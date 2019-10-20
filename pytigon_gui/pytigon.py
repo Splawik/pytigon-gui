@@ -210,7 +210,7 @@ from asyncio.events import get_event_loop
 
 LOOP = get_event_loop()
 
-from schserw import settings as schserw_settings
+from pytigon.schserw import settings as schserw_settings
 
 sys.path.append(schserw_settings.PRJ_PATH)
 
