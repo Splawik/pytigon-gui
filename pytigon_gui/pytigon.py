@@ -58,7 +58,6 @@ if ROOT_PATH.startswith("."):
 sys.path.append(ROOT_PATH)
 sys.path.append(ROOT_PATH + "/schappdata")
 
-os.environ["LD_LIBRARY_PATH"] = ROOT_PATH + "/ext_prg/tcc"
 os.environ['EMBEDED_DJANGO_SERVER'] = '1'
 
 from pytigon_lib import init_paths
@@ -211,6 +210,8 @@ from asyncio.events import get_event_loop
 LOOP = get_event_loop()
 
 from pytigon.schserw import settings as schserw_settings
+
+os.environ["LD_LIBRARY_PATH"] = os.path.join(schserw_settings.DATA_PATH, "ext_prg", "tcc")
 
 sys.path.append(schserw_settings.PRJ_PATH)
 
