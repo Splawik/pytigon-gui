@@ -2,13 +2,13 @@ from setuptools import setup, find_packages
 
 setup(
     name="pytigon-gui",
-    version="0.9",
+    version="0.91",
     description="Pytigon GUI",
     author="Sławomir Chołaj",
     author_email="slawomir.cholaj@gmail.com",
     license="LGPLv3",
     packages=find_packages(),
-    install_requires=["pytigon", "wxpython", "wxasync", "PyDispatcher", "cefpython3"],
+    install_requires=["pytigon", "wxpython", "wxasync", "PyDispatcher", "pywebview"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Web Environment",
