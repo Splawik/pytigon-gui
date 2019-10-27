@@ -8,7 +8,7 @@ setup(
     author_email="slawomir.cholaj@gmail.com",
     license="LGPLv3",
     packages=find_packages(),
-    install_requires=["pytigon", "wxpython", "wxasync", "PyDispatcher", "pywebview"],
+    install_requires=["pytigon", "wxpython", "wxasync", "PyDispatcher", "cefpython3"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Web Environment",
