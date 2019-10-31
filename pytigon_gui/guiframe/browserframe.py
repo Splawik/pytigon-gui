@@ -61,6 +61,7 @@ class SchBrowserFrame(SchBaseFrame):
             self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(self, name='schbrowser', size=self.GetClientSize())
             #self.ctrl.load_url(app.base_address+"/", cookies = COOKIES)
             self.ctrl.load_url(app.base_path+"/", cookies = COOKIES)
+            #self.ctrl.load_url(app.base_path + "/")
 
     def on_size(self, event):
         if event:
