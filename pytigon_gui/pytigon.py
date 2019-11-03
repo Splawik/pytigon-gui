@@ -211,7 +211,7 @@ LOOP = get_event_loop()
 
 from pytigon.schserw import settings as schserw_settings
 
-os.environ["LD_LIBRARY_PATH"] = os.path.join(schserw_settings.DATA_PATH, "ext_prg", "tcc")
+#os.environ["LD_LIBRARY_PATH"] = os.path.join(schserw_settings.DATA_PATH, "ext_prg", "tcc")
 
 sys.path.append(schserw_settings.PRJ_PATH)
 
