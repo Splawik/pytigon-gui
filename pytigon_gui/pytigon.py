@@ -238,15 +238,15 @@ def process_adv_argv():
 
         choices = [
             ff
-            for ff in os.listdir(schserw_settings.PRJ_PATH + "/")
-            if not ff.startswith("_")
+            for ff in os.listdir(schserw_settings.PRJ_PATH)
+            if not ff.startswith("_") and os.path.isdir(os.path.join(schserw_settings.PRJ_PATH, ff))
         ]
-        if schserw_settings.PRJ_PATH_ALT and  schserw_settings.PRJ_PATH_ALT != schserw_settings.PRJ_PATH:
-            choices += [
-                ff
-                for ff in os.listdir(schserw_settings.PRJ_PATH_ALT + "/")
-                if not ff.startswith("_")
-            ]
+        #if schserw_settings.PRJ_PATH_ALT and  schserw_settings.PRJ_PATH_ALT != schserw_settings.PRJ_PATH:
+        #    choices += [
+        #        ff
+        #        for ff in os.listdir(schserw_settings.PRJ_PATH_ALT + "/")
+        #        if not ff.startswith("_")
+        #    ]
         dlg = wx.SingleChoiceDialog(
             None,
             _("select the application to run"),
