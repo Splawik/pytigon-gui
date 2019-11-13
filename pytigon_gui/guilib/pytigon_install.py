@@ -9,7 +9,8 @@ import zipfile
 import os
 import configparser
 
-from django.conf import settings
+
+from pytigon.schserw import settings as schserw_settings
 
 from pytigon_lib.schtools.install import extract_ptig
 from pytigon_gui.guilib.tools import create_desktop_shortcut
@@ -88,7 +89,7 @@ class InstallWizard(Wizard):
         event.Skip()
 
     def install(self):
-        extract_to = os.path.join(settings.PRJ_PATH, self.app_name)
+        extract_to = os.path.join(schserw_settings.PRJ_PATH, self.app_name)
         extract_ptig(self.zip_file, self.app_name)
         ini_file = os.path.join(extract_to, "install.ini")
         created = False
