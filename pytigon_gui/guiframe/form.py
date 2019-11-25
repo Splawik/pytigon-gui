@@ -49,7 +49,7 @@ def install_pre_process_lib(fun):
 def _get_css():
     global _INIT_CSS_STR
     if _INIT_CSS_STR == None:
-        with open(wx.GetApp().scr_path + '/schappdata/icss/form.icss', 'r') as f:
+        with open(wx.GetApp().src_path + '/schappdata/icss/form.icss', 'r') as f:
             _INIT_CSS_STR = f.read()
     return _INIT_CSS_STR
 

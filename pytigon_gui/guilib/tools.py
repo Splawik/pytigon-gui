@@ -20,7 +20,10 @@
 import platform
 import os
 import wx
-from pyshortcuts import make_shortcut
+try:
+    from pyshortcuts import make_shortcut
+except:
+    make_shortcut = None
 import sys
 import pytigon
 
@@ -101,7 +104,7 @@ def create_desktop_shortcut(app_name, title=None, parameters=""):
     ico_path = pytigon_init_path.replace("__init__.py", "pytigon.ico")
     ptig_path = pytigon_init_path.replace("__init__.py", "ptig.py")
 
-    if "python" in sys.executable:
+    if "python" in sys.executable and make_shortcut:
         make_shortcut(
             ptig_path + " " + app_name, name=title if title else app_name, icon=ico_path
         )

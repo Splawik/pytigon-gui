@@ -40,7 +40,7 @@ class SchBaseFrame(wx.Frame):
     def init_plugins(self):
         home_dir = wx.GetApp().get_working_dir()
         app_plugins = os.path.join(wx.GetApp().cwd, "plugins")
-        dirnames = [wx.GetApp().scr_path + "/schappdata/schplugins/", home_dir + "plugins_cache/", app_plugins]
+        dirnames = [wx.GetApp().src_path + "/schappdata/schplugins/", home_dir + "plugins_cache/", app_plugins]
         auto_plugins = wx.GetApp().config['Global settings']['auto_plugins'].split(';')
         for dirname in dirnames:
             if not os.path.exists(dirname):
@@ -75,8 +75,7 @@ class SchBaseFrame(wx.Frame):
                             except:
                                 try_run = try_run - 1
                                 if try_run == 1:
-                                    print(dirname2, f, wx.GetApp().scr_path)
-                                    compile(wx.GetApp().scr_path, os.path.join(dirname2, f))
+                                    compile(wx.GetApp().data_path, os.path.join(dirname2, f))
                                 else:
                                     import traceback
                                     print("Error load plugin: ", mod_name)

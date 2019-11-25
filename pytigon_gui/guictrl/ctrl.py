@@ -438,11 +438,11 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
                 self.Append(id, bmp, id)
 
     def init_embeded_icons(self):
-        base_path = wx.GetApp().scr_path+'/static/icons/22x22/'
+        base_path = wx.GetApp().src_path+'/static/icons/22x22/'
         return self._init_icons(base_path, 'png://')
 
     def init_fa_icons(self):
-        base_path = wx.GetApp().scr_path+'/static/fonts/font-awesome/fonts/22x22/'
+        base_path = wx.GetApp().src_path+'/static/fonts/font-awesome/fonts/22x22/'
         return self._init_icons(base_path, 'fa://')
 
     def init_extern_icons(self, base_path, prefix):

@@ -45,13 +45,13 @@ if platform.system() == "Windows":
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 CWD_PATH = os.path.join(os.getcwd(), "..")
-SCR_PATH = os.path.dirname(pytigon.__file__)
-#if SCR_PATH == "":
-#    SCR_PATH = CWD_PATH
+SRC_PATH = os.path.dirname(pytigon.__file__)
+#if SRC_PATH == "":
+#    SRC_PATH = CWD_PATH
 #else:
-#    SCR_PATH = os.path.join(SCR_PATH, "..")
+#    SRC_PATH = os.path.join(SRC_PATH, "..")
 
-ROOT_PATH = SCR_PATH
+ROOT_PATH = SRC_PATH
 
 if ROOT_PATH.startswith("."):
     ROOT_PATH = CWD_PATH + "/" + ROOT_PATH
@@ -217,6 +217,8 @@ sys.path.append(schserw_settings.PRJ_PATH)
 
 from pytigon_lib.schtools.install_init import init
 
+DATA_PATH = schserw_settings.DATA_PATH
+
 init(
     "_schall",
     schserw_settings.ROOT_PATH,
@@ -289,8 +291,11 @@ def process_adv_argv():
 process_adv_argv()
 
 if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
-    from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
-
+    try:
+        from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
+    except:
+        asyncio.futures.CancelledError = asyncio.CancelledError
+        from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
     class SChAsyncApp(WxAsyncApp):
         async def MainLoop(self):
             evtloop = wx.GUIEventLoop()
@@ -429,7 +434,7 @@ class SchApp(App, _BASE_APP):
             and not "nogui" in _PARAM
             and not "server_only" in _PARAM
         ):
-            bitmap = wx.Bitmap(SCR_PATH + "/pytigon_splash.jpeg", wx.BITMAP_TYPE_JPEG)
+            bitmap = wx.Bitmap(SRC_PATH + "/pytigon_splash.jpeg", wx.BITMAP_TYPE_JPEG)
             splash = wx.adv.SplashScreen(
                 bitmap,
                 wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT,
@@ -443,7 +448,7 @@ class SchApp(App, _BASE_APP):
             splash.Update()
             wx.Yield()
 
-        config_name = os.path.join(SCR_PATH, "pytigon.ini")
+        config_name = os.path.join(SRC_PATH, "pytigon.ini")
         self.config = configparser.ConfigParser()
         self.config.read(config_name)
 
@@ -456,9 +461,10 @@ class SchApp(App, _BASE_APP):
 
         self.base_address = None
 
-        self.scr_path = SCR_PATH
+        self.src_path = SRC_PATH
         self.root_path = ROOT_PATH
         self.cwd_path = CWD_PATH
+        self.data_path = DATA_PATH
 
         self.http = None
         self.images = None
@@ -661,7 +667,7 @@ class SchApp(App, _BASE_APP):
 
     def SetTopWindow(self, frame):
         wx.App.SetTopWindow(self, frame)
-        icon = wx.Icon(SCR_PATH + "/pytigon.ico", wx.BITMAP_TYPE_ICO)
+        icon = wx.Icon(SRC_PATH + "/pytigon.ico", wx.BITMAP_TYPE_ICO)
         frame.SetIcon(icon)
 
         if hasattr(frame, "statusbar") and frame.statusbar:
@@ -1032,7 +1038,7 @@ def _main_init():
             pass
 
     cwd = CWD_PATH
-    inst_dir = SCR_PATH
+    inst_dir = SRC_PATH
     if inst_dir == "":
         inst_dir = cwd
 
@@ -1174,7 +1180,7 @@ def _main_init():
 def _main_run():
     app = wx.GetApp()
     app.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
-    app.locale.AddCatalogLookupPathPrefix(SCR_PATH + "/pytigon_gui/locale")
+    app.locale.AddCatalogLookupPathPrefix(SRC_PATH + "/pytigon_gui/locale")
 
     app.locale.AddCatalog("wx")
     app.locale.AddCatalog("pytigon")

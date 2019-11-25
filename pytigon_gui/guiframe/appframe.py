@@ -197,7 +197,7 @@ class SchAppFrame(SchBaseFrame):
         wx.ArtProvider.Push(ArtProviderFromIcon())
 
         icon = wx.Icon()
-        b = wx.Bitmap(wx.Image(wx.GetApp().scr_path + '/static/icons/schweb.png'))
+        b = wx.Bitmap(wx.Image(wx.GetApp().src_path + '/static/icons/schweb.png'))
         icon.CopyFromBitmap(b)
         self.SetIcon(icon)
 

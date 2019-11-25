@@ -131,10 +131,10 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
     if href2[:3] == 'wx.':
         bmp = wx.ArtProvider.GetBitmap(eval(href2), wx.ART_TOOLBAR, (icon_size, icon_size))
     elif href.startswith('client://'):
-        image = wx.Image(wx.GetApp().scr_path + '/static/icons/%dx%d/' % (icon_size, icon_size) + href2[9:])
+        image = wx.Image(wx.GetApp().src_path + '/static/icons/%dx%d/' % (icon_size, icon_size) + href2[9:])
         bmp = wx.Bitmap(image)
     elif href.startswith('png://'):
-        image = wx.Image(wx.GetApp().scr_path + '/static/icons/%dx%d/' % (icon_size, icon_size) + href2[6:])
+        image = wx.Image(wx.GetApp().src_path + '/static/icons/%dx%d/' % (icon_size, icon_size) + href2[6:])
         bmp = wx.Bitmap(image)
     elif href.startswith('fa://'):
         if '.png' in href.lower():
@@ -142,7 +142,7 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
         else:
             suffix = '.png'
         try:
-            image = wx.Image(wx.GetApp().scr_path + '/static/fonts/font-awesome/fonts/%dx%d/' % (icon_size,icon_size) +
+            image = wx.Image(wx.GetApp().src_path + '/static/fonts/font-awesome/fonts/%dx%d/' % (icon_size,icon_size) +
                     href2[5:].replace('fa-','')+suffix)
             image = image.AdjustChannels(1, 1, 1, 0.55)
             bmp = wx.Bitmap(image)
@@ -169,7 +169,7 @@ class ArtProviderFromIcon(wx.ArtProvider):
         self.tab_22 = {}
         self.tab_32 = {}
 
-        ids = open(wx.GetApp().scr_path + '/static/icons/ids.txt')
+        ids = open(wx.GetApp().src_path + '/static/icons/ids.txt')
         for line in ids:
             l = line.replace('\n', '').split(',')
             if len(l) > 1:
