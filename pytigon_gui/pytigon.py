@@ -964,7 +964,7 @@ def _main_init():
             x = prg_name.split(".")
             if len(x) == 2 or (len(x) > 2 and x[-2].lower() == "inst"):
                 prg_name2 = x[0]
-                path = os.path.join(schserw_settings.PRJ_PATH, "_schremote")
+                path = os.path.join(schserw_settings.PRJ_PATH_ALT, "_schremote")
                 sys.path.append(path)
                 if not pytigon_install.install(args[0], prg_name2):
                     return (None, None)
@@ -988,7 +988,7 @@ def _main_init():
             arg = args[0].strip()
             if arg == "embeded" or "." in arg or "/" in arg:
                 if arg != "embeded":
-                    CWD_PATH = schserw_settings.PRJ_PATH + "/_schremote"
+                    CWD_PATH = os.path.join(schserw_settings.PRJ_PATH_ALT, "_schremote")
 
                 tmp = arg.replace("//", "$$$")
                 if "/" in arg:
