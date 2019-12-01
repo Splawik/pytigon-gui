@@ -86,3 +86,4 @@ class SchBaseFrame(wx.Frame):
         for fun in self.run_on_close:
             fun(self)
         event.Skip()
+

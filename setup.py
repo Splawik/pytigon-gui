@@ -15,6 +15,7 @@ setup(
         "PyDispatcher",
         "cefpython3",
         "pyshortcuts",
+        "libsass",
     ],
     classifiers=[
         "Development Status :: 3 - Alpha",
