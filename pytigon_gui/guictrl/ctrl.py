@@ -2023,8 +2023,9 @@ def COMPOSITE(parent, **kwds):
 
 
 def COMPONENT(parent, **kwds):
+    print(kwds)
     http = wx.GetApp().get_http(parent)
-    resonse = http.get(parent, wx.GetApp().make_href("/schsys/widget_web?browser_type=1"))
+    response = http.get(parent, wx.GetApp().make_href("/schsys/widget_web?browser_type=1"))
     buf = response.str()
 
     colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE).GetAsString(flags=wx.C2S_HTML_SYNTAX)
