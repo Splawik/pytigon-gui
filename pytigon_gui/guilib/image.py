@@ -106,7 +106,7 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
             - Font Awesome id, format: "fa://icon_name", for example "fa://bus"
             - path to image in local library, format: "png://image_name",
               for example: "png://mimetypes/text-x-script.png".
-              Local library is located in path: "/schappdata/media/size/"
+              Local library is located in path: "/appdata/media/size/"
             - path to image in web, for example: "http://www.pytigon.com/test.png"
 
         size

@@ -56,7 +56,7 @@ ROOT_PATH = SRC_PATH
 if ROOT_PATH.startswith("."):
     ROOT_PATH = CWD_PATH + "/" + ROOT_PATH
 sys.path.append(ROOT_PATH)
-sys.path.append(ROOT_PATH + "/schappdata")
+sys.path.append(ROOT_PATH + "/appdata")
 
 os.environ['EMBEDED_DJANGO_SERVER'] = '1'
 
@@ -218,6 +218,7 @@ sys.path.append(schserw_settings.PRJ_PATH)
 from pytigon_lib.schtools.install_init import init
 
 DATA_PATH = schserw_settings.DATA_PATH
+PYTIGON_PATH = schserw_settings.PYTIGON_PATH
 
 init(
     "_schall",
@@ -465,6 +466,7 @@ class SchApp(App, _BASE_APP):
         self.root_path = ROOT_PATH
         self.cwd_path = CWD_PATH
         self.data_path = DATA_PATH
+        self.pytigon_path = PYTIGON_PATH
 
         self.http = None
         self.images = None
@@ -535,7 +537,7 @@ class SchApp(App, _BASE_APP):
             None
 
         Example:
-            see: schappdata/schplugins/standard/keymap/__init__.py
+            see: appdata/plugins/standard/keymap/__init__.py
         """
 
         if tag in self.ctrl_process:
@@ -1042,8 +1044,8 @@ def _main_init():
     if inst_dir == "":
         inst_dir = cwd
 
-    settings.TEMPLATES[0]["DIRS"].insert(0, inst_dir + "/schappdata/schplugins")
-    settings.TEMPLATES[0]["DIRS"].insert(0, cwd + "/schappdata/schplugins")
+    settings.TEMPLATES[0]["DIRS"].insert(0, inst_dir + "/appdata/plugins")
+    settings.TEMPLATES[0]["DIRS"].insert(0, cwd + "/appdata/plugins")
     settings.TEMPLATES[0]["DIRS"].insert(0, inst_dir + "/../templates")
     settings.TEMPLATES[0]["DIRS"].insert(0, cwd + "/templates")
 

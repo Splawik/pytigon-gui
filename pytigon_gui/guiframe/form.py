@@ -49,7 +49,7 @@ def install_pre_process_lib(fun):
 def _get_css():
     global _INIT_CSS_STR
     if _INIT_CSS_STR == None:
-        with open(wx.GetApp().src_path + '/schappdata/icss/form.icss', 'r') as f:
+        with open(wx.GetApp().src_path + '/appdata/icss/form.icss', 'r') as f:
             _INIT_CSS_STR = f.read()
     return _INIT_CSS_STR
 
@@ -782,7 +782,7 @@ class SchForm(ScrolledPanel):
 
     def new_plugin_child_page(self,path,address,title='',parameters=None):
         p = path.split('/')
-        address2 = 'schappdata/schplugins/' + p[-3] + '/' + p[-2] + '/' + address
+        address2 = 'appdata/plugins/' + p[-3] + '/' + p[-2] + '/' + address
         return self.new_local_child_page(address2, title, parameters)
 
     def new_child_page(self,address_or_parser,title='',parameters=None):

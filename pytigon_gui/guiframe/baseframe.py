@@ -23,7 +23,7 @@ import wx
 import pytigon_gui.guictrl.ctrl
 import platform
 
-from pytigon_lib.schtools.cc import compile
+from pytigon_lib.schtools.cc import compile, import_plugin
 
 
 class SchBaseFrame(wx.Frame):
@@ -40,7 +40,7 @@ class SchBaseFrame(wx.Frame):
     def init_plugins(self):
         home_dir = wx.GetApp().get_working_dir()
         app_plugins = os.path.join(wx.GetApp().cwd, "plugins")
-        dirnames = [wx.GetApp().src_path + "/schappdata/schplugins/", home_dir + "plugins_cache/", app_plugins]
+        dirnames = [os.path.join(wx.GetApp().pytigon_path,"appdata", "plugins"), os.path.join(wx.GetApp().data_path, "plugins"), app_plugins]
         auto_plugins = wx.GetApp().config['Global settings']['auto_plugins'].split(';')
         for dirname in dirnames:
             if not os.path.exists(dirname):
@@ -54,33 +54,26 @@ class SchBaseFrame(wx.Frame):
                     pliki.sort()
 
                     for f in pliki:
-                        try_run=2
-                        while try_run>0:
-                            try:
-                                if os.path.isdir(os.path.join(dirname2, f)):
-                                    p = dirname2.split('/')
-                                    mod_name = p[-2] + "." + p[-1] + "." + f
-                                    x = p[-1] + '/' + f
-                                    if p[-1] == 'auto' or (wx.GetApp().plugins and x in wx.GetApp().plugins) or x in auto_plugins:
-                                        if '.__' in mod_name:
-                                            break
-                                        mod = __import__(mod_name)
-                                        mod_path = mod_name.split('.')
-                                        mod2 = getattr(mod, mod_path[1])
-                                        mod3 = getattr(mod2, mod_path[2])
-                                        destroy = mod3.init_plugin(wx.GetApp(), self, self.desktop, self._mgr, self.get_menu_bar(), self.toolbar_interface, self.aTable)
+                        print("PLUGIN:", dirname, ff, f)
+                        if True:
+                            if os.path.isdir(os.path.join(dirname2, f)):
+                                #p = dirname2.split('/')
+                                mod_name = ff + "." + f
+                                x = mod_name.replace('.', '/')
+                                if ff == 'auto' or (wx.GetApp().plugins and x in wx.GetApp().plugins) or x in auto_plugins:
+                                    if '.__' in mod_name:
+                                        break
+                                    mod = import_plugin(mod_name)
+                                    if hasattr(mod,"init_plugin"):
+                                        print("BINGO")
+                                        destroy = mod.init_plugin(wx.GetApp(), self, self.desktop, self._mgr, self.get_menu_bar(), self.toolbar_interface, self.aTable)
                                         if destroy != None:
                                             self.destroy_fun_tab.append(destroy)
-                                break
-                            except:
-                                try_run = try_run - 1
-                                if try_run == 1:
-                                    compile(wx.GetApp().data_path, os.path.join(dirname2, f))
-                                else:
-                                    import traceback
-                                    print("Error load plugin: ", mod_name)
-                                    print(sys.exc_info()[0])
-                                    print(traceback.print_exc())
+                        #except:
+                        #    import traceback
+                        #    print("Error load plugin: ", mod_name)
+                        #    print(sys.exc_info()[0])
+                        #    print(traceback.print_exc())
 
     def on_close(self, event):
         for fun in self.run_on_close:
