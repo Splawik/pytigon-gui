@@ -9,7 +9,7 @@ setup(
     license="LGPLv3",
     packages=find_packages(),
     install_requires=[
-        "pytigon",
+        "pytigon-batteries",
         "wxpython",
         "wxasync",
         "PyDispatcher",
