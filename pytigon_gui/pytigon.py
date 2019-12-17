@@ -225,7 +225,7 @@ init(
     schserw_settings.ROOT_PATH,
     schserw_settings.DATA_PATH,
     schserw_settings.PRJ_PATH,
-    schserw_settings.STATIC_APP_ROOT,
+    schserw_settings.STATIC_ROOT,
     [schserw_settings.MEDIA_ROOT, schserw_settings.UPLOAD_PATH],
 )
 

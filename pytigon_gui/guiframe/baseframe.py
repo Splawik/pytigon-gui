@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import os
 import sys
@@ -31,8 +31,9 @@ class SchBaseFrame(wx.Frame):
         This is main window of pytigon application
     """
 
-    def __init__(self, parent, gui_style="tree(toolbar,statusbar)", id= -1, title="", pos=wx.DefaultPosition, size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE |
-                 wx.CLIP_CHILDREN | wx.WANTS_CHARS, name="MainWindow"):
+    def __init__(self, parent, gui_style="tree(toolbar,statusbar)", id=-1, title="", pos=wx.DefaultPosition,
+                 size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE |
+                                            wx.CLIP_CHILDREN | wx.WANTS_CHARS, name="MainWindow"):
         wx.Frame.__init__(self, None, wx.ID_ANY, title, pos, size, style, "MainWindow")
         self.run_on_close = []
         self.Bind(wx.EVT_CLOSE, self.on_close)
@@ -40,7 +41,8 @@ class SchBaseFrame(wx.Frame):
     def init_plugins(self):
         home_dir = wx.GetApp().get_working_dir()
         app_plugins = os.path.join(wx.GetApp().cwd, "plugins")
-        dirnames = [os.path.join(wx.GetApp().pytigon_path,"appdata", "plugins"), os.path.join(wx.GetApp().data_path, "plugins"), app_plugins]
+        dirnames = [os.path.join(wx.GetApp().pytigon_path, "appdata", "plugins"),
+                    os.path.join(wx.GetApp().data_path, "plugins"), app_plugins]
         auto_plugins = wx.GetApp().config['Global settings']['auto_plugins'].split(';')
         for dirname in dirnames:
             if not os.path.exists(dirname):
@@ -57,19 +59,22 @@ class SchBaseFrame(wx.Frame):
                         print("PLUGIN:", dirname, ff, f)
                         if True:
                             if os.path.isdir(os.path.join(dirname2, f)):
-                                #p = dirname2.split('/')
+                                # p = dirname2.split('/')
                                 mod_name = ff + "." + f
                                 x = mod_name.replace('.', '/')
-                                if ff == 'auto' or (wx.GetApp().plugins and x in wx.GetApp().plugins) or x in auto_plugins:
+                                if ff == 'auto' or (
+                                        wx.GetApp().plugins and x in wx.GetApp().plugins) or x in auto_plugins:
                                     if '.__' in mod_name:
                                         break
                                     mod = import_plugin(mod_name)
-                                    if hasattr(mod,"init_plugin"):
+                                    if hasattr(mod, "init_plugin"):
                                         print("BINGO")
-                                        destroy = mod.init_plugin(wx.GetApp(), self, self.desktop, self._mgr, self.get_menu_bar(), self.toolbar_interface, self.aTable)
+                                        destroy = mod.init_plugin(wx.GetApp(), self, self.desktop, self._mgr,
+                                                                  self.get_menu_bar(), self.toolbar_interface,
+                                                                  self.aTable)
                                         if destroy != None:
                                             self.destroy_fun_tab.append(destroy)
-                        #except:
+                        # except:
                         #    import traceback
                         #    print("Error load plugin: ", mod_name)
                         #    print(sys.exc_info()[0])
@@ -79,4 +84,3 @@ class SchBaseFrame(wx.Frame):
         for fun in self.run_on_close:
             fun(self)
         event.Skip()
-
