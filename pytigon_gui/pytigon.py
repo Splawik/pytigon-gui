@@ -899,7 +899,6 @@ def login(base_href, auth_type=None, username=None):
             "next": "/schsys/ok/",
             "client_param": wx.GetApp()._get_parm_for_server(),
         }
-
         if auth_type == None:
             wx.GetApp().http.post(
                 wx.GetApp(),
@@ -919,14 +918,14 @@ def login(base_href, auth_type=None, username=None):
                 else:
                     dlg.message.SetLabel(_("Failed login attempt!"))
         else:
-            ret, newaddr = wx.GetApp().http.get(
+            result= wx.GetApp().http.get(
                 wx.GetApp(), base_href, credentials=(username, password)
             )
-            if ret == 200:
+            if result.ret_code == 200:
                 dlg.Destroy()
                 return True
             else:
-                dlg.message.SetLabel(_("Failed login attempt! http error: %s") % ret)
+                dlg.message.SetLabel(_("Failed login attempt! http error: %s") % result.ret_code)
     dlg.Destroy()
     return False
 
@@ -959,7 +958,6 @@ def _main_init():
         address = _PARAM["address"]
 
     os.environ["DJANGO_SETTINGS_MODULE"] = "settings_app"
-
     if len(args) > 0:
         if ".ptig" in args[0].lower():
             prg_name = args[0].split("/")[-1].split("\\")[-1]
@@ -1009,14 +1007,12 @@ def _main_init():
                 if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
                     print(_("Application pack: '%s' does not exists") % arg)
                     return (None, None)
-
     sys.path.insert(0, CWD_PATH)
 
     httpclient.init_embeded_django()
 
     if not ("channels" in _PARAM or "rpc" in _PARAM):
         wx.Yield()
-
     import settings_app
 
     os.environ["DJANGO_SETTINGS_MODULE"] = "settings_app"
@@ -1091,7 +1087,6 @@ def _main_init():
 
     settings.BASE_URL = "http://" + address
     settings.URL_ROOT_FOLDER = ""
-
     init_ret = app._init2(address, app_name)
     if init_ret != 200:
         return (False, False)
@@ -1108,7 +1103,6 @@ def _main_init():
     tab = app.get_tab(0)
 
     app.title = app_title
-
     autologin = True
     for row in tab:
         if row[0].data == "autologin":
@@ -1132,7 +1126,6 @@ def _main_init():
 
     if "server_only" in _PARAM:
         app.gui_style = "app.gui_style = tray(file(exit,open))"
-
     app._install_plugins()
 
     ready_to_run = True
