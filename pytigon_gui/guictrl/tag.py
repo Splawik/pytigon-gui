@@ -112,7 +112,7 @@ class TreeLi(BaseHtmlElemParser):
     def handle_starttag(self,parser,tag,attrs):
         if tag == 'ul':
             return TreeUl(self, parser, tag, attrs)
-        elif tag == 'a' or tag == 'ctrlbutton':
+        elif tag == 'a' or tag == 'ctrl-button':
             self.attrs['href'] = attrs['href']
         else:
             return None
@@ -193,7 +193,7 @@ class CompositeChildTag(BaseHtmlElemParser):
 
 
 class CtrlTag(TableTag):
-    """Class which handle all tags startings with 'ctrl'"""
+    """Class which handle all tags startings with 'ctrl-'"""
 
     def __init__(self,parent,parser,tag,attrs):
         """Constructor
@@ -223,10 +223,10 @@ class CtrlTag(TableTag):
             return
         self._calc_relative_size()
 
-        if self.tag == 'ctrlcheckbox':
+        if self.tag == 'ctrl-checkbox':
             pass
 
-        if self.tag == 'ctrlcomposite':
+        if self.tag == 'ctrl-composite':
             self.data2 = []
 
     def append_to_tree(self, elem):
@@ -283,16 +283,16 @@ class CtrlTag(TableTag):
         return context
 
     def handle_data(self, data):
-        if self.tag == 'ctrlcheckbox':
+        if self.tag == 'ctrl-checkbox':
             pass
         return BaseHtmlElemParser.handle_data(self, data)
 
     def handle_starttag(self,parser,tag,attrs):
 
-        if self.tag == 'ctrlcheckbox':
+        if self.tag == 'ctrl-checkbox':
             pass
 
-        if self.tag == 'ctrlcomposite':
+        if self.tag == 'ctrl-composite':
             return CompositeChildTag(self, parser, tag, attrs)
 
         if tag[:3] + '*' in self.child_tags:
@@ -449,8 +449,10 @@ class CtrlTag(TableTag):
                                        - self.padding[1], (self.height
                                        - self.padding[2]) - self.padding[3])
         try:
-            if tag.upper().startswith('CTRL'):
-                self.classObj = getattr(schctrl, tag[4:].upper())
+            if tag.upper().startswith('CTRL-'):
+                self.classObj = getattr(schctrl, tag[5:].upper())
+            #elif tag.upper().startswith('CTRL'):
+            #    self.classObj = getattr(schctrl, tag[4:].upper())
             elif tag.startswith('_'):
                 self.classObj = getattr(schctrl, tag[1:].upper())
             else:
@@ -550,9 +552,9 @@ def table_to_ctrltab(parent, attrs):
     if 'class' in attrs:
         if 'tabsort' in attrs['class']:
             attrs['minheight'] = '60px'
-            return ('ctrltable', attrs)
+            return ('ctrl-table', attrs)
         if 'listctrl' in attrs['class']:
-            return ('ctrllist', attrs)
+            return ('ctrl-list', attrs)
     return ('table', attrs)
 
 register_tag_preprocess_map('table', table_to_ctrltab)
@@ -670,7 +672,7 @@ def input_to_ctrltab(parent, attrs):
     for attr in attrs:
         if not attr in attrs_ret and attr != 'value':
             attrs_ret[attr] = attrs[attr]
-    return ('ctrl' + ret, attrs_ret)
+    return ('ctrl-' + ret, attrs_ret)
 
 register_tag_preprocess_map('input', input_to_ctrltab)
 
@@ -698,13 +700,13 @@ def textarea_to_ctrltab(parent, attrs):
         attrs_ret['src'] = attrs['src']
     if 'name' in attrs:
         attrs_ret['name'] = attrs['name']
-    return ('ctrltextarea', attrs_ret)
+    return ('ctrl-textarea', attrs_ret)
 
 register_tag_preprocess_map('textarea', textarea_to_ctrltab)
 
 
 def select_to_ctrltab(parent, attrs):
-    return ('ctrlselect', attrs)
+    return ('ctrl-select', attrs)
 
 register_tag_preprocess_map('select', select_to_ctrltab)
 
@@ -714,17 +716,17 @@ def a_to_button(parent, attrs):
         if 'popup' in attrs['class'] or 'button' in attrs['class'] or 'btn' in attrs['class'] or 'schbtn' in attrs['class']:
             if 'schbtn' in attrs['class']:
                 try:
-                    if parent.parent.parent.tag == 'ctrltable':
-                        return ('ctrlbutton', attrs)
+                    if parent.parent.parent.tag == 'ctrl-table':
+                        return ('ctrl-button', attrs)
                 except:
                     return ('a', attrs)
             else:
                 try:
-                    if parent.parent.parent.tag == 'ctrltable':
+                    if parent.parent.parent.tag == 'ctrl-table':
                         return ('a', attrs)
                 except:
                     pass
-                return ('ctrlbutton', attrs)
+                return ('ctrl-button', attrs)
     return ('a', attrs)
 
 register_tag_preprocess_map('a', a_to_button)
@@ -739,9 +741,9 @@ def div_convert(parent, attrs):
         if 'controls' in attrs['class']:
             return ('td', attrs)
         if 'tree' in attrs['class']:
-            return ('ctrltree', attrs)
+            return ('ctrl-tree', attrs)
         if 'select2' in attrs['class']:
-            return ('ctrlcomposite', attrs)
+            return ('ctrl-composite', attrs)
         if 'checkbox' in attrs['class']:
             obj = parent.parent.handle_starttag(parent.parser, "th", {})
             if obj:
@@ -760,7 +762,7 @@ register_tag_preprocess_map('label', label_to_th)
 
 def error_span_to_error(parent, attrs):
     if 'class' in attrs and attrs['class'] == 'help-block':
-        return ('ctrlerrorlist', attrs)
+        return ('ctrl-errorlist', attrs)
     else:
         return ('span', attrs)
 
@@ -781,7 +783,7 @@ def ul_convert(parent, attrs):
         if 'root' in attrs['class']:
             return ('ldata', attrs)
         if attrs['class'] == 'errorlist':
-            return ('ctrlerrorlist', attrs)
+            return ('ctrl-errorlist', attrs)
     return ('ul', attrs)
 
 register_tag_preprocess_map('ul', ul_convert)
@@ -790,5 +792,4 @@ register_tag_preprocess_map('ul', ul_convert)
 def component_convert(parent, attrs):
     return ('_component', attrs)
 
-register_tag_preprocess_map('*-*', component_convert)
-
+register_tag_preprocess_map('*-*', component_convert, 'ctr*')

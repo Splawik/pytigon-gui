@@ -151,7 +151,7 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
             bmp = wx.Bitmap()
     else:
         http = wx.GetApp().get_http(None)
-        response = http.get(None, str(href))[0]
+        response = http.get(None, str(href))
         if response.ret_code != 404:
             s = response.ptr()
             stream = BytesIO(s)
