@@ -58,13 +58,13 @@ _ATTRIBUTES = (
 class TreeList(object):
 
     def __init__(self):
-        self.childs = []
+        self.children = []
 
     def append_to_tree(self, elem):
-        self.childs.append(elem)
+        self.children.append(elem)
 
     def get_list(self):
-        return self.childs
+        return self.children
 
 
 class TreeUl(BaseHtmlElemParser):
@@ -72,13 +72,13 @@ class TreeUl(BaseHtmlElemParser):
     def __init__(self,parent,parser,tag,attrs):
         BaseHtmlElemParser.__init__(self, parent, parser, tag, attrs)
         self.child_tags += ['li']
-        self.childs = []
+        self.children = []
 
     def close(self):
-        self.parent.append_to_tree(['', self.childs, self.attrs])
+        self.parent.append_to_tree(['', self.children, self.attrs])
 
     def append_to_tree(self, elem):
-        self.childs.append(elem)
+        self.children.append(elem)
 
     def handle_starttag(
         self,
@@ -146,13 +146,13 @@ class OptionTag(BaseHtmlElemParser):
         if self.data and len(self.data) > 0:
             data = ''.join(self.data).replace('\n', '').replace('\r', ''
                     ).strip()
-            if 'selected' in self.attrs:
-                data = '!!' + data
-            if 'value' in self.attrs:
-                value = self.attrs['value']
-                data = value + ':' + data
-            else:
-                data = ':' + data
+            #if 'selected' in self.attrs:
+            #    data = '!!' + data
+            #if 'value' in self.attrs:
+            #    value = self.attrs['value']
+            #    data = value + ':' + data
+            #else:
+            #    data = ':' + data
             self.parent.tdata.append([Td(data, self.attrs)])
 
 
@@ -173,13 +173,13 @@ class CompositeChildTag(BaseHtmlElemParser):
         self.composite_data['tag'] = tag
         self.composite_data['attrs'] = attrs
         self.composite_data['data'] = None
-        self.composite_data['childs'] = []
+        self.composite_data['children'] = []
 
     def close(self):
         if self.data:
             self.composite_data['data'] = self.data
         if type(self.parent) == CompositeChildTag:
-            self.parent.composite_data['childs'].append(self.composite_data)
+            self.parent.composite_data['children'].append(self.composite_data)
         elif type(self.parent).__name__=='CtrlTag':
                 self.parent.data2.append(self.composite_data)
 

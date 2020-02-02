@@ -155,13 +155,13 @@ class SimpleDataTable(SchGridTableBase):
                 col2 = col
             attrs = []
             td = self.data[row][col2]
-            attrs.append(td.attr)
-            childs = td.childs
-            if childs:
-                for sys_id in sorted(list(childs)):
-                    a = childs[sys_id].attrs
+            attrs.append(td.attrs)
+            children = td.children
+            if children:
+                for sys_id in sorted(list(children)):
+                    a = children[sys_id].attrs
                     txt = ''
-                    for atom in childs[sys_id].atom_list.atom_list:
+                    for atom in children[sys_id].atom_list.atom_list:
                         txt += atom.data
                     a['data'] = txt
                     attrs.append(a)
@@ -186,10 +186,10 @@ class SimpleDataTable(SchGridTableBase):
         try:
             tdattr = {}
             td = self.data[row][col]
-            tdattr.update(td.attr)
-            if td.childs:
-                for sys_id in td.childs:
-                    child = td.childs[sys_id]
+            tdattr.update(td.attrs)
+            if td.children:
+                for sys_id in td.children:
+                    child = td.children[sys_id]
                     tag = child.tag
                     if tag in tdattr:
                         tdattr[tag] += (child.attrs, )
@@ -200,10 +200,10 @@ class SimpleDataTable(SchGridTableBase):
             tdattr = None
         return tdattr
 
-    def get_childs(self, row, col):
+    def get_children(self, row, col):
         try:
             td = self.data[row][col]
-            return td.childs
+            return td.children
         except:
             return None
 
@@ -222,7 +222,7 @@ class SimpleDataTable(SchGridTableBase):
             attr.IncRef()
             return attr
         try:
-            tdattr = self.data[row][col].attr
+            tdattr = self.data[row][col].attrs
         except:
             print('<<<')
             print('rows:', self.GetNumberRows())

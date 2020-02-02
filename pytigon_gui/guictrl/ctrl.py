@@ -40,6 +40,7 @@ from pytigon_lib.schparser.html_parsers import ShtmlParser
 
 from pytigon_lib.schhtml.wxdc import DcDc
 from pytigon_lib.schhtml.htmlviewer import HtmlViewerParser
+from pytigon_lib.schparser.html_parsers import Td
 
 from pytigon_gui.guictrl.grid import grid, gridtable_from_proxy, tabproxy
 from pytigon_gui.guiframe import page
@@ -384,26 +385,33 @@ class CHECKLISTBOX(wx.CheckListBox, SchBaseCtrl):
 
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
-        tdata = self.get_tdata()
-        if tdata:
-            choices = []
-            for row in tdata:
-                choices.append(row[0].data)
-            kwds["choices"] = choices
 
         if 'style' in kwds:
             kwds['style'] |= wx.WANTS_CHARS
         else:
             kwds['style'] = wx.WANTS_CHARS
         wx.CheckListBox.__init__(self, parent, **kwds)
+        self.init_choices(self.get_tdata())
 
     def process_refr_data(self, **kwds):
         self.init_base(kwds)
         self.Clear()
-        tdata = self.get_tdata()
-        if tdata:
-            for row in tdata:
-                self.Append(row[0].data)
+        self.init_data(self.get_tdata())
+
+    def init_choices(self, data):
+        self.choices = {}
+        self.checked_strings = []
+        if data:
+            for row in data:
+                value = row[0].data
+                self.Append(value)
+                if 'value' in row[0].attrs:
+                    self.choices[value] = row[0].attrs['value']
+                if 'selected' in row[0].attrs:
+                    self.checked_strings.append(value)
+
+        if self.checked_strings:
+            self.SetCheckedStrings(self.checked_strings)
 
     #def Refresh(self):
     #    self.Clear()
@@ -503,32 +511,6 @@ class LISTBOX(wx.ListBox, SchBaseCtrl):
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
         self._norefresh = False
-        self.retvalues = []
-        self.sel = []
-        tdata = self.get_tdata()
-        i = 0
-        if tdata:
-            choices = []
-
-            for row in tdata:
-                value = row[0].data.split('::')
-
-                if len(value) == 2:
-                    self.retvalues.append(value[0])
-                    value = value[1]
-                else:
-                    self.retvalues.append(str(i))
-                    value = value[0]
-
-                if value[:2] == "!!":
-                    choices.append(str(value[2:]))
-                    self.sel.append(i)
-                else:
-                    choices.append(str(value))
-
-                i = i + 1
-
-            kwds["choices"] = choices
 
         if self.param and 'multiple' in self.param:
             style = 0
@@ -539,8 +521,8 @@ class LISTBOX(wx.ListBox, SchBaseCtrl):
 
         wx.ListBox.__init__(self, parent, **kwds)
 
-        for s in self.sel:
-            self.SetSelection(s)
+        self.init_choices(self.get_tdata())
+
 
     def block_refresh(self):
         self._norefresh = True
@@ -558,17 +540,32 @@ class LISTBOX(wx.ListBox, SchBaseCtrl):
         if not self._norefresh:
             self.Clear()
             self.refresh_tdata()
-            tdata = self.get_tdata()
+            self.init_choices(self.get_tdata())
 
-            if tdata:
-                for row in tdata:
-                    self.Append(row[0].data)
+    def init_choices(self, data):
+        self.choices = []
+        self.selected_rows = []
+        if data:
+            i = 0
+            for row in data:
+                value = row[0].data
+                self.Append(value)
+                if 'value' in row[0].attrs:
+                    self.choices.append(row[0].attrs['value'])
+                else:
+                    self.choices.append(value)
+                if 'selected' in row[0].attrs:
+                    self.selected_rows.append(i)
+                i += 1
+        if self.selected_rows:
+            for j in self.selected_rows:
+                self.SetSelection(j)
 
     def GetValue(self):
         ret = []
         sel = self.GetSelections()
         for s in sel:
-            ret.append((self.retvalues)[s])
+            ret.append(self.choices[s])
         return ret
 
 
@@ -1484,13 +1481,13 @@ class NOTEBOOK(wx.Notebook, SchBaseCtrl):
 
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
-        self.childs = []
+        self.children = []
         wx.Notebook.__init__(self, parent, **kwds)
         if self.tdata:
             for row in self.tdata:
                 h = page.SchPage(self, row[1].data, {})
                 self.AddPage(h,row[0].data)
-                self.childs.append(h)
+                self.children.append(h)
 
 
 class GRID(grid.SchTableGrid, SchBaseCtrl):
@@ -1628,17 +1625,19 @@ if platform.system() == "Linux":
             POPUPHTML.__init__(self, parent, **kwds)
 
             if self.value:
-                self.set_rec(self.value, [self.value,])
+                self.set_rec(self.value, Td(self.value))
             else:
-                self.set_rec(wx.DateTime.Today().FormatISODate(), [wx.DateTime.Today().FormatISODate(),], False)
+                self.set_rec(wx.DateTime.Today().FormatISODate(), Td(wx.DateTime.Today().FormatISODate()), False)
 
             self.to_masked(autoformat='EUDATEYYYYMMDD.')
 
 
         def GetValue(self):
             value = self.get_rec()
-            if type(value) == tuple and len(value)>0:
-                return value[1][0]
+            #if type(value) == tuple and len(value)>0:
+            #    return value[1][0]
+            if value.data:
+                return value.data
             else:
                 return value
             return None
@@ -1701,10 +1700,10 @@ class DATETIMEPICKER(POPUPHTML):
         self.win.SetValidBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
 
         if self.value:
-            self.set_rec(self.value, [self.value,])
+            self.set_rec(self.value, Td(self.value) )
         else:
             now = datetime.datetime.now().isoformat().replace('T',' ').replace('-','.')[:16]
-            self.set_rec(now, [now,], False)
+            self.set_rec(now, Td(now), False)
 
     #def SetValue(self, value):
     def set_rec(self, value, value_rec, dismiss=False):
@@ -1720,8 +1719,10 @@ class DATETIMEPICKER(POPUPHTML):
         value = self.get_rec()
         value2 = self.GetTextCtrl().GetValue()
         if value2 and value2[0]!=' ':
-            if value.__class__ in (tuple,list) and len(value)>1:
-                return value[1][0]
+            #if value.__class__ in (tuple,list) and len(value)>1:
+            #    return value[1][0]
+            if value.data:
+                return value.data
             else:
                 return [datetime.datetime.strptime(value2, "%Y.%m.%d %H:%M"),]
         return None
@@ -1754,44 +1755,26 @@ class CHOICE(POPUPHTML):
         kwds['dialog_with_value'] = False
         POPUPHTML.__init__(self, parent, **kwds)
 
-        choices = None
-        self._norefresh = False
-        self.retvalues = []
-        self.sel = None
-        tdata = self.get_tdata()
-        i = 0
-        self.choices = None
-        if tdata:
-            choices = []
-
-            for row in tdata:
-                value = row[0].data
-                if value.find("!!") >= 0:
-                    value = value.replace("!!", "")
-                    sel = value.split(':')
-                    if len(sel)>1:
-                      ComboCtrl.SetValue(self, sel[1].lstrip())
-                      self.set_rec(sel[1], sel, dismiss=False)
-                    else:
-                      ComboCtrl.SetValue(self, sel[0], dismiss=False)
-                      self.set_rec(sel[0], sel)
-
-                value = value.split(':')
-                if len(value)>1:
-                    choices.append((value[1].lstrip(), value))
-                else:
-                    choices.append((value[0], value))
-
-                i = i + 1
-
-            self.choices = choices
-        else:
-            self.choices = []
+        self.init_choices(self.get_tdata())
 
         aTable = [
                 (0, wx.WXK_F2,  self.on_ext_button_click),
                  ]
         self.set_acc_key_tab(aTable)
+
+    def init_choices(self, data):
+        self.choices = []
+        if data:
+            i = 0
+            for row in data:
+                self.choices.append(row[0])
+                if 'selected' in row[0].attrs:
+                    value = row[0].data
+                    ComboCtrl.SetValue(self, value)
+                    if 'value' in row[0].attrs:
+                        self.set_rec(row[0].attrs['value'], row[0], dismiss=False)
+                    else:
+                        self.set_rec(value, row[0], dismiss=False)
 
 
     def on_ext_button_click(self, event):
@@ -1834,12 +1817,10 @@ class DBCHOICE(CHOICE):
     def GetValue(self):
         if self.readonly:
             value = self.get_rec()
-            if value.__class__==tuple and len(value)>0:
-                return value[1][0]
-            if len(value)>0:
-                return value[0]
+            if 'value' in value.attrs:
+                return value.attrs['value']
             else:
-                return None
+                return value.data
         else:
             return POPUPHTML.GetValue(self)
         return None
@@ -1861,12 +1842,19 @@ class DBCHOICE_EXT(POPUPHTML):
 
 
     def SetValue(self, value):
-        if '!!' in value:
-            id = value.split(':')[0]
-            name = value[len(id)+1:].replace('!!','')
-            self.set_rec(name, [id,name], dismiss=False)
+        if type(value)==dict:
+            val = value['value']
+            title = value['title']
+            sel = value['selected']
+            if sel:
+                self.set_rec(val, Td(title, {'value': val}), dismiss=False)
         else:
-            POPUPHTML.SetValue(self, value)
+            if '!!' in value:
+                id = value.split(':')[0]
+                name = value[len(id)+1:].replace('!!','')
+                self.set_rec(name, [id,name], dismiss=False)
+
+        POPUPHTML.SetValue(self, value)
 
     def GetValue(self):
         if self.readonly:
@@ -1976,7 +1964,7 @@ class COLLAPSIBLE_PANEL(wx.CollapsiblePane, SchBaseCtrl):
 
 
 def button_from_parm(parent, param):
-    icon = param['childs'][0]['attrs']['class']
+    icon = param['children'][0]['attrs']['class']
     href = param['attrs']['href']
     button = BUTTON(parent, src='fa://'+icon+'?size=0', href=href)
     return button
@@ -1992,8 +1980,8 @@ def SELECT2(parent, **kwds):
     data = kwds['param']['data']
     panel = CompositePanel(parent, size=(460, -1))
     ctrl = Select2Base(panel, **kwds)
-    button1 = button_from_parm(panel, param=data[1]['childs'][0])
-    button2 = button_from_parm(panel, param=data[1]['childs'][1])
+    button1 = button_from_parm(panel, param=data[1]['children'][0])
+    button2 = button_from_parm(panel, param=data[1]['children'][1])
     ctrl.init(button1, button2)
 
     def ret_ok(id, title):

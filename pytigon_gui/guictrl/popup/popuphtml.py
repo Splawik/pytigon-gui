@@ -239,7 +239,12 @@ class DataPopupControl(ComboCtrl):
             value: element id
             value_rec: element
         """
-        value2 = value
+        #if 'value' in value_rec.attrs:
+        #    value2 = value_rec.data
+        #else:
+        #    value2 = value
+        value2 = value_rec.data
+
         if self.event_object:
             if hasattr(self.event_object, "set_rec"):
                 value2 = self.event_object.set_rec(value, value_rec, dismiss)

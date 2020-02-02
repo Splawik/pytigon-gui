@@ -114,10 +114,10 @@ class IconAndStringRenderer(MultiLineStringRenderer):
         return self.cache[image].bmp
 
     def get_image(self,grid,row,col):
-        childs = grid.GetTable().get_childs(row, col)        
-        if childs:
-            for child_id in childs:
-                child = childs[child_id]
+        children = grid.GetTable().get_children(row, col)
+        if children:
+            for child_id in children:
+                child = children[child_id]
                 if child.tag in ('image', 'img'):
                     if 'src' in child.attrs:
                         return self.get_image_from_cache(child.attrs['src'])

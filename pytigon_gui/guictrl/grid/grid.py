@@ -330,10 +330,10 @@ class SchTableGrid(wx.grid.Grid):
             if type(s)==str and s.strip() == '+':
                 attr = self.GetTable().get_ext_attr(evt.GetRow(), evt.GetCol())
                 td = self.GetTable().data[evt.GetRow()][evt.GetCol()]
-                childs = self.GetTable().get_childs(evt.GetRow(), evt.GetCol())
-                if childs:
-                    for child_id in childs:
-                        child = childs[child_id]
+                children = self.GetTable().get_children(evt.GetRow(), evt.GetCol())
+                if children:
+                    for child_id in children:
+                        child = children[child_id]
                         if 'href' in child.attrs:
                             self.GetParent().GetParent().href_clicked(self, child.attrs)
                             break

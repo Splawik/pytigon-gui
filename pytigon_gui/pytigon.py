@@ -98,7 +98,7 @@ def process_argv(argv):
 
             -b --embededbrowser - run embeded browseer window
             -s --embededserver - run in background embeded http server
-            -m --menu_always - show menu event then configuration says otherwise
+            --menu_always - show menu event then configuration says otherwise
             --no_splash - do not show splash window
             --no_gui - run program without gui
             --server_only - run only http server
@@ -172,7 +172,7 @@ def process_argv(argv):
             ret["extern_prj"] = True
         elif opt == "--no_gui":
             ret["nogui"] = True
-        elif opt in ("-m", "--menu_always"):
+        elif opt in ("--menu_always", ):
             ret["menu_always"] = True
         elif opt in ("--rpc"):
             ret["rpc"] = int(arg)
