@@ -806,16 +806,16 @@ class SLIDER(wx.Slider, SchBaseCtrl):
         wx.Slider.__init__(self, parent, **kwds)
 
 
-class SPINBUTTON(wx.SpinButton, SchBaseCtrl):
-    """SPINBUTTON handle ctrlspinbutton tag
-
-    Tag arguments:
-        value
-    """
-
-    def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
-        wx.SpinButton.__init__(self, parent, **kwds)
+#class SPINBUTTON(wx.SpinButton, SchBaseCtrl):
+#    """SPINBUTTON handle ctrlspinbutton tag
+#
+#    Tag arguments:
+#        value
+#    """
+#
+#    def __init__(self, parent, **kwds):
+#        SchBaseCtrl.__init__(self, parent, kwds)
+#        wx.SpinButton.__init__(self, parent, **kwds)
 
 
 class SPIN(wx.SpinCtrl, SchBaseCtrl):
