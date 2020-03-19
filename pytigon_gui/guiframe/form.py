@@ -980,6 +980,8 @@ class SchForm(ScrolledPanel):
                 if target == '_top':
                     self.new_main_page(mp, is_null(mp.title, title), parameters=self.get_parm_obj(), panel=None)
                     return
+                if target == 'refresh_page':
+                    self.any_parent_command('refresh_html')
 
                 if target.startswith('_top2'):
                     x = target[5:]
