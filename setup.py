@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="pytigon-gui",
-    version="0.97",
+    version="0.98",
     description="Pytigon GUI",
     author="Sławomir Chołaj",
     author_email="slawomir.cholaj@gmail.com",
