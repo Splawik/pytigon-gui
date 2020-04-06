@@ -522,7 +522,7 @@ class SchApp(App, _BASE_APP):
                 # pass
                 print("CALLBACK:", msg)
 
-        self.add_websoket_callback("/schbuilder/clock/socket.io/", callback)
+        self.add_websoket_callback("/schbuilder/clock/channel/", callback)
 
     def register_ctrl_process_fun(self, tag, fun):
         """Register function, which is called when widget connected to the specified tag is created.
@@ -635,7 +635,7 @@ class SchApp(App, _BASE_APP):
         while True:
             await asyncio.sleep(1)
             await self.websocket_send(
-                "/schbuilder/clock/socket.io/", {"title": "Hello world %s" % count}
+                "/schbuilder/clock/channel/", {"title": "Hello world %s" % count}
             )
             count -= 1
 
