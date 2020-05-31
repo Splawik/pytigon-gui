@@ -22,6 +22,7 @@
 import io
 from io import BytesIO
 from PIL import Image
+from wx.svg import SVGimage
 
 import wx
 
@@ -149,6 +150,15 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
         except:
             print("Error, can't load image: ", href2)
             bmp = wx.Bitmap()
+    elif href.startswith('data:image/svg+xml'):
+        x = href.split(',',1)
+        svg_code = x[1]
+        svg = SVGimage.CreateFromBytes(svg_code.encode('utf-8'))
+        #_bmp = svg.ConvertToBitmap(scale=10, width=icon_size*10, height=icon_size*10)
+        #image = wx.ImageFromBitmap(_bmp)
+        #image = image.Scale(width=icon_size, height=icon_size, quality=wx.IMAGE_QUALITY_HIGH)
+        #bmp = wx.Bitmap(image)
+        bmp = svg.ConvertToBitmap(width=icon_size, height=icon_size)
     else:
         http = wx.GetApp().get_http(None)
         response = http.get(None, str(href))
