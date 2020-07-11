@@ -46,10 +46,6 @@ if platform.system() == "Windows":
 
 CWD_PATH = os.path.join(os.getcwd(), "..")
 SRC_PATH = os.path.dirname(pytigon.__file__)
-#if SRC_PATH == "":
-#    SRC_PATH = CWD_PATH
-#else:
-#    SRC_PATH = os.path.join(SRC_PATH, "..")
 
 ROOT_PATH = SRC_PATH
 
