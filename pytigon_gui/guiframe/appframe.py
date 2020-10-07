@@ -40,7 +40,7 @@ from django.conf import settings
 
 from pytigon_lib.schfs.vfstools import get_temp_filename
 from pytigon_lib.schtools.tools import split2
-from pytigon_lib.schtasks.task import get_process_manager
+#from pytigon_lib.schtasks.task import get_process_manager
 
 from pytigon_gui.guilib.image import ArtProviderFromIcon
 from pytigon_gui.guilib.events import * #@UnusedWildImport

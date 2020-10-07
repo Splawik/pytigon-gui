@@ -341,8 +341,8 @@ class SchTableGrid(wx.grid.Grid):
                 if self.typ == self.GET_ID:
                     self.action('get')
 
-    def on_l_up(self, event):
-        pass
+    def on_l_up(self, evt):
+        evt.Skip()
 
     def on_cell_left_dclick(self, evt):
         if self.typ == self.VIEW or self.typ == self.GET_ID or self.readonly:

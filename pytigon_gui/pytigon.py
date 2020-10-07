@@ -33,6 +33,7 @@ import time
 import platform
 import zipfile
 import getopt
+from multiprocessing import Process
 import configparser
 from urllib.parse import urljoin
 import pytigon
@@ -125,6 +126,7 @@ def process_argv(argv):
                 "password=",
                 "embededbrowser",
                 "embededserver",
+                "embededtaskqueue",
                 "websocket_id=",
                 "channels",
                 "migrate",
@@ -166,6 +168,8 @@ def process_argv(argv):
         elif opt in ("-s", "--embededserver"):
             ret["address"] = "embeded"
             ret["extern_prj"] = True
+        elif opt in ("--embededtaskqueue",):
+            ret["embeded_taskqueue"] = True
         elif opt == "--no_gui":
             ret["nogui"] = True
         elif opt in ("--menu_always", ):
@@ -627,6 +631,13 @@ class SchApp(App, _BASE_APP):
         self.mp.close()
 
     async def test_websockets(self):
+        print("-----------------------------------------------------------------")
+        print(self.websockets)
+        await self.websocket_send(
+            "/schtasks/show_task_events/channel/", {'id': "test"}
+        )
+        print("=================================================================")
+
         count = 999
         while True:
             await asyncio.sleep(1)
@@ -826,16 +837,17 @@ class SchApp(App, _BASE_APP):
 
     def on_exit(self):
         if self.task_manager:
-            if len(self.task_manager.list_threads(all=False)) > 0:
-                dlg = wx.MessageDialog(
-                    None,
-                    _("There are background tasks - kill?"),
-                    _("Warning"),
-                    wx.YES_NO | wx.ICON_QUESTION,
-                )
-                result = dlg.ShowModal()
-                if result == wx.ID_YES:
-                    self.task_manager.kill_all()
+            self.task_manager.terminate()
+            #if len(self.task_manager.list_threads(all=False)) > 0:
+            #    dlg = wx.MessageDialog(
+            #        None,
+            #        _("There are background tasks - kill?"),
+            #        _("Warning"),
+            #        wx.YES_NO | wx.ICON_QUESTION,
+            #    )
+            #    result = dlg.ShowModal()
+            #    if result == wx.ID_YES:
+            #        self.task_manager.kill_all()
 
     def run_script(self, app_name, script_path):
         with open(script_path, "rb") as s:
@@ -877,6 +889,7 @@ class SchApp(App, _BASE_APP):
         return self.on_websocket_callback(client, "on_websocket_open", {})
 
     def on_websocket_message(self, client, websocket_id, msg):
+        print("FFFFF: ", msg)
         return self.on_websocket_callback(client, "on_websocket_message", msg)
 
 
@@ -1076,10 +1089,23 @@ def _main_init():
         server = run_server(address, port, prod=False)
         address = "http://" + address + ":" + str(port)
     else:
-        from pytigon_lib.schtasks.base_task import get_process_manager
-
-        app.task_manager = get_process_manager()
+    #    from pytigon_lib.schtasks.base_task import get_process_manager
+    #    app.task_manager = get_process_manager()
         server = None
+
+    if 'embeded_taskqueue' in _PARAM:
+        app.task_manager = ""
+        from django_q.management.commands.qcluster import Command as qcluster_command
+
+        qcluster = qcluster_command()
+        #try:
+        if True:
+            #qcluster.run_from_argv(["manage.py", "qcluster"])
+            app.task_manager = Process(target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],))
+            app.task_manager.start()
+            #p.join()
+        #except SystemExit:
+        #    pass
 
     settings.BASE_URL = "http://" + address
     settings.URL_ROOT_FOLDER = ""
@@ -1207,8 +1233,8 @@ def _main_run():
 
     httpclient.set_http_idle_func(idle_fun)
 
-    if app.task_manager:
-        frame.idle_objects.append(app.task_manager)
+    #if app.task_manager:
+    #    frame.idle_objects.append(app.task_manager)
 
     if _RPC:
         reactor.listenTCP(app.rpc, server.Site(app))
@@ -1233,8 +1259,8 @@ def _main_run():
         else:
             app.MainLoop()
 
-    if app.task_manager:
-        app.task_manager.wait_for_result()
+    #if app.task_manager:
+    #    app.task_manager.wait_for_result()
     if app.server:
         app.server.stop()
     del app

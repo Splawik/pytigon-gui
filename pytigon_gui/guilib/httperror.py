@@ -56,7 +56,8 @@ class HttpErrorDialog(wx.Dialog):
         btn.SetHelpText(_('The Break button breaks the application'))
         btnsizer.AddButton(btn)
         btnsizer.Realize()
-        sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        #sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        sizer.Add(btnsizer, 0,  wx.ALL, 5)
         self.SetSizer(sizer)
         sizer.Fit(self)
         wx.CallAfter(self.label.load_str, text)
@@ -66,7 +67,7 @@ class HttpErrorDialog(wx.Dialog):
         pass
 
 
-def http_error(parent, content):
+def _http_error(parent, content):
     """Show form with error content returned by http server
 
     Args:
@@ -94,3 +95,6 @@ def http_error(parent, content):
 
         if val == wx.ID_CANCEL:
             sys.exit()
+
+def http_error(parent, content):
+    wx.CallAfter(_http_error, parent, content)

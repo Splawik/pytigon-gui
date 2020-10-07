@@ -927,6 +927,9 @@ class SchForm(ScrolledPanel):
                 else:
                     response = http.get(self, adr)
 
+            if '500' in response.ret_content_type:
+                return
+
             if 'text/plain' in response.ret_content_type:
                 s = response.str()
                 if title:
