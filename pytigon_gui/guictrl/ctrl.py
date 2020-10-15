@@ -907,7 +907,7 @@ class SEARCH(wx.SearchCtrl, SchBaseCtrl):
             kwds['size']=(200, 28)
         else:
             kwds['size']=(200, -1)
-        kwds['style']=wx.TE_PROCESS_ENTER
+        #kwds['style']=wx.TE_PROCESS_ENTER
         wx.SearchCtrl.__init__(self, parent, **kwds)
 
         if wx.Platform in ['__WXGTK__', '__WXMSW__']:
