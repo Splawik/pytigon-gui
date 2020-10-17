@@ -647,6 +647,31 @@ class SchApp(App, _BASE_APP):
             count -= 1
 
     async def init_websockets(self):
+        from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
+        obj = self
+        old_init = WebsocketConsumer.__init__
+        old_init_async = AsyncWebsocketConsumer.__init__
+
+        def accept(self):
+            pass
+
+        async def accept_async(self):
+            pass
+
+        def init(self, *args, **kwargs):
+            old_init(self, *args, **kwargs)
+            self.connect()
+
+        def init_async(self, *args, **kwargs):
+            nonlocal obj
+            old_init_async(self, *args, **kwargs)
+            obj.StartCoroutine(self.connect, self)
+
+        WebsocketConsumer.__init__ = init
+        AsyncWebsocketConsumer.__init__ = init_async
+        WebsocketConsumer.accept = accept
+        AsyncWebsocketConsumer.accept = accept_async
+
         tasks = []
         if self.websockets:
             for key, value in self.websockets.items():
