@@ -685,7 +685,18 @@ class SchApp(App, _BASE_APP):
                         )
                     )
             if tasks:
-                await asyncio.wait(tasks)
+                try:
+                    done, pending = await asyncio.wait(tasks)
+                    #done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
+                    assert not pending
+                    future, = done  # unpack a set of length one
+                    print(future.result())  # raise an exception or use future.exception()
+                except Error:
+                    print('got exception', flush=True)
+                else:
+                    print('no exception', flush=True)
+
+
 
     def create_websocket(self, websocket_id, callback):
         local = True if app.base_address.startswith("http://127.0.0.2") else False
@@ -914,7 +925,6 @@ class SchApp(App, _BASE_APP):
         return self.on_websocket_callback(client, "on_websocket_open", {})
 
     def on_websocket_message(self, client, websocket_id, msg):
-        print("FFFFF: ", msg)
         return self.on_websocket_callback(client, "on_websocket_message", msg)
 
 
@@ -1249,6 +1259,8 @@ def _main_run():
 
     if not "tray" in app.gui_style:
         frame.Show()
+
+    wx.Log.SetActiveTarget(wx.LogStderr())
 
     destroy_fun_tab = frame.destroy_fun_tab
     httpclient.set_http_error_func(http_error)
