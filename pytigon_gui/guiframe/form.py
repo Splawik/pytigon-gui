@@ -867,7 +867,7 @@ class SchForm(ScrolledPanel):
                     return
                 if target == '_refresh':
                     self.any_parent_command('send_refr_obj')
-                if target == 'refresh_obj':
+                if target == 'refresh_frame':
                     self.any_parent_command('_refresh')
                 return
             if href[:7] == 'http://' or href[:7] == 'file://':
@@ -903,7 +903,7 @@ class SchForm(ScrolledPanel):
             if fields:
                 (typ, fields2) = fields.split(':')
                 adr = adr + '|' + fields2
-            if target == 'refresh_obj':
+            if target == 'refresh_frame':
                 self.any_parent_command('set_adr_and_param', adr, self.get_parm_obj())
                 self.any_parent_command('refresh_html')
                 return
@@ -974,13 +974,13 @@ class SchForm(ScrolledPanel):
                         self.GetParent().address_or_parser  = response.new_url
 
                     return
-                if target in ('_blank', 'inline', 'popup_edit', 'popup_info', 'popup_delete', '_self',):
+                if target.startswith('popup') or target.startswith('inline') or target in ('_blank', '_self',):
                     self.GetParent().active_ctrl = ctrl
                     win = self.new_child_page(mp, is_null(mp.title, title), parameters=self.get_parm_obj())
                     if win:
                         win.body.set_address_parm(str(response.new_url))
                     return
-                if target == '_top':
+                if target == '_parent':
                     self.new_main_page(mp, is_null(mp.title, title), parameters=self.get_parm_obj(), panel=None)
                     return
                 if target == 'refresh_page':
