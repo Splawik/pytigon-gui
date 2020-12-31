@@ -952,7 +952,7 @@ def login(base_href, auth_type=None, username=None):
             )
 
             ret_str = wx.GetApp().http.str()
-            if "RETURN_OK" in ret_str:
+            if "$$RETURN_OK" in ret_str:
                 dlg.Destroy()
                 return True
             else:
@@ -1215,7 +1215,7 @@ def _main_init():
             },
         )
         ret_str = response.str()
-        if "RETURN_OK" in ret_str:
+        if "$$RETURN_OK" in ret_str:
             app.authorized = True
             ready_to_run = True
     if not app.authorized and "username" in _PARAM:
