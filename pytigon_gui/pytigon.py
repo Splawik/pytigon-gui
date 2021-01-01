@@ -605,12 +605,6 @@ class SchApp(App, _BASE_APP):
         self.mp.feed(ret_str)
         self.mp.close()
 
-        if hasattr(self, "StartCoroutine"):
-            if self.base_address.startswith("http://127.0.0.2"):
-                self.StartCoroutine(self.init_websockets, self)
-            if _DEBUG:
-                self.StartCoroutine(self.test_websockets, self)
-
         return response.ret_code
 
     def _re_init(self, address, app):
@@ -719,6 +713,12 @@ class SchApp(App, _BASE_APP):
             self.thread_manager = SchThreadManager(self, frame.statusbar)
         if _INSPECTION:
             self.ShowInspectionTool()
+
+        if hasattr(self, "StartCoroutine"):
+            if self.base_address.startswith("http://127.0.0.2"):
+                self.StartCoroutine(self.init_websockets, frame)
+            if _DEBUG:
+                self.StartCoroutine(self.test_websockets, frame)
 
     def register_extern_app(self, address, app):
         self.ext_app.append((app, address))
