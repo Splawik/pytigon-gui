@@ -659,7 +659,12 @@ class SchApp(App, _BASE_APP):
         def init_async(self, *args, **kwargs):
             nonlocal obj
             old_init_async(self, *args, **kwargs)
-            obj.StartCoroutine(self.connect, self)
+            if hasattr(self, "Bind"):
+                obj.StartCoroutine(self.connect, self)
+            else:
+                def _bind(x,y,z):
+                    pass
+                self.Bind = _bind
 
         WebsocketConsumer.__init__ = init
         AsyncWebsocketConsumer.__init__ = init_async
@@ -679,16 +684,17 @@ class SchApp(App, _BASE_APP):
                         )
                     )
             if tasks:
-                try:
+                #try:
                     done, pending = await asyncio.wait(tasks)
                     #done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
                     assert not pending
                     future, = done  # unpack a set of length one
                     print(future.result())  # raise an exception or use future.exception()
-                except Error:
-                    print('got exception', flush=True)
-                else:
-                    print('no exception', flush=True)
+                #except Error:
+                #except:
+                #    print('got exception', flush=True)
+                #else:
+                #    print('no exception', flush=True)
 
 
 
