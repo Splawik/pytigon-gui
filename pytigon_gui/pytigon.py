@@ -205,7 +205,10 @@ if _PARAM == None:
     sys.exit(0)
 
 import asyncio
-from asyncio.events import get_event_loop
+from asyncio import get_event_loop, set_event_loop_policy
+if sys.platform == 'win32':
+    import WindowsSelectorEventLoopPolicy
+    set_event_loop_policy(WindowsSelectorEventLoopPolicy())
 
 LOOP = get_event_loop()
 
