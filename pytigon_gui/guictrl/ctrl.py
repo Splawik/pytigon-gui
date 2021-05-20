@@ -434,7 +434,7 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
     def after_create(self):
         super().after_create()
         if self.init_default_icons:
-            self.init_wx_icons()
+            #self.init_wx_icons()
             self.init_embeded_icons()
             self.init_fa_icons()
 
@@ -450,7 +450,7 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
         return self._init_icons(base_path, 'png://')
 
     def init_fa_icons(self):
-        base_path = wx.GetApp().src_path+'/static/fonts/font-awesome/fonts/22x22/'
+        base_path = wx.GetApp().src_path+'/static/fonts/fork-awesome/fonts/22x22/'
         return self._init_icons(base_path, 'fa://')
 
     def init_extern_icons(self, base_path, prefix):
@@ -482,6 +482,20 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
                             self.Append(id.replace('\\','/'), bmp, id)
                         except:
                             pass
+
+    def GetValue(self):
+        ret = super().GetValue()
+        if ret:
+            return ret
+        else:
+            return ""
+
+    def SetValue(self, value):
+        if value:
+            ret = super().SetValue(value)
+        else:
+            ret = super().SetValue("")
+        return ret
 
 
 class GAUGE(wx.Gauge, SchBaseCtrl):

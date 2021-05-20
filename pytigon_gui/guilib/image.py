@@ -143,7 +143,7 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
         else:
             suffix = '.png'
         try:
-            image = wx.Image(wx.GetApp().src_path + '/static/fonts/font-awesome/fonts/%dx%d/' % (icon_size,icon_size) +
+            image = wx.Image(wx.GetApp().src_path + '/static/fonts/fork-awesome/fonts/%dx%d/' % (icon_size,icon_size) +
                     href2[5:].replace('fa-','')+suffix)
             image = image.AdjustChannels(1, 1, 1, 0.55)
             bmp = wx.Bitmap(image)
