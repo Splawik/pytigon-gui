@@ -21,7 +21,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="pytigon-gui",
-    version="0.116",
+    version="0.118",
     description="Pytigon GUI",
     author="Sławomir Chołaj",
     author_email="slawomir.cholaj@gmail.com",
@@ -43,4 +43,9 @@ setup(
         "Topic :: Software Development :: Libraries :: Application Frameworks",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
+    entry_points={
+        "console_scripts": [
+            "ptig=pytigon.pytigon_run:run",
+        ]
+    },
 )
