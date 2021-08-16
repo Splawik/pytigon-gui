@@ -4,3 +4,4 @@ wxasync
 PyDispatcher
 pyshortcuts
 libsass
+black
