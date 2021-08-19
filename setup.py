@@ -21,7 +21,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="pytigon-gui",
-    version="0.120",
+    version="0.123",
     description="Pytigon GUI",
     author="Sławomir Chołaj",
     author_email="slawomir.cholaj@gmail.com",
