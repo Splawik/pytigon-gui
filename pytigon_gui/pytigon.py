@@ -211,24 +211,28 @@ if sys.platform == 'win32':
 
 LOOP = get_event_loop()
 
-from pytigon.schserw import settings as schserw_settings
+from pytigon_lib.schtools.main_paths import get_main_paths
+if 'PRJ_NAME' in os.environ:
+    PRJ_NAME = os.environ['PRJ_NAME']
+    PATHS = get_main_paths(os.environ['PRJ_NAME'])
+else:
+    PRJ_NAME = None
+    PATHS = get_main_paths()
 
-#os.environ["LD_LIBRARY_PATH"] = os.path.join(schserw_settings.DATA_PATH, "ext_prg", "tcc")
-
-sys.path.append(schserw_settings.PRJ_PATH)
+sys.path.append(PATHS['PRJ_PATH'])
 
 from pytigon_lib.schtools.install_init import init
 
-DATA_PATH = schserw_settings.DATA_PATH
-PYTIGON_PATH = schserw_settings.PYTIGON_PATH
+DATA_PATH = PATHS['DATA_PATH']
+PYTIGON_PATH = PATHS['PYTIGON_PATH']
 
 init(
     "_schall",
-    schserw_settings.ROOT_PATH,
-    schserw_settings.DATA_PATH,
-    schserw_settings.PRJ_PATH,
-    schserw_settings.STATIC_ROOT,
-    [schserw_settings.MEDIA_ROOT, schserw_settings.UPLOAD_PATH],
+    PATHS['ROOT_PATH'],
+    PATHS['DATA_PATH'],
+    PATHS['PRJ_PATH'],
+    PATHS['STATIC_PATH'],
+    [ PATHS['MEDIA_PATH'], PATHS['UPLOAD_PATH']] if PRJ_NAME else None,
 )
 
 import wx
@@ -243,15 +247,9 @@ def process_adv_argv():
 
         choices = [
             ff
-            for ff in os.listdir(schserw_settings.PRJ_PATH)
-            if not ff.startswith("_") and os.path.isdir(os.path.join(schserw_settings.PRJ_PATH, ff))
+            for ff in os.listdir(PATHS['PRJ_PATH'])
+            if not ff.startswith("_") and os.path.isdir(os.path.join(PATHS['PRJ_PATH'], ff))
         ]
-        #if schserw_settings.PRJ_PATH_ALT and  schserw_settings.PRJ_PATH_ALT != schserw_settings.PRJ_PATH:
-        #    choices += [
-        #        ff
-        #        for ff in os.listdir(schserw_settings.PRJ_PATH_ALT + "/")
-        #        if not ff.startswith("_")
-        #    ]
         dlg = wx.SingleChoiceDialog(
             None,
             _("select the application to run"),
@@ -273,7 +271,7 @@ def process_adv_argv():
     else:
         arg = _PARAM["args"][0].strip()
     if not (arg == "embeded" or "." in arg or "/" in arg):
-        CWD_PATH = schserw_settings.PRJ_PATH + "/" + arg
+        CWD_PATH = os.path.join(PATHS['PRJ_PATH'], arg)
         if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
             print(_("Application pack: '%s' does not exists") % arg)
             sys.exit(0)
@@ -1016,19 +1014,19 @@ def _main_init():
             x = prg_name.split(".")
             if len(x) == 2 or (len(x) > 2 and x[-2].lower() == "inst"):
                 prg_name2 = x[0]
-                path = os.path.join(schserw_settings.PRJ_PATH_ALT, "_schremote")
+                path = os.path.join(PATHS['PRJ_PATH_ALT'], "_schremote")
                 sys.path.append(path)
                 if not pytigon_install.install(args[0], prg_name2):
                     return (None, None)
                 # sys.path.remove(path)
                 return (None, None)
-                CWD_PATH = schserw_settings.PRJ_PATH + "/" + prg_name2
+                CWD_PATH = os.path.join(PATHS['PRJ_PATH'], prg_name2)
             else:
                 if len(x) > 3:
                     prg_name2 = x[0]
                     app_name2 = x[-2]
                     prj = x[-3]
-                    CWD_PATH = schserw_settings.PRJ_PATH + "/" + prj.strip()
+                    CWD_PATH = os.path.join(PATHS['PRJ_PATH'], prj.strip())
                     if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
                         print(_("Application pack: '%s' does not exists") % prj.strip())
                         return (None, None)
@@ -1040,7 +1038,7 @@ def _main_init():
             arg = args[0].strip()
             if arg == "embeded" or "." in arg or "/" in arg:
                 if arg != "embeded":
-                    CWD_PATH = os.path.join(schserw_settings.PRJ_PATH_ALT, "_schremote")
+                    CWD_PATH = os.path.join(PATHS['PRJ_PATH_ALT'], "_schremote")
 
                 tmp = arg.replace("//", "$$$")
                 if "/" in arg:
@@ -1055,7 +1053,7 @@ def _main_init():
 
                 extern_prj = True
             else:
-                CWD_PATH = schserw_settings.PRJ_PATH + "/" + arg
+                CWD_PATH = os.path.join(PATHS['PRJ_PATH'], arg)
                 if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
                     print(_("Application pack: '%s' does not exists") % arg)
                     return (None, None)
