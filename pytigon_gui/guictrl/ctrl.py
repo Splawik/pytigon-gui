@@ -429,14 +429,16 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
         BitmapComboBox.__init__(self, parent, **kwds)
         self.init_default_icons = False
+        self._first_use = True
         self.accept_focus = False
 
     def after_create(self):
         super().after_create()
         if self.init_default_icons:
-            #self.init_wx_icons()
-            self.init_embeded_icons()
-            self.init_fa_icons()
+            def _fun():
+                self.init_embeded_icons()
+                self.init_fa_icons()
+            wx.CallAfter(_fun)
 
     def init_wx_icons(self):
         for id in sorted([pos for pos in dir(wx) if pos.startswith('ART_')]):
