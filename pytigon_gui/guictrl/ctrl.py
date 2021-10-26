@@ -484,6 +484,7 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
                             self.Append(id.replace('\\','/'), bmp, id)
                         except:
                             pass
+                wx.Yield()
 
     def GetValue(self):
         ret = super().GetValue()

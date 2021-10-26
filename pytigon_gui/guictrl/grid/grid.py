@@ -126,7 +126,11 @@ class SchTableGrid(wx.grid.Grid):
         column_label_window = self.GetGridColLabelWindow()
         self.Bind(wx.EVT_PAINT, self.on_column_header_paint, column_label_window)
 
-        self.GetGridWindow().Bind(wx.EVT_LEFT_UP, self.on_l_up)
+        self.EnableDragCell(False)
+        self.EnableDragGridSize(False)
+
+
+
 
     def begin_edit(self, event=None):
         if event is None:
@@ -313,19 +317,18 @@ class SchTableGrid(wx.grid.Grid):
         evt.Skip()
 
     def on_cell_left_click(self, evt):
+        print("+++++++++++++++++++++++++++++++++++++++++++")
         row1 = self.GetGridCursorRow()
         row2 = evt.GetRow()
-        self.SelectRow(evt.GetRow())
-        self.SetGridCursor(evt.GetRow(), evt.GetCol())
-        self.SetFocus()
         if evt.ControlDown():
             self.GetTable().sel_row(row2)
-        if evt.ShiftDown():
+        elif evt.ShiftDown():
             if row1 > row2:
                 (row1, row2) = (row2, row1)
             for row in range(row1, row2 + 1):
                 self.GetTable().sel_row(row)
-        if not evt.ControlDown() and not evt.ShiftDown():
+        #elif not evt.ControlDown() and not evt.ShiftDown():
+        else:
             s = self.GetTable().GetValue(evt.GetRow(), evt.GetCol())
             if type(s)==str and s.strip() == '+':
                 attr = self.GetTable().get_ext_attr(evt.GetRow(), evt.GetCol())
@@ -340,6 +343,13 @@ class SchTableGrid(wx.grid.Grid):
             else:
                 if self.typ == self.GET_ID:
                     self.action('get')
+                else:
+                    print(evt.GetRow())
+                    self.SelectRow(evt.GetRow())
+                    self.SetGridCursor(evt.GetRow(), evt.GetCol())
+                    self.SetFocus()
+                    print("-----------------------")
+                #    evt.Skip()
 
     def on_l_up(self, evt):
         evt.Skip()
