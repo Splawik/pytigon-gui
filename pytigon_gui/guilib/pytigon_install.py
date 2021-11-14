@@ -9,7 +9,7 @@ import zipfile
 import os
 import configparser
 
-from pytigon_lib.schtools.install import extract_ptig
+from pytigon_lib.schtools.install import Ptig
 from pytigon_gui.guilib.tools import create_desktop_shortcut
 
 _ = wx.GetTranslation
@@ -32,11 +32,11 @@ class TitledPage(WizardPageSimple):
 
 
 class InstallWizard(Wizard):
-    def __init__(self,file_name,zip_file,app_name,licence_txt,readme_txt):
+    def __init__(self,file_name):
         Wizard.__init__(self, None, -1, 'Install app')
         self.Bind(wx.adv.EVT_WIZARD_PAGE_CHANGING, self.on_wiz_page_changing)
-        self.zip_file = zip_file
-        self.app_name = app_name
+        self.ptig = Ptig(file_name)
+
         page1 = TitledPage(self, 1, _('Program description'))
         self.page1 = page1
         page2 = TitledPage(self, 2, _('License'))
@@ -44,10 +44,10 @@ class InstallWizard(Wizard):
 
         r_txt = wx.TextCtrl(page1, -1, size=wx.Size(600, 300),
                             style=wx.TE_MULTILINE | wx.TE_READONLY)
-        r_txt.SetValue(readme_txt)
+        r_txt.SetValue(self.ptig.get_readme())
         page1.sizer.Add(r_txt)
         self.FitToPage(page1)
-        l_txt = wx.TextCtrl(page2, -1, licence_txt, size=wx.Size(600, 300),
+        l_txt = wx.TextCtrl(page2, -1, self.ptig.get_license(), size=wx.Size(600, 300),
                             style=wx.TE_MULTILINE | wx.TE_READONLY)
         page2.sizer.Add(l_txt)
         page2.sizer.AddSpacer(5)
@@ -86,42 +86,28 @@ class InstallWizard(Wizard):
         event.Skip()
 
     def install(self):
-        from django.conf import settings
-        extract_to = os.path.join(settings.PRJ_PATH, self.app_name)
-        extract_ptig(self.zip_file, self.app_name)
-        ini_file = os.path.join(extract_to, "install.ini")
+        self.ptig.extract_ptig()
+
+        ini_file = os.path.join(self.ptig.extract_to, "install.ini")
         created = False
         if os.path.exists(ini_file):
             config = configparser.ConfigParser()
             config.read(ini_file)
             if 'INSTALL' in config.sections():
                 install = config['INSTALL']
-                title = install.get('Title', self.app_name)
+                title = install.get('Title', self.ptig.prj_name)
                 parameters = install.get('Parameters', '')
-                create_desktop_shortcut(self.app_name, title, parameters)
+                create_desktop_shortcut(self.ptig.prj_name, title, parameters)
 
         if not created:
-            create_desktop_shortcut(self.app_name, self.app_name)
+            create_desktop_shortcut(self.ptig.prj_name, self.ptig.prj_name)
 
         return True
 
 
-def install(pti, app_name):
-    #try:
-    if True:
-        zip_file = zipfile.ZipFile(str(pti))
-        l = zip_file.open('LICENSE.txt')
-        licence_txt = l.read().decode('utf-8')
-        l.close()
-        r = zip_file.open('README.txt')
-        readme_txt = r.read().decode('utf-8')
-        r.close()
-        wizard2 = InstallWizard(pti, zip_file, app_name, licence_txt, readme_txt)
-        if wizard2.run():
-            return True
-        else:
-            return False
-    #except:
+def install(ptig_path):
+    wizard = InstallWizard(ptig_path)
+    if wizard.run():
+        return True
     else:
-        wx.MessageBox(_('Installation error!'), _('Installation'))
         return False

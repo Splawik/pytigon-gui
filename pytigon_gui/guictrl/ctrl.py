@@ -53,6 +53,8 @@ from pytigon_gui.guictrl.popup.select2 import Select2Base
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 from pytigon_gui.guictrl.button.toolbarbutton import BitmapTextButton
 
+from django.utils.translation import gettext_lazy as _
+
 def SELECT(parent, **kwds):
     """SELECT handle ctrlselect tag
 
@@ -1119,6 +1121,9 @@ class FILEBROWSEBUTTON(filebrowsebutton.FileBrowseButton, SchBaseCtrl):
 
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
+        kwds['labelText'] = ""
+        kwds['buttonText'] = str(_("Browse"))
+        kwds['size'] = (400, -1)
         filebrowsebutton.FileBrowseButton.__init__(self, parent, **kwds)
 
     def GetValue(self):

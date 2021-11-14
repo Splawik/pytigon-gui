@@ -702,7 +702,30 @@ class SchApp(App, _BASE_APP):
         local = True if app.base_address.startswith("http://127.0.0.2") else False
         create_websocket_client(self, websocket_id, local, callback)
         if local:
-            self.StartCoroutine(self.init_websockets, self)
+            tasks = []
+            if self.websockets:
+                for key, value in self.websockets.items():
+                    if value.status == 1:
+                        value.status = 2
+                        tasks.append(
+                            httpclient.local_websocket(
+                                self.base_address.replace("http://", "ws://") + key,
+                                value.input_queue,
+                                value,
+                            )
+                        )
+                if tasks:
+                    async def reinit_websockets():
+                        nonlocal  tasks
+                        done, pending = await asyncio.wait(tasks)
+                        # done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
+                        assert not pending
+                        future, = done  # unpack a set of length one
+                        print(future.result())  # raise an exception or use future.exception(
+                    self.StartCoroutine(reinit_websockets, self.GetTopWindow())
+
+        #if local:
+        #    self.StartCoroutine(self.init_websockets, self)
 
     def make_href(self, href):
         if self.base_app and href.startswith("/"):
@@ -906,8 +929,15 @@ class SchApp(App, _BASE_APP):
         else:
             self.websockets_callbacks[websocket_id] = [callback]
 
+    def remove_websoket_callback(self, websocket_id, callback):
+        if websocket_id in self.websockets_callbacks:
+            if callback in self.websockets_callbacks[websocket_id]:
+                self.websockets_callbacks[websocket_id].remove(callback)
+
     async def websocket_send(self, websocket_id, msg):
         if websocket_id in self.websockets:
+            if not 'clock' in websocket_id:
+                print(websocket_id)
             obj = self.websockets[websocket_id].send_message(msg)
             if obj:
                 await obj
@@ -1010,13 +1040,13 @@ def _main_init():
     os.environ["DJANGO_SETTINGS_MODULE"] = "settings_app"
     if len(args) > 0:
         if ".ptig" in args[0].lower():
-            prg_name = args[0].split("/")[-1].split("\\")[-1]
+            prg_name = args[0].replace('\\', '/').split("/")[-1]
             x = prg_name.split(".")
             if len(x) == 2 or (len(x) > 2 and x[-2].lower() == "inst"):
                 prg_name2 = x[0]
                 path = os.path.join(PATHS['PRJ_PATH_ALT'], "_schremote")
                 sys.path.append(path)
-                if not pytigon_install.install(args[0], prg_name2):
+                if not pytigon_install.install(args[0]):
                     return (None, None)
                 # sys.path.remove(path)
                 return (None, None)

@@ -30,6 +30,7 @@ import subprocess
 
 from tempfile import NamedTemporaryFile
 from pydispatch import dispatcher
+from pathlib import Path
 
 import wx
 #import wx.html2
@@ -39,6 +40,8 @@ from wx.lib.agw import aui
 from django.conf import settings
 
 from pytigon_lib.schfs.vfstools import get_temp_filename
+from pytigon_lib.schdjangoext.tools import gettempdir
+
 from pytigon_lib.schtools.tools import split2
 #from pytigon_lib.schtasks.task import get_process_manager
 
@@ -1060,7 +1063,7 @@ class SchAppFrame(SchBaseFrame):
             f.close()
             return self.new_main_page('^standard/html_print/html_print.html', name, parameters=name)
         else:
-            cd = http_ret.http.headers.get('content-disposition')
+            cd = http_ret.response.headers.get('content-disposition')
             if cd:
                 name = cd.split('filename=')[1].replace('\"',"")
             else:
@@ -1068,7 +1071,7 @@ class SchAppFrame(SchBaseFrame):
 
             p = http_ret.ptr()
 
-            path = os.path.join(settings.DATA_PATH, 'download')
+            path = gettempdir()
 
             with open(os.path.join(path, name), "wb") as f:
                 f.write(p)
