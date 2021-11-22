@@ -746,8 +746,8 @@ class SchApp(App, _BASE_APP):
         if hasattr(self, "StartCoroutine"):
             if self.base_address.startswith("http://127.0.0.2"):
                 self.StartCoroutine(self.init_websockets, frame)
-            if _DEBUG:
-                self.StartCoroutine(self.test_websockets, frame)
+            #if _DEBUG:
+            #    self.StartCoroutine(self.test_websockets, frame)
 
     def register_extern_app(self, address, app):
         self.ext_app.append((app, address))
@@ -929,7 +929,7 @@ class SchApp(App, _BASE_APP):
         else:
             self.websockets_callbacks[websocket_id] = [callback]
 
-    def remove_websoket_callback(self, websocket_id, callback):
+    def remove_websocket_callback(self, websocket_id, callback):
         if websocket_id in self.websockets_callbacks:
             if callback in self.websockets_callbacks[websocket_id]:
                 self.websockets_callbacks[websocket_id].remove(callback)

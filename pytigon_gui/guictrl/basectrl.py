@@ -35,7 +35,8 @@ class SchBaseCtrl(object):
         self.unique_name = None
         self.init_base(kwds, parent)
         self.accept_focus = True
-        self.acc_tab = False
+        #self.acc_tab = False
+        self.acc_tab_bind = False
         form = self.get_parent_form()
         if form:
             form.signal_from_child(self, '__init__')

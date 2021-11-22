@@ -153,7 +153,10 @@ class SchGridTableBase(wx.grid.GridTableBase):
     def get_sel_key(self):
         row = self.GetView().GetGridCursorRow()
         rec = self.get_rec(row)
-        return rec[0]
+        if rec:
+            return rec[0]
+        else:
+            return None
 
     def get_sel_rows(self):
         ret = []
@@ -164,8 +167,12 @@ class SchGridTableBase(wx.grid.GridTableBase):
     def set_read_only(self, read_only):
         self.read_only = read_only
         if self.read_only:
+            if self.can_append == 1:
+                self.last_row_count -= 1
             self.can_append = 0
         else:
+            if self.can_append == 0:
+                self.last_row_count += 1
             self.can_append = 1
 
     def set_no_actions(self, val):

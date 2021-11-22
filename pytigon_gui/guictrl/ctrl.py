@@ -252,7 +252,11 @@ def _make_button_class(base_class, is_bitmap_button=False, is_close_button=False
                 upload = False
                 if self.valuetype == 'upload':
                     upload = True
-                self.get_parent_form().href_clicked(self, {'href': self.href, 'target': self.target}, upload, self.fields)
+                if hasattr(self, "href"):
+                    href = self.href
+                else:
+                    href = ""
+                self.get_parent_form().href_clicked(self, {'href': href, 'target': self.target}, upload, self.fields)
 
     return BUTTONCLASS
 

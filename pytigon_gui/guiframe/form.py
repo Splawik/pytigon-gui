@@ -110,9 +110,10 @@ class SchForm(ScrolledPanel):
         self.closing = False
         self.acc_tabs = {}
         self.acc_tab = None
+        self.acc_tab_bind = False
         self.last_clicked = None
         self.t1 = None
-        self.websockets = {}
+        self.websockets = []
 
         self.hscroll = hscroll
         self.vscroll = vscroll
@@ -574,9 +575,12 @@ class SchForm(ScrolledPanel):
         return ret
 
     def _on_close(self):
+        app = wx.GetApp()
         self.closing=True
         if hasattr(self, 'on_close'):
             self.on_close()
+        for x in self.websockets:
+            app.remove_websocket_callback(x[0], x[1])
         gc.collect()
 
     def any_parent_command(self, command, *args, **kwds):
@@ -861,6 +865,18 @@ class SchForm(ScrolledPanel):
                     else:
                         return f
 
+            if href:
+                parent_form = self.get_parent_form()
+                if hasattr(parent_form, "filter_child_url"):
+                    ret = parent_form.filter_child_url(self, href)
+                    if ret:
+                        return ret
+                #parent_page = self.GetParent().get_parent_page()
+                #if hasattr(parent_page.body, "filter_child_url"):
+                #    ret = parent_page.body.filter_child_url(self, href)
+                #    if ret:
+                #        return ret
+
             if href == None:
                 if target == '_parent':
                     self.any_parent_command('on_child_form_cancel')
@@ -1018,47 +1034,17 @@ class SchForm(ScrolledPanel):
                     exec (script.elem.text.replace('\r', ''))
                     return
 
+    def create_websocket(self, url, callback):
+        app = wx.GetApp()
+        self.websockets.append((url, callback))
+        app.create_websocket(url, callback)
 
-    def on_websocket_connect(self, client, websocket_id, response):
-        print("On websocket connected", websocket_id, response.peer)
-
-    def on_websocket_open(self, client, websocket_id):
-        print("On websocket open", websocket_id)
-
-    def on_websocket_message(self, client, websocket_id, msg, binary):
-        print("On websocket message:", websocket_id, msg, binary)
-
-    def websocket_send(self, websocket_id, msg):
-        if websocket_id in self.websockets:
-            self.websocket[websocket_id].sendMessage(msg)
-
-    def new_websocket(self, websocket_id):
-        from autobahn.twisted.websocket import WebSocketClientFactory, WebSocketClientProtocol, connectWS
-        form = self
-
-        class PytigonClientProtocol(WebSocketClientProtocol):
-            def __init__(self):
-                nonlocal form, websocket_id
-                super().__init__()
-                self.form = form
-                self.websocket_id = websocket_id
-                form.websockets[websocket_id] = self
-
-            def onConnect(self, response):
-                self.form.on_websocket_connect(self, self.websocket_id, response)
-
-            def onOpen(self):
-                self.form.on_websocket_open(self, self.websocket_id)
-
-            def onMessage(self, msg, binary):
-                self.form.on_websocket_message(self, websocket_id, msg, binary)
-
-        ws_address = wx.GetApp().base_address.replace('http', 'ws').replace('https', 'wss')
-        ws_address += websocket_id
-        factory = WebSocketClientFactory(ws_address)
-        factory.protocol = PytigonClientProtocol
-        connectWS(factory)
-
+    def websocket_send(self, url, data):
+        app = wx.GetApp()
+        async def _send():
+            nonlocal app, url, data
+            await app.websocket_send(url, data)
+        app.StartCoroutine(_send, app.GetTopWindow())
 
     def signal_from_child(self, child_object, signal):
         pass
@@ -1127,9 +1113,9 @@ class SchForm(ScrolledPanel):
                 for pos in tab:
                     self.acc_tab.append(list(pos)+[win,])
 
-                if not win.acc_tab:
+                if not win.acc_tab_bind:
                     win.Bind(wx.EVT_KEY_DOWN, self.on_acc_key_down)
-                    win.acc_tab = True
+                    win.acc_tab_bind = True
 
         if wx.Platform != '__WXMSW__':
             self.SetAcceleratorTable(wx.AcceleratorTable(tab2))

@@ -33,12 +33,13 @@ Server api:
       returned element is in format: (element id, string representation of element)
 """
 
-from base64 import b32encode
 import wx
 from wx import ComboCtrl
 from wx.lib import masked
 
 from pytigon_lib.schtools import schjson
+from pytigon_lib.schtools.tools import bencode, bdecode
+
 
 
 class DataPopup(wx.ComboPopup):
@@ -211,7 +212,7 @@ class DataPopupControl(ComboCtrl):
         if str(value) != self.start_value:
             if not str(value) == "":
                 self.http = wx.GetApp().get_http(self)
-                x = b32encode(value.encode('utf-8'))
+                x = bencode(value)
                 response = self.http.post(self, str(self.href) + "test/", {"value": x})
                 tab = schjson.loads(self.response.str())
                 ret = tab[0]
@@ -228,9 +229,9 @@ class DataPopupControl(ComboCtrl):
         return True if parm=='value' else False
 
     def get_parm(self, parm):
-        """For param = 'value' return field value b32 encoded
+        """For param = 'value' return field value bencoded
         """
-        return b32encode(ComboCtrl.GetValue(self).encode('utf-8')) if parm=='value' else None
+        return bencode(ComboCtrl.GetValue(self)) if parm=='value' else None
 
     def set_rec(self, value, value_rec, dismiss=False):
         """Set field value
