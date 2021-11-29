@@ -38,7 +38,9 @@ from pytigon_gui.guilib.events import *
 class SchPage(wx.Window, Signal):
     """SchPage class"""
 
-    def __init__(self, parent, address_or_parser, parameters, pos=(0, 0), size=wx.DefaultSize):
+    def __init__(
+        self, parent, address_or_parser, parameters, pos=(0, 0), size=wx.DefaultSize
+    ):
         """Contructor
 
         Args:
@@ -70,13 +72,15 @@ class SchPage(wx.Window, Signal):
         self.active_ctrl = None
 
         Signal.__init__(self)
-        wx.Window.__init__(self, parent, -1, pos, size, style=wx.WANTS_CHARS, name='SchPage')
+        wx.Window.__init__(
+            self, parent, -1, pos, size, style=wx.WANTS_CHARS, name="SchPage"
+        )
 
         self.exists = True
 
         mp = self._read_html(address_or_parser, parameters)
         if not mp:
-            print('ERROR READ HTML:', address_or_parser, parameters)
+            print("ERROR READ HTML:", address_or_parser, parameters)
 
         self.address = mp.address
 
@@ -89,17 +93,17 @@ class SchPage(wx.Window, Signal):
         vscroll = True
         hscroll = True
 
-        if 'no_vscrollbar' in config:
+        if "no_vscrollbar" in config:
             vscroll = False
-        if 'no_hscrollbar' in config:
+        if "no_hscrollbar" in config:
             hscroll = False
-        if 'vertical_position' in config:
-            self.set_vertical_position(config['vertical_position'])
+        if "vertical_position" in config:
+            self.set_vertical_position(config["vertical_position"])
 
         self.title = mp.title
 
-        if 'disable_parent' in config:
-            if config['disable_parent'] == '0':
+        if "disable_parent" in config:
+            if config["disable_parent"] == "0":
                 self.disable_parent = False
             else:
                 self.disable_parent = True
@@ -109,7 +113,14 @@ class SchPage(wx.Window, Signal):
         winids = []
 
         if header[0]:
-            topwin = wx.adv.SashLayoutWindow(self, -1, wx.DefaultPosition, (100, 5), wx.adv.SW_3D, style=wx.WANTS_CHARS)
+            topwin = wx.adv.SashLayoutWindow(
+                self,
+                -1,
+                wx.DefaultPosition,
+                (100, 5),
+                wx.adv.SW_3D,
+                style=wx.WANTS_CHARS,
+            )
             topwin.SetOrientation(wx.adv.LAYOUT_HORIZONTAL)
             topwin.SetAlignment(wx.adv.LAYOUT_TOP)
             topwin.SetSashVisible(wx.adv.SASH_BOTTOM, True)
@@ -123,7 +134,9 @@ class SchPage(wx.Window, Signal):
             self._top_window = None
 
         if footer[0]:
-            bottomwin = wx.adv.SashLayoutWindow(self, -1, wx.DefaultPosition, (1000, 5), wx.adv.SW_3D)
+            bottomwin = wx.adv.SashLayoutWindow(
+                self, -1, wx.DefaultPosition, (1000, 5), wx.adv.SW_3D
+            )
             bottomwin.SetOrientation(wx.adv.LAYOUT_HORIZONTAL)
             bottomwin.SetAlignment(wx.adv.LAYOUT_BOTTOM)
             bottomwin.SetSashVisible(wx.adv.SASH_TOP, True)
@@ -136,7 +149,9 @@ class SchPage(wx.Window, Signal):
             self._bottom_window = None
 
         if panel[0]:
-            leftwin = wx.adv.SashLayoutWindow(self, -1, wx.DefaultPosition, (5, 100), wx.adv.SW_3D)
+            leftwin = wx.adv.SashLayoutWindow(
+                self, -1, wx.DefaultPosition, (5, 100), wx.adv.SW_3D
+            )
             leftwin.SetOrientation(wx.adv.LAYOUT_VERTICAL)
             leftwin.SetAlignment(wx.adv.LAYOUT_LEFT)
             leftwin.SetSashVisible(wx.adv.SASH_RIGHT, True)
@@ -150,19 +165,24 @@ class SchPage(wx.Window, Signal):
             self._left_window = None
 
         self.body = SchForm(self, self, hscroll, vscroll)
-        self.body.set_htm_type('body')
+        self.body.set_htm_type("body")
         attrs = mp.get_body_attrs()
-        if 'width' in attrs and 'height' in attrs:
-            w = attrs['width']
-            h = attrs['height']
+        if "width" in attrs and "height" in attrs:
+            w = attrs["width"]
+            h = attrs["height"]
             self.body.bestsize = (int(w) * 4 / 3, int(h) * 4 / 3)
         self.body.show_form(body, parameters)
         self.body.set_address_parm(self.address)
-        if 'refresh' in mp.var:
-            self.body.refresh_time(int(mp.var['refresh']))
+        if "refresh" in mp.var:
+            self.body.refresh_time(int(mp.var["refresh"]))
 
         if winids:
-            self.Bind(wx.adv.EVT_SASH_DRAGGED_RANGE, self.on_sash_drag, id=min(winids), id2=max(winids))
+            self.Bind(
+                wx.adv.EVT_SASH_DRAGGED_RANGE,
+                self.on_sash_drag,
+                id=min(winids),
+                id2=max(winids),
+            )
 
         self.Bind(wx.EVT_SIZE, self.on_size)
         self.body.Bind(wx.EVT_CHILD_FOCUS, self.on_child_focus)
@@ -187,8 +207,7 @@ class SchPage(wx.Window, Signal):
         self._signal_handlers.append((fun, signal))
 
     def unreg_application_signal_handler(self, signal):
-        """Unregister signal"
-        """
+        """Unregister signal" """
         i = 0
         test = None
         for pos in self._signal_handlers:
@@ -246,7 +265,7 @@ class SchPage(wx.Window, Signal):
     def get_widgets(self):
         return self._ctrl_dict
 
-    def init_frame(self):
+    def init_frame(self, callback=None):
         if self.header:
             self.header.init()
         if self.footer:
@@ -254,7 +273,7 @@ class SchPage(wx.Window, Signal):
         if self.panel:
             self.panel.init()
 
-        self.body.init()
+        self.body.init(callback)
 
     def get_parent_page(self):
         """Return parent wxPage object"""
@@ -272,7 +291,7 @@ class SchPage(wx.Window, Signal):
 
     def on_char_hook(self, event):
         if event.KeyCode == wx.WXK_ESCAPE:
-            if hasattr(self.GetParent(), 'on_child_form_cancel'):
+            if hasattr(self.GetParent(), "on_child_form_cancel"):
                 self.GetParent().on_child_form_cancel()
             else:
                 event.Skip()
@@ -295,10 +314,9 @@ class SchPage(wx.Window, Signal):
         self.parameters = param
 
     def _refresh(self):
-        if self.address_or_parser.__class__.__name__ == 'ShtmlParser':
+        if self.address_or_parser.__class__.__name__ == "ShtmlParser":
             if self.address_or_parser.address:
-                mp = self._read_html(self.address_or_parser.address,
-                                     self.parameters)
+                mp = self._read_html(self.address_or_parser.address, self.parameters)
             else:
                 mp = self._read_html(self.address_or_parser, self.parameters)
         else:
@@ -313,16 +331,22 @@ class SchPage(wx.Window, Signal):
         config = mp.var
         self.title = mp.title
         if self.header:
-            if not self.header.show_form("""<html encoding="utf-8">""" + header + '</html>'):
+            if not self.header.show_form(
+                """<html encoding="utf-8">""" + header + "</html>"
+            ):
                 return False
         if self.body:
             if not self.body.show_form(body, self.parameters):
                 return False
         if self.footer:
-            if not self.footer.show_form("""<html encoding="utf-8">""" + footer + '</html>'):
+            if not self.footer.show_form(
+                """<html encoding="utf-8">""" + footer + "</html>"
+            ):
                 return False
         if self.panel:
-            if not self.panel.show_form("""<html encoding="utf-8">""" + panel + '</html>'):
+            if not self.panel.show_form(
+                """<html encoding="utf-8">""" + panel + "</html>"
+            ):
                 return False
         if self.header:
             self.header.init()
@@ -349,10 +373,14 @@ class SchPage(wx.Window, Signal):
             if not self.panel.CanClose():
                 return False
 
-        if self.header: self.header._on_close()
-        if self.body: self.body._on_close()
-        if self.footer: self.footer._on_close()
-        if self.panel: self.panel._on_close()
+        if self.header:
+            self.header._on_close()
+        if self.body:
+            self.body._on_close()
+        if self.footer:
+            self.footer._on_close()
+        if self.panel:
+            self.panel._on_close()
 
         for pos in self._signal_handlers:
             dispatcher.disconnect(pos[0], pos[1], sender=dispatcher.Any)
@@ -368,19 +396,22 @@ class SchPage(wx.Window, Signal):
             new_win = evt.GetWindow()
             parent = new_win.GetParent()
             while parent != None:
-                if parent.__class__.__name__ == 'HtmlPanel':
+                if parent.__class__.__name__ == "HtmlPanel":
                     parent.SelectTab()
                     break
                 parent = parent.GetParent()
             while new_win != None:
-                if new_win.GetParent() and new_win.GetParent().GetWindowStyleFlag() & wx.TAB_TRAVERSAL != 0:
+                if (
+                    new_win.GetParent()
+                    and new_win.GetParent().GetWindowStyleFlag() & wx.TAB_TRAVERSAL != 0
+                ):
                     break
                 new_win = new_win.GetParent()
             if new_win != self.last_control_with_focus:
                 if self.last_control_with_focus:
-                    if hasattr(self.last_control_with_focus, 'KillFocus'):
+                    if hasattr(self.last_control_with_focus, "KillFocus"):
                         self._disable_setfocus = True
-                        getattr(self.last_control_with_focus, 'KillFocus')()
+                        getattr(self.last_control_with_focus, "KillFocus")()
                         self._disable_setfocus = False
                 self.last_control_with_focus = new_win
             evt.Skip()

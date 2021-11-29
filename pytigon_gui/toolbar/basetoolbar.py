@@ -368,7 +368,7 @@ class ToolbarBar(object):
         else:
             self.parent.Unbind(wx.EVT_MENU, id=id)
 
-    def create_html_win(self, toolbar_page, address_or_parser, parameters):
+    def create_html_win(self, toolbar_page, address_or_parser, parameters, callback=None):
         """Create html page in toolbar. Not all toolbars may be used
 
         Args:
@@ -412,18 +412,18 @@ class ToolbarBar(object):
             page2.body.toolbar_interface = self
             page2.body.toolbar_interface_page = page
 
-            def init_page():
+            def init_page(callback):
                 page2.init_frame()
                 page2.activate_page()
                 #wx.GetApp().GetTopWindow()._mgr.GetPane("desktop").Show()
                 page2.Update()
 
-            wx.CallAfter(init_page)
+            wx.CallAfter(init_page, callback)
 
             return page2
 
         return None
 
-    def new_child_page(self,address_or_parser,title='',param=None):
+    def new_child_page(self,address_or_parser,title='',param=None, callback=None):
         """Crate new chid page, for toolbar child page is transfered to desktop window"""
         return wx.GetApp().GetTopWindow().new_main_page(address_or_parser, title,param)
