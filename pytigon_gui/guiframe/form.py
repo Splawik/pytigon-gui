@@ -775,7 +775,8 @@ class SchForm(ScrolledPanel):
                 self.reinit()
             elif hasattr(self, "init_form"):
                 self.init_form()
-            callback(self)
+            if callback:
+                callback(self)
         wx.CallAfter(self._build_acc_tab)
         wx.CallAfter(self._check_scroll_bar)
 
