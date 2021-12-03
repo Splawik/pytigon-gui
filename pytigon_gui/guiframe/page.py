@@ -190,7 +190,7 @@ class SchPage(wx.Window, Signal):
 
         self.register_signal(self, "child_closed_with_ok")
 
-    def child_closed_with_ok(self):
+    def child_closed_with_ok(self, win=None):
         wx.CallAfter(self.refresh_html)
 
     def reg_application_signal_handler(self, fun, signal):
