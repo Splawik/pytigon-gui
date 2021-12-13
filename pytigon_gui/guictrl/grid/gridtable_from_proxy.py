@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Sławomir Chołaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Sławomir Chołaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Sławomir Chołaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Sławomir Chołaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import copy
 
@@ -26,7 +26,6 @@ from .gridtable_base import SchGridTableBase
 
 
 class DataSource(SchGridTableBase):
-
     def __init__(self, proxy):
         SchGridTableBase.__init__(self)
         self.proxy = proxy
@@ -62,10 +61,10 @@ class DataSource(SchGridTableBase):
         return SchGridTableBase.refr_count(self, count, storePos)
 
     def refresh(self, storePos):
-        #store pos
-        #0 - no store, cursor - pos 1
-        #1 - store, if out of range - pos 1
-        #2 - store, if out of range - pos = max
+        # store pos
+        # 0 - no store, cursor - pos 1
+        # 1 - store, if out of range - pos 1
+        # 2 - store, if out of range - pos = max
         self.commit()
         self.append_count = 0
         self.last_page_id = -1
@@ -76,7 +75,9 @@ class DataSource(SchGridTableBase):
         self.rec_to_update = dict()
         self.rec_to_instert = dict()
         self.rec_to_delete = []
-        self.refr_count(self.proxy.get_count()+ self.can_append + self.append_count, storePos)
+        self.refr_count(
+            self.proxy.get_count() + self.can_append + self.append_count, storePos
+        )
         self.GetView().ForceRefresh()
 
     def get_rec(self, nr_rec):
@@ -101,7 +102,10 @@ class DataSource(SchGridTableBase):
                 else:
                     if self.setparm == False:
                         self.setparm = True
-                        parm = createparm.create_parm(self.GetView().address, self.GetView().GetParent().get_parm_obj())
+                        parm = createparm.create_parm(
+                            self.GetView().address,
+                            self.GetView().GetParent().get_parm_obj(),
+                        )
                         if parm:
                             self.proxy.set_address_parm(parm[2])
 
@@ -118,8 +122,15 @@ class DataSource(SchGridTableBase):
                         self.last_page = (self.pages)[0]
                         self.last_page_id = strona
 
-                        if len(nowaStrona) < 256 and self.rec_count != strona * 256 + len(nowaStrona):
-                            self.refr_count(self.proxy.get_count()+self.can_append+self.append_count,2)
+                        if len(
+                            nowaStrona
+                        ) < 256 and self.rec_count != strona * 256 + len(nowaStrona):
+                            self.refr_count(
+                                self.proxy.get_count()
+                                + self.can_append
+                                + self.append_count,
+                                2,
+                            )
                         return self.get_rec(nr_rec)
                     else:
                         self.refr_count(self.proxy.get_count(), 2)
@@ -156,7 +167,11 @@ class DataSource(SchGridTableBase):
     def data_changed(self):
         if self.read_only:
             return False
-        if len(list(self.rec_to_update.keys())) > 0 or len(list(self.rec_to_instert.keys())) > 0 or len(self.rec_to_delete) > 0:
+        if (
+            len(list(self.rec_to_update.keys())) > 0
+            or len(list(self.rec_to_instert.keys())) > 0
+            or len(self.rec_to_delete) > 0
+        ):
             return True
         else:
             return False
@@ -168,13 +183,13 @@ class DataSource(SchGridTableBase):
         return self.rec_count + self.can_append + self.append_count
 
     def get_action_list(self, row, col=None):
-        return rec[rowlen+1]
+        return rec[rowlen + 1]
 
     def get_actions(self, row, col=None):
-        rowlen=len(self.GetColNames())
+        rowlen = len(self.GetColNames())
         rec = self.get_rec(row)
-        if rec and len(rec)>rowlen+1:
-            return rec[rowlen+1]
+        if rec and len(rec) > rowlen + 1:
+            return rec[rowlen + 1]
         else:
             return dict()
 
@@ -187,7 +202,7 @@ class DataSource(SchGridTableBase):
                 if test == 0:
                     test = 1
                 else:
-                    sort = sort + ','
+                    sort = sort + ","
 
                 if i < 0:
                     sort = sort + "-" + self.GetColNames()[-1 * i]
@@ -203,10 +218,10 @@ class DataSource(SchGridTableBase):
         return self.proxy.auto_update(col_name, col_names, rec)
 
     def filter_cmp(self, pos, key):
-        if self.filter_id >=0:
+        if self.filter_id >= 0:
             elem = pos[self.filter_id]
             if elem.__class__ == tuple:
-                elem=elem[0]
+                elem = elem[0]
             if str(elem).upper().startswith(key.upper()):
                 return True
             else:
@@ -216,14 +231,22 @@ class DataSource(SchGridTableBase):
 
     def filter(self, key):
         self.key = key
-        self.proxy.set_parm('value', key)
+        self.proxy.set_parm("value", key)
         self.refresh(0)
 
     def get_table_and_state(self):
         tableandstate = SchGridTableBase.get_table_and_state(self)
         tableandstate.append(self.proxy)
-        tableandstate.append( (self.last_page_id, self.pages_nr, self.pages, self.last_page,
-                             self.max_count, self.rec_count ) )
+        tableandstate.append(
+            (
+                self.last_page_id,
+                self.pages_nr,
+                self.pages,
+                self.last_page,
+                self.max_count,
+                self.rec_count,
+            )
+        )
         return tableandstate
 
     def duplicate_table_and_state(self):
@@ -277,36 +300,42 @@ class DataSource(SchGridTableBase):
     def GetAttr(self, row, col, kind):
         if not self.is_valid:
             return SchGridTableBase.GetAttr(self, row, col, kind)
-        if row < self.rec_count and (row not in self.rec_to_update) and ( not row in self.rec_to_delete ) and \
-                (not self._is_sel(row)):
+        if (
+            row < self.rec_count
+            and (row not in self.rec_to_update)
+            and (not row in self.rec_to_delete)
+            and (not self._is_sel(row))
+        ):
             rec = self.get_rec(row)
             if rec:
                 value = rec[col + 1]
-                if value.__class__ in (tuple,list) :
+                if value.__class__ in (tuple, list):
                     if value[1] in self.attrs:
                         attr = self.attrs[value[1]]
                     else:
                         attr = wx.grid.GridCellAttr()
-                        atrybuty=value[1].split(',')
+                        atrybuty = value[1].split(",")
                         style = atrybuty[0]
                         bgcolor = None
                         color = None
-                        if len(atrybuty)>1: bgcolor = atrybuty[1]
-                        if len(atrybuty)>2: color = atrybuty[2]
+                        if len(atrybuty) > 1:
+                            bgcolor = atrybuty[1]
+                        if len(atrybuty) > 2:
+                            color = atrybuty[2]
 
-                        if bgcolor and len(bgcolor)>1:
+                        if bgcolor and len(bgcolor) > 1:
                             attr.SetBackgroundColour(bgcolor)
-                        if color and len(color)>1:
+                        if color and len(color) > 1:
                             attr.SetTextColour(color)
-                        if style and len(style)>0:
-                            if 's' in style:
+                        if style and len(style) > 0:
+                            if "s" in style:
                                 font = self.GetView().GetDefaultCellFont()
                                 font.SetWeight(wx.FONTWEIGHT_BOLD)
                                 attr.SetFont(font)
-                            if '>' in style:
+                            if ">" in style:
                                 attr.SetAlignment(wx.ALIGN_RIGHT, -1)
-                            if '-' in style:
-                                attr.SetAlignment(wx.ALIGN_CENTRE, -1)
+                            if "-" in style:
+                                attr.SetAlignment(wx.ALIGN_CENTER, -1)
                         (self.attrs)[value[1]] = attr
                 else:
                     attr = self.attr_normal
@@ -369,7 +398,9 @@ class DataSource(SchGridTableBase):
 
             if row == self.GetNumberRows() - 1:
                 self.append_count = self.append_count + 1
-                msg = wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, 1)
+                msg = wx.grid.GridTableMessage(
+                    self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, 1
+                )
                 self.GetView().ProcessTableMessage(msg)
         else:
             if row not in self.rec_to_update:
@@ -379,7 +410,7 @@ class DataSource(SchGridTableBase):
                 self.rec_to_delete.remove(row)
 
     def CanGetValueAs(self, row, col, typeName):
-        colType = self.GetColTypes()[col + 1].split(':')[0]
+        colType = self.GetColTypes()[col + 1].split(":")[0]
         if typeName == colType:
             return True
         else:
@@ -392,9 +423,9 @@ class DataSource(SchGridTableBase):
         return self.GetColNames()[col + 1]
 
     def GetValueAsBool(self, row, col):
-        colType = self.GetColTypes()[col + 1].split(':')[0]
-        if colType=='bool':
-            ret = self.GetValue(row,col)
+        colType = self.GetColTypes()[col + 1].split(":")[0]
+        if colType == "bool":
+            ret = self.GetValue(row, col)
             if ret:
                 return True
             else:
@@ -425,7 +456,9 @@ class DataSource(SchGridTableBase):
             return True
         else:
             if row in self.rec_to_instert:
-                msg = wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, row, il)
+                msg = wx.grid.GridTableMessage(
+                    self, wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, row, il
+                )
                 del (self.rec_to_instert)[row]
                 self.append_count = self.append_count - 1
                 self.GetView().ProcessTableMessage(msg)

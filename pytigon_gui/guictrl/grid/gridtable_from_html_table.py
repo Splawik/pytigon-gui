@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import urllib
 import wx
@@ -24,22 +24,26 @@ from .gridtable_base import SchGridTableBase
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
 from pytigon_gui.guilib.tools import colour_to_html
 
+
 class KeyForRec:
     def __init__(self, rec, tabsort):
         self.rec = rec
         self.tabsort = tabsort
 
     def __lt__(self, other):
-        if self.rec[0].data.strip() == '-':
+        if self.rec[0].data.strip() == "-":
             return 1
-        if other.rec[0].data.strip() == '-':
+        if other.rec[0].data.strip() == "-":
             return -1
 
         for pos in self.tabsort:
             if pos > 0:
                 x = self.rec[pos - 1].data.lower() < other.rec[pos - 1].data.lower()
             else:
-                x = self.rec[-1 * pos - 1].data.lower() > other.rec[-1 * pos - 1].data.lower()
+                x = (
+                    self.rec[-1 * pos - 1].data.lower()
+                    > other.rec[-1 * pos - 1].data.lower()
+                )
             if x:
                 return x
         return False
@@ -50,7 +54,6 @@ def make_key(tabsort):
 
 
 class PageData(object):
-
     def __init__(self, parent, page_len, count, first_page):
         self.count = count
         self.page_len = page_len
@@ -60,11 +63,11 @@ class PageData(object):
 
     def get_page(self, nr):
         href = self.parent.GetParent().get_parm_obj().address
-        if '?' in href:
-            addr = href + '&page=' + str(nr + 1)
+        if "?" in href:
+            addr = href + "&page=" + str(nr + 1)
         else:
-            addr = href + '?page=' + str(nr + 1)
-        html = self.parent.load_data_from_server(addr).decode('utf-8')
+            addr = href + "?page=" + str(nr + 1)
+        html = self.parent.load_data_from_server(addr).decode("utf-8")
         tab = tdata_from_html(html, wx.GetApp().http)
         if tab:
             return tab[1:]
@@ -99,10 +102,9 @@ class PageData(object):
 
 
 class SimpleDataTable(SchGridTableBase):
-
     def __init__(self, parent, tab):
         SchGridTableBase.__init__(self)
-        self._parent=parent
+        self._parent = parent
         self.init_data(tab)
         self.last_row_count = len(self.data)
 
@@ -110,22 +112,24 @@ class SimpleDataTable(SchGridTableBase):
         self.colLabels = tab[0]
         self.dataTypes = []
         for col in self.colLabels:
-            self.dataTypes.append('s')
-        l = tab[0][0].data.split(':')
+            self.dataTypes.append("s")
+        l = tab[0][0].data.split(":")
         self.count = len(tab) - 1
         self.per_page = 0
         if len(l) > 1:
-            pages = l[1].split('/')
+            pages = l[1].split("/")
             if len(pages) > 1:
                 self.per_page = int(pages[0])
                 self.count = int(pages[1])
                 self.colLabels[0].data = l[0]
 
         if self.per_page > 0:
-            self.data = PageData(self._parent, int(self.per_page), self.count, tab[1:self.per_page + 1])
+            self.data = PageData(
+                self._parent, int(self.per_page), self.count, tab[1 : self.per_page + 1]
+            )
             self.simple_data = False
             if self.count > 128:
-                self.auto_size = 'short'
+                self.auto_size = "short"
         else:
             self.data = tab[1:]
             self.per_page = len(self.data)
@@ -136,11 +140,16 @@ class SimpleDataTable(SchGridTableBase):
     def replace_tab(self, new_tab):
         SchGridTableBase.replace_tab(self, new_tab)
         self.init_data(new_tab)
-        self.refr_count(len(new_tab)-1)
+        self.refr_count(len(new_tab) - 1)
 
     def refresh_page_data(self, tab):
         old_data = self.data
-        self.data = PageData(old_data.parent, int(self.per_page), int(len(tab) - 1), tab[1:self.per_page + 1])
+        self.data = PageData(
+            old_data.parent,
+            int(self.per_page),
+            int(len(tab) - 1),
+            tab[1 : self.per_page + 1],
+        )
 
     def enable(self, enabled):
         self.enabled = enabled
@@ -160,12 +169,12 @@ class SimpleDataTable(SchGridTableBase):
             if children:
                 for sys_id in sorted(list(children)):
                     a = children[sys_id].attrs
-                    txt = ''
+                    txt = ""
                     for atom in children[sys_id].atom_list.atom_list:
                         txt += atom.data
-                    a['data'] = txt
+                    a["data"] = txt
                     attrs.append(a)
-            if col2!=0:
+            if col2 != 0:
                 attrs2 = self.get_action_list(row, 0)
                 for pos in attrs2:
                     attrs.append(pos)
@@ -192,11 +201,11 @@ class SimpleDataTable(SchGridTableBase):
                     child = td.children[sys_id]
                     tag = child.tag
                     if tag in tdattr:
-                        tdattr[tag] += (child.attrs, )
+                        tdattr[tag] += (child.attrs,)
                     else:
-                        tdattr[tag] = (child.attrs, )
+                        tdattr[tag] = (child.attrs,)
         except:
-            print('GetExtAttr:', row, col)
+            print("GetExtAttr:", row, col)
             tdattr = None
         return tdattr
 
@@ -216,7 +225,7 @@ class SimpleDataTable(SchGridTableBase):
         else:
             return False
 
-    def GetAttr(self,row,col,kind):
+    def GetAttr(self, row, col, kind):
         if row >= self.GetNumberRows():
             attr = self.attr_normal
             attr.IncRef()
@@ -224,33 +233,44 @@ class SimpleDataTable(SchGridTableBase):
         try:
             tdattr = self.data[row][col].attrs
         except:
-            print('<<<')
-            print('rows:', self.GetNumberRows())
-            print('cols:', self.GetNumberCols())
-            print('len:', len(self.data[row]))
+            print("<<<")
+            print("rows:", self.GetNumberRows())
+            print("cols:", self.GetNumberCols())
+            print("len:", len(self.data[row]))
             print(self.data[row][col])
-            print('Error', row, col)
-            print('>>>')
+            print("Error", row, col)
+            print(">>>")
         bgcolor = None
         color = None
         strong = None
-        if 'bgcolor' in tdattr:
-            bgcolor = tdattr['bgcolor']
-            if bgcolor[0] != '#':
+        if "bgcolor" in tdattr:
+            bgcolor = tdattr["bgcolor"]
+            if bgcolor[0] != "#":
                 bgcolor = None
-        if 'color' in tdattr:
-            color = tdattr['color']
-            if color[0] != '#':
+        if "color" in tdattr:
+            color = tdattr["color"]
+            if color[0] != "#":
                 color = None
-        if 'strong' in tdattr:
-            strong = 's'
+        if "strong" in tdattr:
+            strong = "s"
         if self._is_sel(row):
             bgcolor = colour_to_html(self.sel_colour)
-            strong = 's'
-        key = ''
-        key += bgcolor if bgcolor else '_'
-        key += color if color else '_'
-        key += strong if strong else '_'
+            strong = "s"
+
+        key = ""
+        key += bgcolor if bgcolor else "_"
+        key += color if color else "_"
+        key += strong if strong else "_"
+        if "align" in tdattr:
+            if tdattr["align"].lower() == "center":
+                key += "c"
+            elif tdattr["align"].lower() == "right":
+                key += "r"
+            else:
+                key += "_"
+        else:
+            key += "_"
+
         if key:
             if key in self.attrs:
                 attr = self.attrs[key]
@@ -267,6 +287,13 @@ class SimpleDataTable(SchGridTableBase):
                 self.attrs[key] = attr
         else:
             attr = self.attr_normal
+
+        if "align" in tdattr:
+            if tdattr["align"].lower() == "center":
+                attr.SetAlignment(wx.ALIGN_CENTER, -1)
+            elif tdattr["align"].lower() == "right":
+                attr.SetAlignment(wx.ALIGN_RIGHT, -1)
+
         attr.IncRef()
         return attr
 
@@ -275,7 +302,7 @@ class SimpleDataTable(SchGridTableBase):
             if self.no_actions:
                 return len(self.colLabels)
             else:
-                return len(self.colLabels)-1
+                return len(self.colLabels) - 1
         else:
             return 0
 
@@ -284,15 +311,17 @@ class SimpleDataTable(SchGridTableBase):
             ret = self.data[row][col].data
             return ret
         except IndexError:
-            return ''
+            return ""
 
-    def SetValue(self,row,col,value):
+    def SetValue(self, row, col, value):
         try:
             self.data[row][col] = value
         except IndexError:
-            self.data.append([''] * self.GetNumberCols())
+            self.data.append([""] * self.GetNumberCols())
             self.SetValue(row, col, value)
-            msg = wx.grid.GridTableMessage(self,wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, 1)
+            msg = wx.grid.GridTableMessage(
+                self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, 1
+            )
             self.GetView().ProcessTableMessage(msg)
 
     def GetColLabelValue(self, col):
@@ -301,29 +330,29 @@ class SimpleDataTable(SchGridTableBase):
     def GetTypeName(self, row, col):
         return self.dataTypes[col]
 
-    def CanGetValueAs(self,row,col,type_name):
-        col_type = self.dataTypes[col].split(':')[0]
+    def CanGetValueAs(self, row, col, type_name):
+        col_type = self.dataTypes[col].split(":")[0]
         if type_name == col_type:
             return True
         else:
             return False
 
-    def CanSetValueAs(self,row,col,type_name):
+    def CanSetValueAs(self, row, col, type_name):
         return self.CanGetValueAs(row, col, type_name)
 
-
     def refresh(self, storePos):
-        self.GetView().GetParent().get_parent_form().any_parent_command('refresh_html')
-
+        self.GetView().GetParent().get_parent_form().any_parent_command("refresh_html")
 
     def copy(self):
         href_base = self._parent.GetParent().get_parm_obj().address
         href = urllib.parse.urljoin(href_base, "../table_action/")
         if self.rec_selected:
             href += "?pk=" + ",".join([str(pos.data) for pos in self.get_sel_rows()[0]])
-        data = { 'action': 'copy', }
+        data = {
+            "action": "copy",
+        }
         http = wx.GetApp().get_http(self._parent)
-        response = http.post(self._parent, href, parm = data, json_data = True)
+        response = http.post(self._parent, href, parm=data, json_data=True)
         try:
             s = response.json()
         except:
@@ -334,9 +363,9 @@ class SimpleDataTable(SchGridTableBase):
         href_base = self._parent.GetParent().get_parm_obj().address
         href = urllib.parse.urljoin(href_base, "../table_action/")
 
-        data2 = { 'action': 'paste', 'data': data }
+        data2 = {"action": "paste", "data": data}
         http = wx.GetApp().get_http(self._parent)
-        response = http.post(self._parent, href, parm = data2, json_data = True)
+        response = http.post(self._parent, href, parm=data2, json_data=True)
         try:
             s = response.json()
         except:
