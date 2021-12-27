@@ -801,13 +801,15 @@ class SchAppFrame(SchBaseFrame):
                     try:
                         bitmap = (wx.GetApp().images)[int(row[4].data)]
                     except:
-                        if row[4].data != "":
+                        if row[4].data and row[4].data != "" and row[4].data != "None":
                             try:
                                 bitmap = bitmap_from_href(row[4].data)
                             except:
                                 bitmap = (wx.GetApp().images)[0]
                         else:
                             bitmap = (wx.GetApp().images)[0]
+                    if not bitmap:
+                        bitmap = (wx.GetApp().images)[0]
                     idn = self._append_command(row[5].data, row[6].data)
                     panel.append(idn, row[2].data, bitmap)
             bar.bind(self.on_command)
