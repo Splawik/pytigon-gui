@@ -142,7 +142,7 @@ class IconAndStringRenderer(MultiLineStringRenderer):
             text = grid.GetCellValue(row, col)
             if text == "+":
                 image2 = wx.ArtProvider.GetBitmap(
-                    wx.ART_ADD_BOOKMARK, wx.ART_TOOLBAR, (32, 32)
+                    wx.ART_ADD_BOOKMARK, wx.ART_TOOLBAR, (24, 24)
                 )
                 if image2:
                     image = image2
@@ -173,7 +173,7 @@ class IconAndStringRenderer(MultiLineStringRenderer):
         else:
             text = grid.GetCellValue(row, col)
             if text == "+":
-                return wx.Size(32, 32)
+                return wx.Size(24, 24)
             else:
                 return MultiLineStringRenderer.GetBestSize(
                     self, grid, attr, dc, row, col

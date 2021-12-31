@@ -1049,7 +1049,7 @@ class SchForm(ScrolledPanel):
                     )
                     return
                 if target == "refresh_page":
-                    self.any_parent_command("set_new_href", adr)
+                    #self.any_parent_command("set_new_href", adr)
                     self.any_parent_command("refresh_html")
 
                 if target.startswith("_top2"):
