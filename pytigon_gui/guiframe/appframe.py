@@ -11,12 +11,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 """
 This module contains SchAppFrame class. When pytigon application starts, new top frame window (class SchAppFrame) is created.
@@ -33,7 +33,8 @@ from pydispatch import dispatcher
 from pathlib import Path
 
 import wx
-#import wx.html2
+
+# import wx.html2
 import datetime
 from wx.lib.agw import aui
 
@@ -43,10 +44,11 @@ from pytigon_lib.schfs.vfstools import get_temp_filename
 from pytigon_lib.schdjangoext.tools import gettempdir
 
 from pytigon_lib.schtools.tools import split2
-#from pytigon_lib.schtasks.task import get_process_manager
+
+# from pytigon_lib.schtasks.task import get_process_manager
 
 from pytigon_gui.guilib.image import ArtProviderFromIcon
-from pytigon_gui.guilib.events import * #@UnusedWildImport
+from pytigon_gui.guilib.events import *  # @UnusedWildImport
 from pytigon_gui.guiframe.notebook import SchNotebook
 from pytigon_gui.guiframe.notebookpage import SchNotebookPage
 from pytigon_gui.guiframe.manager import SChAuiManager
@@ -61,6 +63,7 @@ _RECORD_VIDEO_STRUCT = None
 _RECORD_VIDEO_OUT = None
 _RECORD_VIDEO_MONITOR = None
 
+
 def save_video_frame(win):
     global _RECORD_VIDEO_STRUCT, _RECORD_VIDEO_OUT, _RECORD_VIDEO_MONITOR
     if _RECORD_VIDEO_STRUCT:
@@ -71,29 +74,38 @@ def save_video_frame(win):
             pos = win.GetScreenPosition()
             size = win.GetSize()
 
-            #fourcc = cv2.VideoWriter_fourcc(*'MJPG')
-            fourcc = cv2.VideoWriter_fourcc(*'XVID')
-            _RECORD_VIDEO_OUT = cv2.VideoWriter('video.avi', fourcc, 4, (size.width, size.height))
-            _RECORD_VIDEO_MONITOR = {'top': pos.y, 'left': pos.x, 'width': size.width, 'height': size.height }
+            # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+            fourcc = cv2.VideoWriter_fourcc(*"XVID")
+            _RECORD_VIDEO_OUT = cv2.VideoWriter(
+                "video.avi", fourcc, 4, (size.width, size.height)
+            )
+            _RECORD_VIDEO_MONITOR = {
+                "top": pos.y,
+                "left": pos.x,
+                "width": size.width,
+                "height": size.height,
+            }
 
         with mss() as sct:
             pos = win.GetScreenPosition()
             size = win.GetSize()
             frame = numpy.array(sct.grab(_RECORD_VIDEO_MONITOR))
-            frame = numpy.flip(frame[:, :, :3], 2) 
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)          
+            frame = numpy.flip(frame[:, :, :3], 2)
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             _RECORD_VIDEO_OUT.write(frame)
-            
+
+
 def finish_video():
     if _RECORD_VIDEO_OUT:
         _RECORD_VIDEO_OUT.release()
         _RECORD_VIDEO_STRUCT = None
 
+
 class _SChMainPanel(wx.Window):
     def __init__(self, app_frame, *argi, **argv):
-        argv['name'] = 'schmainpanel'
-        if 'style' in argv:
-            argv['style'] |= wx.WANTS_CHARS
+        argv["name"] = "schmainpanel"
+        if "style" in argv:
+            argv["style"] |= wx.WANTS_CHARS
         self.app_frame = app_frame
         wx.Window.__init__(self, *argi, **argv)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
@@ -113,11 +125,18 @@ class _SChMainPanel(wx.Window):
 
 class SchAppFrame(SchBaseFrame):
     """
-        This is main window of pytigon application
+    This is main window of pytigon application
     """
 
-    def __init__(self, gui_style="tree(toolbar,statusbar)", title="", pos=wx.DefaultPosition, size=wx.DefaultSize,
-                 style=wx.DEFAULT_FRAME_STYLE | wx.CLIP_CHILDREN | wx.WANTS_CHARS, video=False):
+    def __init__(
+        self,
+        gui_style="tree(toolbar,statusbar)",
+        title="",
+        pos=wx.DefaultPosition,
+        size=wx.DefaultSize,
+        style=wx.DEFAULT_FRAME_STYLE | wx.CLIP_CHILDREN | wx.WANTS_CHARS,
+        video=False,
+    ):
         """Constructor
 
         Args:
@@ -151,8 +170,10 @@ class SchAppFrame(SchBaseFrame):
             style - see wx.Frame constructor
         """
 
-        SchBaseFrame.__init__(self, None, gui_style, wx.ID_ANY, title, pos, size, style, "MainWindow")
-        #self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
+        SchBaseFrame.__init__(
+            self, None, gui_style, wx.ID_ANY, title, pos, size, style, "MainWindow"
+        )
+        # self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
 
         self._id = wx.ID_HIGHEST
         self._perspectives = []
@@ -164,7 +185,7 @@ class SchAppFrame(SchBaseFrame):
         self.idle_objects = []
         self.gui_style = gui_style
         self.command = {}
-        #self.command_enabled_always = []
+        # self.command_enabled_always = []
         self.last_pane = None
         self.active_pane = None
         self.active_page = None
@@ -179,7 +200,7 @@ class SchAppFrame(SchBaseFrame):
 
         self.sys_command = dict({"EXIT": self.on_exit, "ABOUT": self.on_about})
 
-        if 'dialog' in self.gui_style or 'one_form' in self.gui_style:
+        if "dialog" in self.gui_style or "one_form" in self.gui_style:
             hide_on_single_page = True
         else:
             hide_on_single_page = False
@@ -188,7 +209,7 @@ class SchAppFrame(SchBaseFrame):
         self._mgr = SChAuiManager()
         self._mgr.SetManagedWindow(self._panel)
 
-        if not hasattr(self._mgr, 'SetAGWFlags'):
+        if not hasattr(self._mgr, "SetAGWFlags"):
             self._mgr.SetAGWFlags = self._mgr.SetFlags
             self._mgr.GetAGWFlags = self._mgr.GetFlags
 
@@ -200,17 +221,17 @@ class SchAppFrame(SchBaseFrame):
         wx.ArtProvider.Push(ArtProviderFromIcon())
 
         icon = wx.Icon()
-        b = wx.Bitmap(wx.Image(wx.GetApp().src_path + '/static/icons/schweb.png'))
+        b = wx.Bitmap(wx.Image(wx.GetApp().src_path + "/static/icons/schweb.png"))
         icon.CopyFromBitmap(b)
         self.SetIcon(icon)
 
-        if 'tray' in gui_style:
+        if "tray" in gui_style:
             self.tbIcon = wx.adv.TaskBarIcon()
             self.tbIcon.SetIcon(icon, "Pytigon")
         else:
             self.tbIcon = None
 
-        if 'statusbar' in gui_style:
+        if "statusbar" in gui_style:
             self.statusbar = self._create_status_bar()
         else:
             self.statusbar = None
@@ -219,74 +240,116 @@ class SchAppFrame(SchBaseFrame):
 
         self.setup_frame()
 
-        if 'tree' in gui_style:
+        if "tree" in gui_style:
             self._sizer = wx.BoxSizer(wx.HORIZONTAL)
         else:
             self._sizer = wx.BoxSizer(wx.VERTICAL)
 
-        if 'standard' in gui_style:
-            if len(wx.GetApp().get_tab(self._toolbar_bar_lp))>1:
+        if "standard" in gui_style:
+            if len(wx.GetApp().get_tab(self._toolbar_bar_lp)) > 1:
                 from pytigon_gui.toolbar import standardtoolbar
-                self.toolbar_interface = standardtoolbar.StandardToolbarBar(self, gui_style)
+
+                self.toolbar_interface = standardtoolbar.StandardToolbarBar(
+                    self, gui_style
+                )
                 self._create_tool_bar()
                 self.toolbar_interface.create()
             self._sizer.Add(self._panel, 1, wx.EXPAND)
             self._mgr.Update()
-        elif 'generic' in gui_style:
-            if len(wx.GetApp().get_tab(self._toolbar_bar_lp))>1:
+        elif "generic" in gui_style:
+            if len(wx.GetApp().get_tab(self._toolbar_bar_lp)) > 1:
                 from pytigon_gui.toolbar import generictoolbar
-                self.toolbar_interface = generictoolbar.GenericToolbarBar(self, gui_style)
+
+                self.toolbar_interface = generictoolbar.GenericToolbarBar(
+                    self, gui_style
+                )
                 self._create_tool_bar()
                 self.toolbar_interface.create()
             self._sizer.Add(self._panel, 1, wx.EXPAND)
             self._mgr.Update()
-        elif 'modern' in gui_style:
+        elif "modern" in gui_style:
             from pytigon_gui.toolbar.moderntoolbar import ModernToolbarBar
+
             self.toolbar_interface = ModernToolbarBar(self, gui_style)
             self._create_tool_bar()
-            #self.toolbar_interface.realize_bar()
+            # self.toolbar_interface.realize_bar()
             self.toolbar_interface.create()
             self._sizer.Add(self.toolbar_interface, 0, wx.EXPAND)
             self._sizer.Add(self._panel, 1, wx.EXPAND)
-        elif 'tree' in gui_style:
+        elif "tree" in gui_style:
             from pytigon_gui.toolbar.treetoolbar import TreeToolbarBar
+
             self.toolbar_interface = TreeToolbarBar(self._panel, gui_style)
             self._create_tool_bar()
             self.toolbar_interface.create()
-            self._mgr.AddPane(self.toolbar_interface, self._create_pane_info("menu", _("Menu")).CaptionVisible(True).MinimizeButton(True).CloseButton(False).Left().BestSize((250, 40)).MinSize((250, 40)).Show())
+            self._mgr.AddPane(
+                self.toolbar_interface,
+                self._create_pane_info("menu", _("Menu"))
+                .CaptionVisible(True)
+                .MinimizeButton(True)
+                .CloseButton(False)
+                .Left()
+                .BestSize((250, 40))
+                .MinSize((250, 40))
+                .Show(),
+            )
             self._sizer.Add(self._panel, 1, wx.EXPAND)
         else:
             self._sizer.Add(self._panel, 1, wx.EXPAND)
 
         self.SetSizer(self._sizer)
 
-        if len(wx.GetApp().get_tab(2))>1:
+        if len(wx.GetApp().get_tab(2)) > 1:
             self._menu_bar_lp = 2
         else:
             if wx.GetApp().menu_always:
                 self._menu_bar_lp = 1
 
-        if self._menu_bar_lp>0:
+        if self._menu_bar_lp > 0:
             from pytigon_gui.toolbar import menubar
+
             self.menubar_interface = menubar.MenuToolbarBar(self, gui_style)
             self._create_menu_bar()
-
 
         s_dx = wx.SystemSettings.GetMetric(wx.SYS_SCREEN_X)
         s_dy = wx.SystemSettings.GetMetric(wx.SYS_SCREEN_Y)
 
-        self._mgr.AddPane(self._create_notebook_ctrl(), self._create_pane_info("panel", _("Tools")).CaptionVisible(True).
-            Left().MinSize((400, s_dy / 2)).BestSize((s_dx / 2 - 50, s_dy - 100)).Show())
-        self._mgr.AddPane(self._create_notebook_ctrl(), self._create_pane_info("header", _("Header")).CaptionVisible(False).
-            Top().MinSize((s_dx, s_dy / 10)).BestSize((s_dx, s_dy/5)).Show())
-        self._mgr.AddPane(self._create_notebook_ctrl(), self._create_pane_info("footer", _("Footer")).CaptionVisible(False).
-            Bottom().MinSize((s_dx, s_dy / 10)).BestSize((s_dx, s_dy/5)).Show())
-        self._mgr.AddPane(self.desktop, self._create_pane_info("desktop", _("Desktop")).CenterPane().Show())
+        self._mgr.AddPane(
+            self._create_notebook_ctrl(),
+            self._create_pane_info("panel", _("Tools"))
+            .CaptionVisible(True)
+            .Left()
+            .MinSize((400, s_dy / 2))
+            .BestSize((s_dx / 2 - 50, s_dy - 100))
+            .Show(),
+        )
+        self._mgr.AddPane(
+            self._create_notebook_ctrl(),
+            self._create_pane_info("header", _("Header"))
+            .CaptionVisible(False)
+            .Top()
+            .MinSize((s_dx, s_dy / 10))
+            .BestSize((s_dx, s_dy / 5))
+            .Show(),
+        )
+        self._mgr.AddPane(
+            self._create_notebook_ctrl(),
+            self._create_pane_info("footer", _("Footer"))
+            .CaptionVisible(False)
+            .Bottom()
+            .MinSize((s_dx, s_dy / 10))
+            .BestSize((s_dx, s_dy / 5))
+            .Show(),
+        )
+        self._mgr.AddPane(
+            self.desktop,
+            self._create_pane_info("desktop", _("Desktop")).CenterPane().Show(),
+        )
         perspective_notoolbar = self._mgr.SavePerspective()
 
-        if 'toolbar' in gui_style and 'standard' in gui_style:
+        if "toolbar" in gui_style and "standard" in gui_style:
             i = 1
-            while(True):
+            while True:
                 name = "tb" + str(i)
                 tbpanel = self._mgr.GetPane(name)
                 if tbpanel.IsOk():
@@ -300,7 +363,7 @@ class SchAppFrame(SchBaseFrame):
 
         for ii in range(len(all_panes)):
             if not all_panes[ii].IsToolbar():
-                if all_panes[ii].name != 'menu':
+                if all_panes[ii].name != "menu":
                     all_panes[ii].Hide()
 
         self._mgr.GetPane("desktop").Show()
@@ -308,7 +371,7 @@ class SchAppFrame(SchBaseFrame):
         perspective_default = self._mgr.SavePerspective()
 
         size = self.desktop.GetPageCount()
-        for i in range(size): #@UnusedVariable
+        for i in range(size):  # @UnusedVariable
             self.desktop.DeletePage(0)
 
         self._perspectives.append(perspective_default)
@@ -326,9 +389,11 @@ class SchAppFrame(SchBaseFrame):
 
         self.Bind(wx.EVT_TIMER, self.on_timer, self.t1)
         self.Bind(aui.EVT_AUI_PANE_ACTIVATED, self.on_pane_activated)
-        self.Bind(wx.EVT_MENU_RANGE, self.on_show_elem, id=ID_SHOWHEADER, id2=ID_SHOWTOOLBAR2)
+        self.Bind(
+            wx.EVT_MENU_RANGE, self.on_show_elem, id=ID_SHOWHEADER, id2=ID_SHOWTOOLBAR2
+        )
 
-        if 'tray' in gui_style:
+        if "tray" in gui_style:
             self.Bind(wx.EVT_CLOSE, self.on_taskbar_hide)
         else:
             self.Bind(wx.EVT_CLOSE, self.on_close)
@@ -338,11 +403,11 @@ class SchAppFrame(SchBaseFrame):
         self.bind_command(self.on_open, id=wx.ID_OPEN)
         self.bind_command(self.on_exit, id=wx.ID_EXIT)
 
-        #if self.toolbar_interface:
-            #self.toolbar_interface.bind_ui(self.on_update_ui_command, wx.ID_ANY)
+        # if self.toolbar_interface:
+        # self.toolbar_interface.bind_ui(self.on_update_ui_command, wx.ID_ANY)
 
-            #for pos in [wx.ID_EXIT, ID_WEB_NEW_WINDOW, wx.ID_OPEN]:
-            #    self.command_enabled_always.append(pos)
+        # for pos in [wx.ID_EXIT, ID_WEB_NEW_WINDOW, wx.ID_OPEN]:
+        #    self.command_enabled_always.append(pos)
 
         self.bind_command(self.on_next_tab, id=ID_NEXTTAB)
         self.bind_command(self.on_prev_tab, id=ID_PREVTAB)
@@ -368,12 +433,12 @@ class SchAppFrame(SchBaseFrame):
             wx.adv.EVT_TASKBAR_RIGHT_UP(self.tbIcon, self.on_taskbar_show_menu)
 
             self.menu_tray = wx.Menu()
-            self.menu_tray.Append(ID_TASKBAR_SHOW, _('Show It'))
+            self.menu_tray.Append(ID_TASKBAR_SHOW, _("Show It"))
             wx.EVT_MENU(self, ID_TASKBAR_SHOW, self.on_taskbar_show)
-            self.menu_tray.Append(ID_TASKBAR_HIDE, _('Minimize It'))
+            self.menu_tray.Append(ID_TASKBAR_HIDE, _("Minimize It"))
             wx.EVT_MENU(self, ID_TASKBAR_HIDE, self.on_taskbar_hide)
             self.menu_tray.AppendSeparator()
-            self.menu_tray.Append(ID_TASKBAR_CLOSE, _('Close It'))
+            self.menu_tray.Append(ID_TASKBAR_CLOSE, _("Close It"))
             wx.EVT_MENU(self, ID_TASKBAR_CLOSE, self.on_close)
 
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
@@ -383,33 +448,31 @@ class SchAppFrame(SchBaseFrame):
         self.Layout()
         wx.CallAfter(self.Bind, wx.EVT_IDLE, self.on_idle)
 
-
     def setup_frame(self):
         self.SetMinSize(wx.Size(800, 600))
-
 
     def init_acc_keys(self):
         self.aTable = [
             (wx.ACCEL_ALT, wx.WXK_PAGEUP, ID_PREVTAB),
             (wx.ACCEL_ALT, wx.WXK_PAGEDOWN, ID_NEXTTAB),
-
             (wx.ACCEL_ALT, wx.WXK_LEFT, ID_GOTOPANEL),
-            (wx.ACCEL_ALT, ord('t'), ID_GOTOPANEL),
+            (wx.ACCEL_ALT, ord("t"), ID_GOTOPANEL),
             (wx.ACCEL_ALT, wx.WXK_RIGHT, ID_GOTODESKTOP),
-            (wx.ACCEL_ALT, ord('d'), ID_GOTODESKTOP),
+            (wx.ACCEL_ALT, ord("d"), ID_GOTODESKTOP),
             (wx.ACCEL_ALT, wx.WXK_UP, ID_GOTOHEADER),
-            (wx.ACCEL_CTRL, ord('w'), ID_CLOSETAB),
-            (wx.ACCEL_CTRL, ord('n'), ID_WEB_NEW_WINDOW),
+            (wx.ACCEL_CTRL, ord("w"), ID_CLOSETAB),
+            (wx.ACCEL_CTRL, ord("n"), ID_WEB_NEW_WINDOW),
             (wx.ACCEL_CTRL, wx.WXK_TAB, ID_NEXTTAB),
             (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, wx.WXK_TAB, ID_PREVTAB),
             (wx.ACCEL_CTRL, wx.WXK_F6, ID_NEXTTAB),
             (wx.ACCEL_CTRL | wx.ACCEL_SHIFT, wx.WXK_F6, ID_PREVTAB),
-            (wx.ACCEL_ALT, ord('h'), ID_PREVTAB),
-            (wx.ACCEL_ALT, ord('l'), ID_NEXTTAB),
-            (wx.ACCEL_ALT, ord('k'), ID_PREVPAGE),
-            (wx.ACCEL_ALT, ord('j'), ID_NEXTPAGE),
+            (wx.ACCEL_ALT, ord("h"), ID_PREVTAB),
+            (wx.ACCEL_ALT, ord("l"), ID_NEXTTAB),
+            (wx.ACCEL_ALT, ord("k"), ID_PREVPAGE),
+            (wx.ACCEL_ALT, ord("j"), ID_NEXTPAGE),
             (wx.ACCEL_ALT, wx.WXK_BACK, ID_WEB_BACK),
-            (0, wx.WXK_F5, ID_REFRESHTAB)]
+            (0, wx.WXK_F5, ID_REFRESHTAB),
+        ]
 
     def on_idle(self, event):
         for obj in self.idle_objects:
@@ -419,31 +482,33 @@ class SchAppFrame(SchBaseFrame):
             self.after_init = True
             app = wx.GetApp()
             if len(app.start_pages) > 0:
+
                 def start_pages():
                     for page in app.start_pages:
-                        url_page = page.split(';')
+                        url_page = page.split(";")
                         if len(url_page) == 2:
-                            self._on_html(_(url_page[0]) + ',' + app.base_path + "/" + url_page[1])
+                            self._on_html(
+                                _(url_page[0]) + "," + app.base_path + "/" + url_page[1]
+                            )
                         elif len(url_page) == 1:
-                            self._on_html(',' + app.base_path + "/" + url_page[0])
+                            self._on_html("," + app.base_path + "/" + url_page[0])
 
                 wx.CallAfter(start_pages)
 
         event.Skip()
 
-
     def on_pane_activated(self, event):
         active_pane = event.GetPane()
 
         if self.active_pane != active_pane:
-            if self.active_pane and hasattr(self.active_pane, 'set_active'):
+            if self.active_pane and hasattr(self.active_pane, "set_active"):
                 self.active_pane.set_active(False)
                 if self.active_pane.GetCurrentPage():
                     self.active_pane.GetCurrentPage().Refresh()
 
             self.active_pane = active_pane
 
-            if active_pane and hasattr(active_pane, 'set_active'):
+            if active_pane and hasattr(active_pane, "set_active"):
                 active_pane.set_active(True)
                 if active_pane.GetCurrentPage():
                     active_pane.GetCurrentPage().Refresh()
@@ -463,9 +528,15 @@ class SchAppFrame(SchBaseFrame):
             tab.SetFocus()
 
     def _create_notebook_ctrl(self, hideSingleTab=True):
-        style = aui.AUI_NB_WINDOWLIST_BUTTON | aui.AUI_NB_CLOSE_ON_ALL_TABS | aui.AUI_NB_TAB_MOVE | \
-                aui.AUI_NB_TAB_EXTERNAL_MOVE | aui.AUI_NB_TAB_SPLIT | aui.AUI_NB_WINDOWLIST_BUTTON
-        n = SchNotebook(self._panel, wx.Point(0, 0), wx.Size(0,0), style=style)
+        style = (
+            aui.AUI_NB_WINDOWLIST_BUTTON
+            | aui.AUI_NB_CLOSE_ON_ALL_TABS
+            | aui.AUI_NB_TAB_MOVE
+            | aui.AUI_NB_TAB_EXTERNAL_MOVE
+            | aui.AUI_NB_TAB_SPLIT
+            | aui.AUI_NB_WINDOWLIST_BUTTON
+        )
+        n = SchNotebook(self._panel, wx.Point(0, 0), wx.Size(0, 0), style=style)
         n.SetAGWWindowStyleFlag(style)
         n.SetArtProvider(aui.VC71TabArt())
         return n
@@ -473,23 +544,26 @@ class SchAppFrame(SchBaseFrame):
     def _create_pane_info(self, name, caption):
         return aui.AuiPaneInfo().Name(name).Caption(caption)
 
-
     def _on_page_event(self, direction):
         """scroll active form"""
         w = wx.Window.FindFocus()
         parent = w
         while parent:
-            if parent.__class__.__name__=='SchForm':
+            if parent.__class__.__name__ == "SchForm":
                 if hasattr(parent, "on_page_event"):
                     parent.on_page_event(direction)
                     return
                 else:
-                    y = parent.GetViewStart()[1]*parent.GetScrollPixelsPerUnit()[1]
-                    dy = parent.GetScrollPageSize(wx.VERTICAL)*parent.GetScrollPixelsPerUnit()[1]
+                    y = parent.GetViewStart()[1] * parent.GetScrollPixelsPerUnit()[1]
+                    dy = (
+                        parent.GetScrollPageSize(wx.VERTICAL)
+                        * parent.GetScrollPixelsPerUnit()[1]
+                    )
                     y = y + direction * dy
-                    if y<0: y=0
-                    if parent.GetScrollPixelsPerUnit()[1]!=0:
-                        parent.Scroll(-1, y/parent.GetScrollPixelsPerUnit()[1])
+                    if y < 0:
+                        y = 0
+                    if parent.GetScrollPixelsPerUnit()[1] != 0:
+                        parent.Scroll(-1, y / parent.GetScrollPixelsPerUnit()[1])
                     else:
                         parent.Scroll(-1, y)
                     return
@@ -532,7 +606,7 @@ class SchAppFrame(SchBaseFrame):
         """close active tab in active notebook"""
         win = wx.Window.FindFocus()
         while win:
-            if win.__class__.__name__ == 'SchNotebook':
+            if win.__class__.__name__ == "SchNotebook":
                 id = win.GetSelection()
                 if id >= 0:
                     panel = win.GetPage(id)
@@ -583,7 +657,9 @@ class SchAppFrame(SchBaseFrame):
                     return htmlwin
         return None
 
-    def new_main_page(self, address_or_parser, title="", parameters=None, panel="desktop"):
+    def new_main_page(
+        self, address_or_parser, title="", parameters=None, panel="desktop"
+    ):
         """Open a new page in main
 
         Args:
@@ -602,63 +678,82 @@ class SchAppFrame(SchBaseFrame):
             address = address_or_parser.address
 
         pdict = {}
-        parm = split2(address,'?')
-        if len(parm)==2:
-            parm2 = parm[1].split(',')
-            parm3 = [ pos.split('=') for pos in parm2 ]
+        parm = split2(address, "?")
+        if len(parm) == 2:
+            parm2 = parm[1].split(",")
+            parm3 = [pos.split("=") for pos in parm2]
             for pos in parm3:
-                if len(pos)==2:
-                    pdict[pos[0]]=pos[1]
+                if len(pos) == 2:
+                    if pos[1]:
+                        pdict[pos[0]] = pos[1]
+                    else:
+                        pdict[pos[0]] = "browser"
                 else:
-                    pdict[pos[0]]=None
-        if parameters and type(parameters)==dict:
+                    pdict[pos[0]] = "browser"
+
+        if parameters and type(parameters) == dict:
             pdict.update(parameters)
 
-        if 'schtml' in pdict:
-            _panel = pdict['schtml']
+        if "schtml" in pdict:
+            _panel = pdict["schtml"]
         else:
             _panel = panel
 
-        if _panel == "desktop2" or _panel == '1':
-            _panel = 'desktop'
+        if _panel == "desktop2" or _panel == "1":
+            _panel = "desktop"
 
-        if panel=='pscript':
+        if panel == "pscript":
             http = wx.GetApp().get_http(self)
             response = http.get(self, address)
             ptr = response.str()
             exec(ptr)
             return
 
-        if not address.startswith('^'):
-            if (not _panel or _panel.startswith('browser')) or ((address.startswith('http') \
-                    or address.startswith('file://')) and not address.startswith(wx.GetApp().base_address)):
-                if '_' in _panel:
-                    _panel = _panel.split('_')[1]
+        if not address.startswith("^"):
+            if (not _panel or _panel.startswith("browser")) or (
+                (address.startswith("http") or address.startswith("file://"))
+                and not address.startswith(wx.GetApp().base_address)
+            ):
+                if "_" in _panel:
+                    _panel = _panel.split("_")[1]
                 else:
-                    _panel = 'desktop'
-                ret =  self.new_main_page("^standard/webview/widget_web.html", "Empty page", panel=_panel)
-                if address.startswith('http://') or address.startswith('https://') or address.startswith('file://'):
+                    _panel = "desktop"
+                ret = self.new_main_page(
+                    "^standard/webview/widget_web.html", "Empty page", panel=_panel
+                )
+                if (
+                    address.startswith("http://")
+                    or address.startswith("https://")
+                    or address.startswith("file://")
+                ):
+
                     def _ret_fun():
                         ret.body.WEB.go(address)
+
                     wx.CallAfter(_ret_fun)
                 else:
+
                     def _ret_fun():
                         ret.body.WEB.go(wx.GetApp().base_path + address)
+
                     wx.CallAfter(_ret_fun)
                 return ret
 
-        if len(title)<32:
+        if len(title) < 32:
             title2 = title
         else:
-            title2 = title[:30] + '...'
+            title2 = title[:30] + "..."
 
         if panel.startswith("toolbar"):
             name = panel[7:]
-            if name[0:1] == '_':
-                return self.toolbar_interface.create_html_win(name[1:], address_or_parser, parameters)
+            if name[0:1] == "_":
+                return self.toolbar_interface.create_html_win(
+                    name[1:], address_or_parser, parameters
+                )
             else:
-                return self.toolbar_interface.create_html_win(None, address_or_parser, parameters)
-
+                return self.toolbar_interface.create_html_win(
+                    None, address_or_parser, parameters
+                )
 
         n = self._mgr.GetPane(_panel).window
 
@@ -667,9 +762,9 @@ class SchAppFrame(SchBaseFrame):
         else:
             refr = False
 
-        if title2 in [ pos.caption for pos in n._tabs._pages ]:
+        if title2 in [pos.caption for pos in n._tabs._pages]:
             for id, pos in enumerate(n._tabs._pages):
-                if pos.caption==title2:
+                if pos.caption == title2:
                     n.SetSelection(id)
                     n.activate_page(pos.window)
             if refr:
@@ -680,7 +775,7 @@ class SchAppFrame(SchBaseFrame):
         page = SchNotebookPage(n)
         if panel == "desktop2":
             if title is None:
-                if type(address_or_parser)==str:
+                if type(address_or_parser) == str:
                     n.add_and_split(page, "", wx.RIGHT)
                 else:
                     n.add_and_split(page, address_or_parser.title, wx.RIGHT)
@@ -688,14 +783,14 @@ class SchAppFrame(SchBaseFrame):
                 n.add_and_split(page, title2, wx.RIGHT)
         else:
             if title is None:
-                if type(address_or_parser)==str:
+                if type(address_or_parser) == str:
                     n.AddPage(page, "", True)
                 else:
                     n.AddPage(page, address_or_parser.title, True)
             else:
                 n.AddPage(page, title2, True)
 
-        if type(address_or_parser)==str:
+        if type(address_or_parser) == str:
             address = address_or_parser
         else:
             address = address_or_parser.address
@@ -752,7 +847,7 @@ class SchAppFrame(SchBaseFrame):
         event.Skip()
 
     def on_timer(self, evt):
-        #if platform.system() == "Windows":
+        # if platform.system() == "Windows":
         #    wx.html2.WebView.New("messageloop")
         global _RECORD_VIDEO, _RECORD_VIDEO_STRUCT
         if self._video:
@@ -761,6 +856,7 @@ class SchAppFrame(SchBaseFrame):
                     from mss import mss
                     import cv2
                     import numpy
+
                     _RECORD_VIDEO_STRUCT = (mss, cv2, numpy)
                     _RECORD_VIDEO = 1
                 except:
@@ -768,12 +864,12 @@ class SchAppFrame(SchBaseFrame):
             if _RECORD_VIDEO == 1:
                 save_video_frame(self)
 
-        x = dispatcher.getReceivers(signal='PROCESS_INFO')
-        if len(x)>0:
+        x = dispatcher.getReceivers(signal="PROCESS_INFO")
+        if len(x) > 0:
             if not self._proc_mannager:
                 self._proc_mannager = get_process_manager()
             x = self._proc_mannager.list_threads(all=False)
-            dispatcher.send('PROCESS_INFO',self, x)
+            dispatcher.send("PROCESS_INFO", self, x)
 
     def _append_command(self, typ, command):
         id = wx.NewId()
@@ -831,7 +927,7 @@ class SchAppFrame(SchBaseFrame):
             funct - function (event handler) to bind
             id - toolbar button id
         """
-        if 'toolbar' in self.gui_style:
+        if "toolbar" in self.gui_style:
             self.toolbar_interface.bind(funct, id)
 
     def _create_status_bar(self):
@@ -839,9 +935,6 @@ class SchAppFrame(SchBaseFrame):
         statusbar.SetStatusWidths([-2, -3])
         statusbar.SetStatusText("Ready", 0)
         return statusbar
-
-
-
 
     def _exit(self, event=None):
         finish_video()
@@ -858,7 +951,9 @@ class SchAppFrame(SchBaseFrame):
             base_path = wx.GetApp().base_address + "/" + wx.GetApp().base_app
         else:
             base_path = wx.GetApp().base_address
-        self.new_main_page(base_path + '/schcommander/form/FileManager/', "Commander", None, "panel")
+        self.new_main_page(
+            base_path + "/schcommander/form/FileManager/", "Commander", None, "panel"
+        )
 
     def on_exit(self, event=None):
         self._exit()
@@ -869,7 +964,9 @@ class SchAppFrame(SchBaseFrame):
         event.Skip()
 
     def on_show_elem(self, event):
-        name = ["header", "panel", "footer", "tb1", "tb2"][event.GetId() - ID_SHOWHEADER]
+        name = ["header", "panel", "footer", "tb1", "tb2"][
+            event.GetId() - ID_SHOWHEADER
+        ]
         panel = self._mgr.GetPane(name)
         panel.Show(not panel.IsShown())
         self._mgr.Update()
@@ -888,7 +985,7 @@ class SchAppFrame(SchBaseFrame):
             self._create_status_bar()
 
     def _on_html(self, command):
-        l = command.split(',')
+        l = command.split(",")
         if len(l) > 2:
             parm = l[2]
             if parm == "":
@@ -896,16 +993,15 @@ class SchAppFrame(SchBaseFrame):
         else:
             parm = None
 
-        if l[1] != None and l[1][0] == ' ':
+        if l[1] != None and l[1][0] == " ":
             l[1] = (l[1])[1:]
-        if parm != None and parm[0] == ' ':
+        if parm != None and parm[0] == " ":
             parm = parm[1:]
 
         if l[0]:
             return self.new_main_page(l[1], l[0], parm)
         else:
-            return self.new_main_page(l[1], l[0], parm, panel='pscript')
-
+            return self.new_main_page(l[1], l[0], parm, panel="pscript")
 
     def _on_python(self, command):
         exec(command)
@@ -917,34 +1013,47 @@ class SchAppFrame(SchBaseFrame):
         id = event.GetId()
         if id in self.command:
             cmd = self.command[id]
-            if cmd[0] == 'html':
+            if cmd[0] == "html":
                 return self._on_html(cmd[1])
-            if cmd[0] == 'python':
+            if cmd[0] == "python":
                 return self._on_python(cmd[1])
-            if cmd[0] == 'sys':
+            if cmd[0] == "sys":
                 return self._on_sys(cmd[1])
         else:
             if id == ID_RESET:
                 from pytigon_gui.toolbar.moderntoolbar import RibbonInterface
+
                 old_toolbar = self.toolbar_interface
                 sizer = self.GetSizer()
                 self.toolbar_interface = RibbonInterface(self, self.gui_style)
                 self._create_tool_bar()
                 self.toolbar_interface.realize_bar()
                 sizer.Replace(old_toolbar.get_bar(), self.toolbar_interface.get_bar())
-                self.toolbar_interface.get_bar().SetSize(old_toolbar.get_bar().GetSize())
+                self.toolbar_interface.get_bar().SetSize(
+                    old_toolbar.get_bar().GetSize()
+                )
                 wx.CallAfter(old_toolbar.get_bar().Destroy)
                 return
             elif id == ID_WEB_NEW_WINDOW:
-                win = wx.GetApp().GetTopWindow().new_main_page("^standard/webview/widget_web.html", "Empty page")
+                win = (
+                    wx.GetApp()
+                    .GetTopWindow()
+                    .new_main_page("^standard/webview/widget_web.html", "Empty page")
+                )
                 win.body.new_child_page("^standard/webview/gotopanel.html", title="Go")
                 return
         event.Skip()
 
     def on_about(self):
-        msg = "Pytigon runtime\nSławomir Chołaj\nslawomir.cholaj@gmail.com\n\n" + \
-              "The program uses wxpython library version:" + wx.VERSION_STRING
-        dlg = wx.MessageDialog(self, msg, "Pytigon", wx.OK | wx.ICON_INFORMATION) % wx.GetApp().title
+        msg = (
+            "Pytigon runtime\nSławomir Chołaj\nslawomir.cholaj@gmail.com\n\n"
+            + "The program uses wxpython library version:"
+            + wx.VERSION_STRING
+        )
+        dlg = (
+            wx.MessageDialog(self, msg, "Pytigon", wx.OK | wx.ICON_INFORMATION)
+            % wx.GetApp().title
+        )
         dlg.ShowModal()
         dlg.Destroy()
 
@@ -961,7 +1070,7 @@ class SchAppFrame(SchBaseFrame):
                 return
         event.Skip()
 
-    #def get_start_position(self):
+    # def get_start_position(self):
     #    self.x = self.x + 20
     #    x = self.x
     #    pt = self.ClientToScreen(wx.Point(0, 0))
@@ -981,19 +1090,19 @@ class SchAppFrame(SchBaseFrame):
             panel.window.SetFocus()
 
     def on_goto_panel(self, event):
-        panel = self._mgr.GetPane('panel')
+        panel = self._mgr.GetPane("panel")
         if panel.IsShown():
-            self.goto_panel('panel')
+            self.goto_panel("panel")
         else:
-            panel = self._mgr.GetPane('menu')
+            panel = self._mgr.GetPane("menu")
             if panel and panel.IsShown():
                 panel.window.SetFocus()
 
     def on_goto_head(self, event):
-        self.goto_panel('header')
+        self.goto_panel("header")
 
     def on_goto_footer(self, event):
-        self.goto_panel('footer')
+        self.goto_panel("footer")
 
     def on_goto_desktop(self, event):
         self.desktop.SetFocus()
@@ -1005,15 +1114,15 @@ class SchAppFrame(SchBaseFrame):
             page: web page address
         """
         http = wx.GetApp().get_http(self)
-        response = http.get(self, str(page)) #, user_agent='webkit')
+        response = http.get(self, str(page))  # , user_agent='webkit')
         form_frame = self._open_binary_data(response, page)
 
         def _after_init():
             form_frame.body.WEB.execute_javascript("document.title = '%s';" % page)
+
         wx.CallAfter(_after_init)
 
         return form_frame
-
 
     def show_odf(self, page):
         """show odf document downloaded from web server
@@ -1022,20 +1131,20 @@ class SchAppFrame(SchBaseFrame):
             page: web page address
         """
         http = wx.GetApp().get_http(self)
-        response = http.get(self, str(page)) #, user_agent='webkit')
+        response = http.get(self, str(page))  # , user_agent='webkit')
         return self._open_binary_data(response, page)
-    
-    def _open_binary_data(self, http_ret, page):
-        if 'application/vnd.oasis.opendocument' in http_ret.ret_content_type:
 
-            cd = http_ret.response.headers.get('content-disposition')
+    def _open_binary_data(self, http_ret, page):
+        if "application/vnd.oasis.opendocument" in http_ret.ret_content_type:
+
+            cd = http_ret.response.headers.get("content-disposition")
             if cd:
-                name = cd.split('filename=')[1]
+                name = cd.split("filename=")[1]
             else:
                 name = None
             p = http_ret.ptr()
-                        
-            postfix = name.split('_')[-1][-12:]
+
+            postfix = name.split("_")[-1][-12:]
             fname = get_temp_filename(postfix)
             with open(fname, "wb") as f:
                 f.write(p)
@@ -1043,31 +1152,40 @@ class SchAppFrame(SchBaseFrame):
             file_name = fname
             if not name:
                 name = file_name
-            if not hasattr(wx.GetApp(),"download_files"):
+            if not hasattr(wx.GetApp(), "download_files"):
                 wx.GetApp().download_files = []
-            wx.GetApp().download_files.append( (file_name, name, datetime.datetime.now() ) )
-    
-            return self.new_main_page('^standard/odf_view/odf_view.html', name, parameters=name)
-        elif 'application/pdf' in http_ret.ret_content_type:
-            p = http_ret.ptr()
-            f = NamedTemporaryFile(delete=False)
-            f.write(p)
-            name = f.name
-            f.close()
-            href = "http://127.0.0.2/static/vanillajs_plugins/pdfjs/web/viewer.html?file="+name
-            return self.new_main_page(href, name, parameters={ 'schtml': 0 } )
+            wx.GetApp().download_files.append(
+                (file_name, name, datetime.datetime.now())
+            )
 
-        elif 'zip' in http_ret.ret_content_type:
+            return self.new_main_page(
+                "^standard/odf_view/odf_view.html", name, parameters=name
+            )
+        elif "application/pdf" in http_ret.ret_content_type:
             p = http_ret.ptr()
             f = NamedTemporaryFile(delete=False)
             f.write(p)
             name = f.name
             f.close()
-            return self.new_main_page('^standard/html_print/html_print.html', name, parameters=name)
+            href = (
+                "http://127.0.0.2/static/vanillajs_plugins/pdfjs/web/viewer.html?file="
+                + name
+            )
+            return self.new_main_page(href, name, parameters={"schtml": 0})
+
+        elif "zip" in http_ret.ret_content_type:
+            p = http_ret.ptr()
+            f = NamedTemporaryFile(delete=False)
+            f.write(p)
+            name = f.name
+            f.close()
+            return self.new_main_page(
+                "^standard/html_print/html_print.html", name, parameters=name
+            )
         else:
-            cd = http_ret.response.headers.get('content-disposition')
+            cd = http_ret.response.headers.get("content-disposition")
             if cd:
-                name = cd.split('filename=')[1].replace('\"',"")
+                name = cd.split("filename=")[1].replace('"', "")
             else:
                 name = "data.dat"
 

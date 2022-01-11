@@ -50,7 +50,7 @@ from pytigon_gui.guictrl.grid.gridtable_from_html_table import SimpleDataTable
 from pytigon_gui.guictrl.grid.gridpanel import SchGridPanel
 from pytigon_gui.guictrl.popup.popuphtml import DataPopupControl
 from pytigon_gui.guictrl.popup.select2 import Select2Base
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SchBaseCtrl, handle_best_size
 from pytigon_gui.guictrl.button.toolbarbutton import BitmapTextButton
 
 from django.utils.translation import gettext_lazy as _
@@ -73,6 +73,19 @@ def SELECT(parent, **kwds):
             size = int(param["size"])
         if multiple and size == 1:
             size = 10
+
+        if "schtype" in param and param["schtype"] in (
+            "HeavySelect2Field",
+            "HeavySelect2MultipleField",
+            "ModelSelect2Field",
+            "ModelSelect2MultipleField",
+        ):
+            kwds["param"]["data"] = [
+                kwds["param"],
+            ]
+            kwds["param"]["data"][0]["attrs"] = kwds["param"]
+
+            return SELECT2(parent, **kwds)
     else:
         size = 1
 
@@ -81,7 +94,9 @@ def SELECT(parent, **kwds):
         return DBCHOICE(parent, **kwds)
     else:
         kwds["length"] = size
-        return HTMLLISTBOX(parent, **kwds)
+        #        return HTMLLISTBOX(parent, **kwds)
+        # return CHECKLIST(parent, **kwds)
+        return CHECKLISTBOX(parent, **kwds)
 
 
 def BUTTON(parent, **kwds):
@@ -405,6 +420,7 @@ class CHECKBOX(wx.CheckBox, SchBaseCtrl):
             self.value = value
 
 
+@handle_best_size
 class CHECKLISTBOX(wx.CheckListBox, SchBaseCtrl):
     """CHECKBOXLIST handle ctrlchecklistbox tag
 
@@ -422,35 +438,39 @@ class CHECKLISTBOX(wx.CheckListBox, SchBaseCtrl):
         else:
             kwds["style"] = wx.WANTS_CHARS
         wx.CheckListBox.__init__(self, parent, **kwds)
-        self.init_choices(self.get_tdata())
+        self.init_data(self.get_tdata())
+
+    def init_data(self, data):
+        checked_items = []
+        if data:
+            for row in data:
+                id = self.Append(row[0].data)
+                if "selected" in row[0].attrs:
+                    checked_items.append(id)
+        if checked_items:
+            self.SetCheckedItems(checked_items)
 
     def process_refr_data(self, **kwds):
         self.init_base(kwds)
         self.Clear()
         self.init_data(self.get_tdata())
 
-    def init_choices(self, data):
-        self.choices = {}
-        self.checked_strings = []
-        if data:
-            for row in data:
-                value = row[0].data
-                self.Append(value)
-                if "value" in row[0].attrs:
-                    self.choices[value] = row[0].attrs["value"]
-                if "selected" in row[0].attrs:
-                    self.checked_strings.append(value)
+    def GetBestSize(self):
+        return (300, 68)
 
-        if self.checked_strings:
-            self.SetCheckedStrings(self.checked_strings)
+    def GetMinSize(self):
+        return self.GetBestSize()
 
-    # def Refresh(self):
-    #    self.Clear()
-    #    self.RefreshTDATA()
-    #    tdata = self.get_tdata()
-    #    if tdata:
-    #        for row in tdata:
-    #            self.Append(row[0].data)
+    def GetValue(self):
+        ret = []
+        data = self.get_tdata()
+        items = self.GetCheckedItems()
+        for item in items:
+            if hasattr(data[item][0], "attrs") and "value" in data[item][0].attrs:
+                ret.append(data[item][0].attrs["value"])
+            else:
+                ret.append(data[item][0].data)
+        return ret
 
 
 class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
@@ -671,6 +691,23 @@ class LIST(wx.ListCtrl, SchBaseCtrl):
                     index = self.InsertStringItem(0, row[0].data)
                     for i in range(1, l):
                         self.SetStringItem(index, i, row[i].data)
+
+
+class CHECKLIST(LIST):
+    def __init__(self, parent, **kwds):
+        super().__init__(parent, **kwds)
+        self.EnableCheckBoxes()
+        self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self.OnItemActivated)
+
+    def ToggleItem(self, index):
+        toggle = not self.IsItemChecked(index)
+        self.CheckItem(index, toggle)
+
+    def OnItemActivated(self, evt):
+        self.ToggleItem(evt.Index)
+
+    def GetBestSize(self):
+        return (400, 48)
 
 
 class TABLE(SchGridPanel, SchBaseCtrl):
@@ -1279,8 +1316,8 @@ class NUM(wx.SpinCtrl, SchBaseCtrl):
         wx.SpinCtrl.__init__(self, parent, **kwds)
 
 
-class AMOUNT(masked.NumCtrl, SchBaseCtrl):
-    """AMOUNT handle ctrlamount tag
+class AMOUNT(wx.SpinCtrlDouble, SchBaseCtrl):
+    """handle ctrlfloat tag
 
     Tag arguments:
         value
@@ -1288,19 +1325,74 @@ class AMOUNT(masked.NumCtrl, SchBaseCtrl):
 
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
-        prec = 2
-        width = 10
-        if "prec" in kwds:
-            prec = kwds["prec"]
-            del kwds["prec"]
-        if "width" in kwds:
-            width = kwds["width"]
-            del kwds["width"]
+        if (
+            self.param
+            and "param" in self.param
+            and "PROCESS_ENTER" in self.param["param"]
+        ):
+            kwds["style"] = wx.TE_PROCESS_ENTER
+        if self.readonly:
+            style = 0
+            if "style" in kwds:
+                style = kwds["style"]
+            style = style | wx.TE_READONLY
+            kwds["style"] = style
 
-        kwds["integerWidth"] = width
-        kwds["fractionWidth"] = prec
+        kwds["inc"] = 1
 
-        masked.NumCtrl.__init__(self, parent, **kwds)
+        if self.param and "min" in self.param:
+            kwds["min"] = float(self.param["min"])
+        else:
+            kwds["min"] = -100000000
+        if self.param and "max" in self.param:
+            kwds["max"] = float(self.param["max"])
+        else:
+            kwds["max"] = 100000000
+
+        kwds["style"] = wx.SP_ARROW_KEYS | wx.ALIGN_RIGHT
+
+        wx.SpinCtrlDouble.__init__(self, parent, **kwds)
+        self.SetDigits(2)
+
+
+class FLOAT(wx.SpinCtrlDouble, SchBaseCtrl):
+    """handle ctrlfloat tag
+
+    Tag arguments:
+        value
+    """
+
+    def __init__(self, parent, **kwds):
+        SchBaseCtrl.__init__(self, parent, kwds)
+        if (
+            self.param
+            and "param" in self.param
+            and "PROCESS_ENTER" in self.param["param"]
+        ):
+            kwds["style"] = wx.TE_PROCESS_ENTER
+        if self.readonly:
+            style = 0
+            if "style" in kwds:
+                style = kwds["style"]
+            style = style | wx.TE_READONLY
+            kwds["style"] = style
+
+        kwds["inc"] = 1
+
+        if self.param and "min" in self.param:
+            kwds["min"] = float(self.param["min"])
+        else:
+            kwds["min"] = -100000000
+        if self.param and "max" in self.param:
+            kwds["max"] = float(self.param["max"])
+        else:
+            kwds["max"] = 100000000
+
+        kwds["style"] = wx.SP_ARROW_KEYS | wx.ALIGN_RIGHT
+
+        wx.SpinCtrlDouble.__init__(self, parent, **kwds)
+
+        self.SetDigits(6)
 
 
 class TIME(masked.TimeCtrl, SchBaseCtrl):
@@ -1419,7 +1511,7 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
         self.choices = []
         self.getItemFunct = None
-
+        self.h = None
         if self.param and "multiple" in self.param:
             style = 0
             if "style" in kwds:
@@ -1435,13 +1527,13 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         tdata = self.get_tdata()
         if tdata:
             for row in tdata:
-                if hasattr(row[0], "attrs") and 'value' in row[0].attrs:
-                    if 'selected' in row[0].attrs:
+                if hasattr(row[0], "attrs") and "value" in row[0].attrs:
+                    if "selected" in row[0].attrs:
                         selected = True
                     else:
-                        selected = False 
-                    self._append_html(row[0].attrs['value'], selected, row[0].data)
-                else: 
+                        selected = False
+                    self._append_html(row[0].attrs["value"], selected, row[0].data)
+                else:
                     self.append_html(row[0].data)
 
         wx.VListBox.__init__(self, parent, **kwds)
@@ -1501,6 +1593,8 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
             print("ERROR:", value)
 
         w2, h2 = p.get_max_sizes()
+        if not self.h:
+            self.h = h2
         return w2, h2
 
     def OnMeasureItem(self, n):
@@ -1515,7 +1609,11 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         return False
 
     def GetBestSize(self):
-        return (400, 200)
+        print("GetBestSize: ", self.h)
+        if self.h:
+            return (400, self.h + 2)
+        else:
+            return (400, 200)
 
     def scroll_to_line(self, line_no):
         nr = line_no
@@ -1531,11 +1629,33 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         self.init_base(kwds)
         self.choices = []
         tdata = self.get_tdata()
+
         if tdata:
             for row in tdata:
-                self.AppendHtml(row[0].data)
+                if hasattr(row[0], "attrs") and "value" in row[0].attrs:
+                    if "selected" in row[0].attrs:
+                        selected = True
+                    else:
+                        selected = False
+                    self._append_html(row[0].attrs["value"], selected, row[0].data)
+                else:
+                    self.append_html(row[0].data)
         self.SetItemCount(len(self.choices))
-        self.SetSelection(len(self.choices) - 1)
+        i = 0
+        for choice in self.choices:
+            if choice[1]:
+                self.SetSelection(i)
+            i += 1
+
+        self.ScrollToRow(0)
+
+        # if tdata:
+        #    for row in tdata:
+        #        self.append_html(row[0].data)
+
+
+#        self.SetItemCount(len(self.choices))
+#        self.SetSelection(len(self.choices) - 1)
 
 
 class HTML(page.SchPage, SchBaseCtrl):
@@ -1745,7 +1865,7 @@ if platform.system() == "Linux":
                     False,
                 )
 
-            self.to_masked(autoformat="EUDATEYYYYMMDD.")
+            wx.CallAfter(self.to_masked,autoformat="EUDATEYYYYMMDD.")
 
         def GetValue(self):
             value = self.get_rec()
@@ -1814,12 +1934,18 @@ class DATETIMEPICKER(POPUPHTML):
 
         POPUPHTML.__init__(self, parent, **kwds)
 
-        self.to_masked(autoformat="EUDATE24HRTIMEYYYYMMDD.HHMM")
+        # self.to_masked(autoformat="EUDATE24HRTIMEYYYYMMDD.HHMM")
+        # self.to_masked(autoformat="EUDATE24HRTIMEYYYYMMDD.HHMM")
+        self.to_masked(
+            mask="####-##-## ##:##",
+            formatcodes="F",
+            validRegex="\d{4}-\d{2}-\d{2} \d{2}:\d{2}",
+        )
         # self.win.SetValidBackgroundColour("Red")
         # self.win.SetValidBackgroundColour(wx.Colour(1,0,0))
-        self.win.SetValidBackgroundColour(
-            wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-        )
+        # self.win.SetValidBackgroundColour(
+        #    wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+        # )
 
         if self.value:
             self.set_rec(self.value, Td(self.value))
@@ -1827,20 +1953,16 @@ class DATETIMEPICKER(POPUPHTML):
             now = (
                 datetime.datetime.now()
                 .isoformat()
-                .replace("T", " ")
-                .replace("-", ".")[:16]
+                .replace("T", " ")[:16]
             )
             self.set_rec(now, Td(now), False)
 
-    # def SetValue(self, value):
     def set_rec(self, value, value_rec, dismiss=False):
-        print(value, value_rec)
         if len(value) == 16:
-            return super().set_rec(value.replace("-", "."), value_rec, dismiss)
+            return super().set_rec(value, value_rec, dismiss)
         elif len(value) == 10:
-            return super().set_rec(
-                value.replace("-", ".") + " 00:00", value_rec, dismiss
-            )
+            value_rec.data = value_rec.data + " 00:00"
+            return super().set_rec(value + " 00:00", value_rec, dismiss)
         else:
             return super().set_rec("0000.00.00 00:00", value_rec, dismiss)
 
@@ -1848,13 +1970,11 @@ class DATETIMEPICKER(POPUPHTML):
         value = self.get_rec()
         value2 = self.GetTextCtrl().GetValue()
         if value2 and value2[0] != " ":
-            # if value.__class__ in (tuple,list) and len(value)>1:
-            #    return value[1][0]
             if value.data:
                 return value.data
             else:
                 return [
-                    datetime.datetime.strptime(value2, "%Y.%m.%d %H:%M"),
+                    datetime.datetime.strptime(value2, "%Y-%m-%d %H:%M"),
                 ]
         return None
 
@@ -1866,7 +1986,7 @@ class DATETIMEPICKER(POPUPHTML):
 class CHOICE(POPUPHTML):
     """CHOICE handle ctrlchoice tag
 
-    Tag arguments:
+    Tag arguments:d
         value
     """
 
@@ -1882,7 +2002,7 @@ class CHOICE(POPUPHTML):
 
         if "size" not in kwds:
             kwds["size"] = wx.Size(250, -1)
-
+        self.height = 250
         kwds["dialog_with_value"] = False
         POPUPHTML.__init__(self, parent, **kwds)
 
@@ -1936,6 +2056,16 @@ class CHOICE(POPUPHTML):
             return POPUPHTML.GetValue(self)
         return None
 
+    def GetBestSize(self):
+        dx, dy = POPUPHTML.GetBestSize(self)
+        return (dx, dy)
+
+    def GetMinSize(self):
+        return self.GetBestSize()
+
+    def GetMaxSize(self):
+        return self.GetBestSize()
+
 
 class DBCHOICE(CHOICE):
     """DBCHOICE handle ctrldbchoice tag
@@ -1947,10 +2077,13 @@ class DBCHOICE(CHOICE):
     def GetValue(self):
         if self.readonly:
             value = self.get_rec()
-            if "value" in value.attrs:
-                return value.attrs["value"]
+            if value:
+                if hasattr(value, "attrs") and "value" in value.attrs:
+                    return value.attrs["value"]
+                else:
+                    return value.data
             else:
-                return value.data
+                return None
         else:
             return POPUPHTML.GetValue(self)
         return None

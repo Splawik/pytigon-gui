@@ -10,36 +10,39 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 """Module contains SchBaseCtrl class"""
 
 import wx
 
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
+
 try:
     from urllib.parse import unquote
 except:
     from urllib import unquote
 from pytigon_lib.schparser.html_parsers import TreeParser
 
+
 class SchBaseCtrl(object):
     """Base class for all widgets"""
+
     def __init__(self, parent, kwds):
         """Constructor"""
         self.unique_name = None
         self.init_base(kwds, parent)
         self.accept_focus = True
-        #self.acc_tab = False
+        # self.acc_tab = False
         self.acc_tab_bind = False
         form = self.get_parent_form()
         if form:
-            form.signal_from_child(self, '__init__')
+            form.signal_from_child(self, "__init__")
 
     def init_base(self, kwds, parent=None):
         if parent:
@@ -48,104 +51,104 @@ class SchBaseCtrl(object):
         self.ldatabuf = None
 
         self.tag = None
-        if 'param' in kwds:
-            if 'tag' in kwds['param']:
-                self.tag = kwds['param']['tag']
+        if "param" in kwds:
+            if "tag" in kwds["param"]:
+                self.tag = kwds["param"]["tag"]
 
-        if 'href' in kwds:
-            self.href = kwds['href']
+        if "href" in kwds:
+            self.href = kwds["href"]
             if self.href == None:
-                self.href = ''
-            del kwds['href']
+                self.href = ""
+            del kwds["href"]
         else:
             self.href = None
-        if 'label' in kwds:
-            self.label = kwds['label']
-            del kwds['label']
+        if "label" in kwds:
+            self.label = kwds["label"]
+            del kwds["label"]
         else:
             self.label = None
-        if 'id' in kwds:
-            self.nr_id = kwds['id']
-            del kwds['id']
+        if "id" in kwds:
+            self.nr_id = kwds["id"]
+            del kwds["id"]
         else:
             self.nr_id = None
-        if 'target' in kwds:
-            self.target = kwds['target']
-            del kwds['target']
+        if "target" in kwds:
+            self.target = kwds["target"]
+            del kwds["target"]
         else:
-            self.target = '_blank'
-        if 'value' in kwds:
-            self.value = kwds['value']
-            del kwds['value']
+            self.target = "_blank"
+        if "value" in kwds:
+            self.value = kwds["value"]
+            del kwds["value"]
         else:
             self.value = None
-        if 'valuetype' in kwds:
-            self.valuetype = kwds['valuetype']
-            del kwds['valuetype']
+        if "valuetype" in kwds:
+            self.valuetype = kwds["valuetype"]
+            del kwds["valuetype"]
         else:
-            self.valuetype = 'data'
-        if 'defaultvalue' in kwds:
-            self.defaultvalue = kwds['defaultvalue']
-            del kwds['defaultvalue']
+            self.valuetype = "data"
+        if "defaultvalue" in kwds:
+            self.defaultvalue = kwds["defaultvalue"]
+            del kwds["defaultvalue"]
         else:
             self.defaultvalue = None
-        if 'length' in kwds:
-            self.length = kwds['length']
-            del kwds['length']
+        if "length" in kwds:
+            self.length = kwds["length"]
+            del kwds["length"]
         else:
             self.length = 0
-        if 'maxlength' in kwds:
-            self.maxlength = kwds['maxlength']
-            del kwds['maxlength']
+        if "maxlength" in kwds:
+            self.maxlength = kwds["maxlength"]
+            del kwds["maxlength"]
         else:
             self.maxlength = 0
-        if 'readonly' in kwds:
-            self.readonly = kwds['readonly']
-            del kwds['readonly']
+        if "readonly" in kwds:
+            self.readonly = kwds["readonly"]
+            del kwds["readonly"]
         else:
             self.readonly = False
-        if 'hidden' in kwds:
+        if "hidden" in kwds:
             self.hidden = True
-            del kwds['hidden']
+            del kwds["hidden"]
         else:
             self.hidden = False
-        if 'src' in kwds:
-            self.src = kwds['src']
-            del kwds['src']
+        if "src" in kwds:
+            self.src = kwds["src"]
+            del kwds["src"]
         else:
             self.src = None
-        if 'onload' in kwds:
-            self.onload = kwds['onload']
-            del kwds['onload']
+        if "onload" in kwds:
+            self.onload = kwds["onload"]
+            del kwds["onload"]
         else:
             self.onload = None
-        if 'tdata' in kwds:
+        if "tdata" in kwds:
             self.tdatabuf = None
-            self.tdata = kwds['tdata']
-            del kwds['tdata']
+            self.tdata = kwds["tdata"]
+            del kwds["tdata"]
         else:
             self.tdata = None
             self.tdatabuf = None
-        if 'ldata' in kwds:
-            self.ldata = kwds['ldata']
-            del kwds['ldata']
+        if "ldata" in kwds:
+            self.ldata = kwds["ldata"]
+            del kwds["ldata"]
         else:
             self.ldata = None
-        if 'data' in kwds:
-            self.data = unquote(kwds['data'])
-            del kwds['data']
+        if "data" in kwds:
+            self.data = unquote(kwds["data"])
+            del kwds["data"]
         else:
             self.data = None
-        if 'param' in kwds:
-            self.param = kwds['param']
-            del kwds['param']
+        if "param" in kwds:
+            self.param = kwds["param"]
+            del kwds["param"]
         else:
             self.param = None
-        if 'style' in kwds:
-            self.style = kwds['style']
-            del kwds['style']
+        if "style" in kwds:
+            self.style = kwds["style"]
+            del kwds["style"]
         else:
-            self.style=None
+            self.style = None
 
         ctrl_process = wx.GetApp().ctrl_process
         if self.tag in ctrl_process:
@@ -157,14 +160,13 @@ class SchBaseCtrl(object):
 
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down_base)
         if self.onload:
-            d = {'wx': wx, 'self': self}
+            d = {"wx": wx, "self": self}
             exec(self.onload, d)
 
         if hasattr(self, "__ext_init__"):
             self.__ext_init__()
 
-        self.get_parent_form().signal_from_child(self, 'after_create')
-
+        self.get_parent_form().signal_from_child(self, "after_create")
 
     def CanAcceptFocus(self):
         if self.IsShown() and self.IsEnabled():
@@ -174,7 +176,6 @@ class SchBaseCtrl(object):
 
     def CanAcceptFocusFromKeyboard(self):
         return self.CanAcceptFocus()
-
 
     def set_unique_name(self, name):
         self.unique_name = name
@@ -193,7 +194,7 @@ class SchBaseCtrl(object):
     def on_key_down_base(self, event):
         if event.GetKeyCode() == wx.WXK_ESCAPE:
             wx.CallAfter(self.GetParent().cancel)
-            #wx.CallAfter(self.GetParent().close_with_delay)
+            # wx.CallAfter(self.GetParent().close_with_delay)
         elif event.GetKeyCode() == wx.WXK_TAB:
             if event.ShiftDown():
                 self.GetParent().Navigate(self, True)
@@ -223,7 +224,7 @@ class SchBaseCtrl(object):
                 if html_src:
                     tables = html_src
                 else:
-                    tables = self.load_data_from_server(self.src).decode('utf-8')
+                    tables = self.load_data_from_server(self.src).decode("utf-8")
 
                 self.tdatabuf = tdata_from_html(tables, wx.GetApp().http)
 
@@ -257,8 +258,8 @@ class SchBaseCtrl(object):
     def get_parent_form(self):
         """Get parent wxForm parent object"""
         parent = self.parent
-        while(parent!=None):
-            if type(parent).__name__ == 'SchForm':
+        while parent != None:
+            if type(parent).__name__ == "SchForm":
                 return parent
             parent = parent.GetParent()
         return None
@@ -269,3 +270,29 @@ class SchBaseCtrl(object):
             return form.get_parent_page()
         else:
             return None
+
+
+def handle_best_size(base_class):
+    class _Derived(base_class):
+        def GetBestSize(self):
+            w = 0
+            h = 0
+            if self.param and "width" in self.param:
+                try:
+                    w = int(self.param["width"])
+                except:
+                    pass
+            if self.param and "height" in self.param:
+                try:
+                    w = int(self.param["height"])
+                except:
+                    pass
+            if w == 0 or h == 0:
+                base_size = super().GetBestSize()
+                if w == 0:
+                    w = base_size[0]
+                if h == 0:
+                    h = base_size[1]
+            return (w, h)
+
+    return _Derived
