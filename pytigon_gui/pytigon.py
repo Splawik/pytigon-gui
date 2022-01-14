@@ -55,7 +55,7 @@ if ROOT_PATH.startswith("."):
 sys.path.append(ROOT_PATH)
 sys.path.append(ROOT_PATH + "/appdata")
 
-os.environ['EMBEDED_DJANGO_SERVER'] = '1'
+os.environ["EMBEDED_DJANGO_SERVER"] = "1"
 
 from pytigon_lib import init_paths
 
@@ -172,7 +172,7 @@ def process_argv(argv):
             ret["embeded_taskqueue"] = True
         elif opt == "--no_gui":
             ret["nogui"] = True
-        elif opt in ("--menu_always", ):
+        elif opt in ("--menu_always",):
             ret["menu_always"] = True
         elif opt in ("--rpc"):
             ret["rpc"] = int(arg)
@@ -206,33 +206,35 @@ if _PARAM == None:
 
 import asyncio
 from asyncio import get_event_loop, set_event_loop_policy
-if sys.platform == 'win32':
+
+if sys.platform == "win32":
     set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 LOOP = get_event_loop()
 
 from pytigon_lib.schtools.main_paths import get_main_paths
-if 'PRJ_NAME' in os.environ:
-    PRJ_NAME = os.environ['PRJ_NAME']
-    PATHS = get_main_paths(os.environ['PRJ_NAME'])
+
+if "PRJ_NAME" in os.environ:
+    PRJ_NAME = os.environ["PRJ_NAME"]
+    PATHS = get_main_paths(os.environ["PRJ_NAME"])
 else:
     PRJ_NAME = None
     PATHS = get_main_paths()
 
-sys.path.append(PATHS['PRJ_PATH'])
+sys.path.append(PATHS["PRJ_PATH"])
 
 from pytigon_lib.schtools.install_init import init
 
-DATA_PATH = PATHS['DATA_PATH']
-PYTIGON_PATH = PATHS['PYTIGON_PATH']
+DATA_PATH = PATHS["DATA_PATH"]
+PYTIGON_PATH = PATHS["PYTIGON_PATH"]
 
 init(
     "_schall",
-    PATHS['ROOT_PATH'],
-    PATHS['DATA_PATH'],
-    PATHS['PRJ_PATH'],
-    PATHS['STATIC_PATH'],
-    [ PATHS['MEDIA_PATH'], PATHS['UPLOAD_PATH']] if PRJ_NAME else None,
+    PATHS["ROOT_PATH"],
+    PATHS["DATA_PATH"],
+    PATHS["PRJ_PATH"],
+    PATHS["STATIC_PATH"],
+    [PATHS["MEDIA_PATH"], PATHS["UPLOAD_PATH"]] if PRJ_NAME else None,
 )
 
 import wx
@@ -247,8 +249,9 @@ def process_adv_argv():
 
         choices = [
             ff
-            for ff in os.listdir(PATHS['PRJ_PATH'])
-            if not ff.startswith("_") and os.path.isdir(os.path.join(PATHS['PRJ_PATH'], ff))
+            for ff in os.listdir(PATHS["PRJ_PATH"])
+            if not ff.startswith("_")
+            and os.path.isdir(os.path.join(PATHS["PRJ_PATH"], ff))
         ]
         dlg = wx.SingleChoiceDialog(
             None,
@@ -271,7 +274,7 @@ def process_adv_argv():
     else:
         arg = _PARAM["args"][0].strip()
     if not (arg == "embeded" or "." in arg or "/" in arg):
-        CWD_PATH = os.path.join(PATHS['PRJ_PATH'], arg)
+        CWD_PATH = os.path.join(PATHS["PRJ_PATH"], arg)
         if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
             print(_("Application pack: '%s' does not exists") % arg)
             sys.exit(0)
@@ -297,6 +300,7 @@ if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
     except:
         asyncio.futures.CancelledError = asyncio.CancelledError
         from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
+
     class SChAsyncApp(WxAsyncApp):
         async def MainLoop(self):
             evtloop = wx.GUIEventLoop()
@@ -627,9 +631,7 @@ class SchApp(App, _BASE_APP):
     async def test_websockets(self):
         print("-----------------------------------------------------------------")
         print(self.websockets)
-        await self.websocket_send(
-            "/schtasks/show_task_events/channel/", {'id': "test"}
-        )
+        await self.websocket_send("/schtasks/show_task_events/channel/", {"id": "test"})
         print("=================================================================")
 
         count = 999
@@ -642,6 +644,7 @@ class SchApp(App, _BASE_APP):
 
     async def init_websockets(self):
         from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
+
         obj = self
         old_init = WebsocketConsumer.__init__
         old_init_async = AsyncWebsocketConsumer.__init__
@@ -662,8 +665,10 @@ class SchApp(App, _BASE_APP):
             if hasattr(self, "Bind"):
                 obj.StartCoroutine(self.connect, self)
             else:
-                def _bind(x,y,z):
+
+                def _bind(x, y, z):
                     pass
+
                 self.Bind = _bind
 
         WebsocketConsumer.__init__ = init
@@ -684,19 +689,17 @@ class SchApp(App, _BASE_APP):
                         )
                     )
             if tasks:
-                #try:
-                    done, pending = await asyncio.wait(tasks)
-                    #done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
-                    assert not pending
-                    future, = done  # unpack a set of length one
-                    print(future.result())  # raise an exception or use future.exception()
-                #except Error:
-                #except:
-                #    print('got exception', flush=True)
-                #else:
-                #    print('no exception', flush=True)
-
-
+                # try:
+                done, pending = await asyncio.wait(tasks)
+                # done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
+                assert not pending
+                (future,) = done  # unpack a set of length one
+                print(future.result())  # raise an exception or use future.exception()
+            # except Error:
+            # except:
+            #    print('got exception', flush=True)
+            # else:
+            #    print('no exception', flush=True)
 
     def create_websocket(self, websocket_id, callback):
         local = True if app.base_address.startswith("http://127.0.0.2") else False
@@ -715,16 +718,20 @@ class SchApp(App, _BASE_APP):
                             )
                         )
                 if tasks:
+
                     async def reinit_websockets():
-                        nonlocal  tasks
+                        nonlocal tasks
                         done, pending = await asyncio.wait(tasks)
                         # done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
                         assert not pending
-                        future, = done  # unpack a set of length one
-                        print(future.result())  # raise an exception or use future.exception(
+                        (future,) = done  # unpack a set of length one
+                        print(
+                            future.result()
+                        )  # raise an exception or use future.exception(
+
                     self.StartCoroutine(reinit_websockets, self.GetTopWindow())
 
-        #if local:
+        # if local:
         #    self.StartCoroutine(self.init_websockets, self)
 
     def make_href(self, href):
@@ -746,7 +753,7 @@ class SchApp(App, _BASE_APP):
         if hasattr(self, "StartCoroutine"):
             if self.base_address.startswith("http://127.0.0.2"):
                 self.StartCoroutine(self.init_websockets, frame)
-            #if _DEBUG:
+            # if _DEBUG:
             #    self.StartCoroutine(self.test_websockets, frame)
 
     def register_extern_app(self, address, app):
@@ -903,7 +910,7 @@ class SchApp(App, _BASE_APP):
     def on_exit(self):
         if self.task_manager:
             self.task_manager.terminate()
-            #if len(self.task_manager.list_threads(all=False)) > 0:
+            # if len(self.task_manager.list_threads(all=False)) > 0:
             #    dlg = wx.MessageDialog(
             #        None,
             #        _("There are background tasks - kill?"),
@@ -936,7 +943,7 @@ class SchApp(App, _BASE_APP):
 
     async def websocket_send(self, websocket_id, msg):
         if websocket_id in self.websockets:
-            if not 'clock' in websocket_id:
+            if not "clock" in websocket_id:
                 print(websocket_id)
             obj = self.websockets[websocket_id].send_message(msg)
             if obj:
@@ -998,14 +1005,16 @@ def login(base_href, auth_type=None, username=None):
                 else:
                     dlg.message.SetLabel(_("Failed login attempt!"))
         else:
-            result= wx.GetApp().http.get(
+            result = wx.GetApp().http.get(
                 wx.GetApp(), base_href, credentials=(username, password)
             )
             if result.ret_code == 200:
                 dlg.Destroy()
                 return True
             else:
-                dlg.message.SetLabel(_("Failed login attempt! http error: %s") % result.ret_code)
+                dlg.message.SetLabel(
+                    _("Failed login attempt! http error: %s") % result.ret_code
+                )
     dlg.Destroy()
     return False
 
@@ -1040,23 +1049,23 @@ def _main_init():
     os.environ["DJANGO_SETTINGS_MODULE"] = "settings_app"
     if len(args) > 0:
         if ".ptig" in args[0].lower():
-            prg_name = args[0].replace('\\', '/').split("/")[-1]
+            prg_name = args[0].replace("\\", "/").split("/")[-1]
             x = prg_name.split(".")
             if len(x) == 2 or (len(x) > 2 and x[-2].lower() == "inst"):
                 prg_name2 = x[0]
-                path = os.path.join(PATHS['PRJ_PATH_ALT'], "_schremote")
+                path = os.path.join(PATHS["PRJ_PATH_ALT"], "_schremote")
                 sys.path.append(path)
                 if not pytigon_install.install(args[0]):
                     return (None, None)
                 # sys.path.remove(path)
                 return (None, None)
-                CWD_PATH = os.path.join(PATHS['PRJ_PATH'], prg_name2)
+                CWD_PATH = os.path.join(PATHS["PRJ_PATH"], prg_name2)
             else:
                 if len(x) > 3:
                     prg_name2 = x[0]
                     app_name2 = x[-2]
                     prj = x[-3]
-                    CWD_PATH = os.path.join(PATHS['PRJ_PATH'], prj.strip())
+                    CWD_PATH = os.path.join(PATHS["PRJ_PATH"], prj.strip())
                     if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
                         print(_("Application pack: '%s' does not exists") % prj.strip())
                         return (None, None)
@@ -1068,7 +1077,7 @@ def _main_init():
             arg = args[0].strip()
             if arg == "embeded" or "." in arg or "/" in arg:
                 if arg != "embeded":
-                    CWD_PATH = os.path.join(PATHS['PRJ_PATH_ALT'], "_schremote")
+                    CWD_PATH = os.path.join(PATHS["PRJ_PATH_ALT"], "_schremote")
 
                 tmp = arg.replace("//", "$$$")
                 if "/" in arg:
@@ -1083,7 +1092,7 @@ def _main_init():
 
                 extern_prj = True
             else:
-                CWD_PATH = os.path.join(PATHS['PRJ_PATH'], arg)
+                CWD_PATH = os.path.join(PATHS["PRJ_PATH"], arg)
                 if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
                     print(_("Application pack: '%s' does not exists") % arg)
                     return (None, None)
@@ -1160,22 +1169,25 @@ def _main_init():
         server = run_server(address, port, prod=False)
         address = "http://" + address + ":" + str(port)
     else:
-    #    from pytigon_lib.schtasks.base_task import get_process_manager
-    #    app.task_manager = get_process_manager()
+        #    from pytigon_lib.schtasks.base_task import get_process_manager
+        #    app.task_manager = get_process_manager()
         server = None
 
-    if 'embeded_taskqueue' in _PARAM:
+    if "embeded_taskqueue" in _PARAM:
         app.task_manager = ""
         from django_q.management.commands.qcluster import Command as qcluster_command
 
         qcluster = qcluster_command()
-        #try:
+        # try:
         if True:
-            #qcluster.run_from_argv(["manage.py", "qcluster"])
-            app.task_manager = Process(target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],))
+            # qcluster.run_from_argv(["manage.py", "qcluster"])
+            app.task_manager = Process(
+                target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],)
+            )
             app.task_manager.start()
-            #p.join()
-        #except SystemExit:
+            print("Task manager started")
+            # p.join()
+        # except SystemExit:
         #    pass
 
     settings.BASE_URL = "http://" + address
@@ -1306,7 +1318,7 @@ def _main_run():
 
     httpclient.set_http_idle_func(idle_fun)
 
-    #if app.task_manager:
+    # if app.task_manager:
     #    frame.idle_objects.append(app.task_manager)
 
     if _RPC:
@@ -1332,7 +1344,7 @@ def _main_run():
         else:
             app.MainLoop()
 
-    #if app.task_manager:
+    # if app.task_manager:
     #    app.task_manager.wait_for_result()
     if app.server:
         app.server.stop()

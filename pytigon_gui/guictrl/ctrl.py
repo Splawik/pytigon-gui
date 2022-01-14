@@ -1865,7 +1865,13 @@ if platform.system() == "Linux":
                     False,
                 )
 
-            wx.CallAfter(self.to_masked,autoformat="EUDATEYYYYMMDD.")
+            wx.CallAfter(
+                self.to_masked,
+                mask="####-##-##",
+                formatcodes="F",
+                validRegex="\d{4}-\d{2}-\d{2}",
+            )
+            # wx.CallAfter(self.to_masked,autoformat="EUDATEYYYYMMDD.")
 
         def GetValue(self):
             value = self.get_rec()
@@ -1950,11 +1956,7 @@ class DATETIMEPICKER(POPUPHTML):
         if self.value:
             self.set_rec(self.value, Td(self.value))
         else:
-            now = (
-                datetime.datetime.now()
-                .isoformat()
-                .replace("T", " ")[:16]
-            )
+            now = datetime.datetime.now().isoformat().replace("T", " ")[:16]
             self.set_rec(now, Td(now), False)
 
     def set_rec(self, value, value_rec, dismiss=False):
