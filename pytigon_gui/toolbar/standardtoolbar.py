@@ -10,44 +10,70 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import wx
 
 from pytigon_gui.guilib.events import *
-from pytigon_gui.toolbar.basetoolbar import ToolbarBar, ToolbarPage, ToolbarPanel, ToolbarButton
+from pytigon_gui.toolbar.basetoolbar import (
+    ToolbarBar,
+    ToolbarPage,
+    ToolbarPanel,
+    ToolbarButton,
+)
 
 
 _ = wx.GetTranslation
 
 
 class StandardToolbarButton(ToolbarButton):
-    def __init__(self, parent_panel, id, title, bitmap, bitmap_disabled = None, kind=ToolbarButton.TYPE_SIMPLE):
-        ToolbarButton.__init__(self, parent_panel, id, title, bitmap, bitmap_disabled, kind)
+    def __init__(
+        self,
+        parent_panel,
+        id,
+        title,
+        bitmap,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
+        ToolbarButton.__init__(
+            self, parent_panel, id, title, bitmap, bitmap_disabled, kind
+        )
 
 
 class StandardToolbarPanel(ToolbarPanel):
     def __init__(self, parent_page, title, kind=ToolbarPanel.TYPE_PANEL_TOOLBAR):
         ToolbarPanel.__init__(self, parent_page, title, kind)
-        if len(parent_page.panels)>0:
+        if len(parent_page.panels) > 0:
             parent_page.parent_bar.standard_tool_bar.AddSeparator()
 
     def _append(self, b):
         item = None
-        if self.kind in (ToolbarPanel.TYPE_PANEL_TOOLBAR, ToolbarPanel.TYPE_PANEL_BUTTONBAR):
+        if self.kind in (
+            ToolbarPanel.TYPE_PANEL_TOOLBAR,
+            ToolbarPanel.TYPE_PANEL_BUTTONBAR,
+        ):
             if b.kind == ToolbarButton.TYPE_SIMPLE:
-                item = self.parent_page.parent_bar.standard_tool_bar.AddTool(b.id, b.title, b.bitmap, b.title, kind=wx.ITEM_NORMAL)
+                item = self.parent_page.parent_bar.standard_tool_bar.AddTool(
+                    b.id, b.title, b.bitmap, b.title, kind=wx.ITEM_NORMAL
+                )
             elif b.kind == ToolbarButton.TYPE_DROPDOWN:
-                item = self.parent_page.parent_bar.standard_tool_bar.AddTool(b.id, b.title, b.bitmap, b.title)
+                item = self.parent_page.parent_bar.standard_tool_bar.AddTool(
+                    b.id, b.title, b.bitmap, b.title
+                )
             elif b.kind == ToolbarButton.TYPE_HYBRID:
-                item = self.parent_page.parent_bar.standard_tool_bar.AddTool(b.id, b.title, b.bitmap, b.title)
+                item = self.parent_page.parent_bar.standard_tool_bar.AddTool(
+                    b.id, b.title, b.bitmap, b.title
+                )
             elif b.kind == ToolbarButton.TYPE_TOOGLE:
-                item = self.parent_page.parent_bar.standard_tool_bar.AddToggleTool(b.id, b.title, b.bitmap)
+                item = self.parent_page.parent_bar.standard_tool_bar.AddToggleTool(
+                    b.id, b.title, b.bitmap
+                )
             elif b.kind == ToolbarButton.TYPE_PANEL:
                 pass
             elif b.kind == ToolbarButton.TYPE_SEPARATOR:
@@ -55,20 +81,30 @@ class StandardToolbarPanel(ToolbarPanel):
         else:
             pass
 
-    def create_button(self, id, title, bitmap=None, bitmap_disabled=None, kind=ToolbarButton.TYPE_SIMPLE):
+    def create_button(
+        self,
+        id,
+        title,
+        bitmap=None,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
         b = StandardToolbarButton(self, id, title, bitmap, bitmap_disabled, kind)
         self._append(b)
         return b
 
     def add_separator(self):
-        b = StandardToolbarButton(self, 0, '', None, None, kind=ToolbarButton.TYPE_SEPARATOR)
+        b = StandardToolbarButton(
+            self, 0, "", None, None, kind=ToolbarButton.TYPE_SEPARATOR
+        )
         self._append(b)
         return b
+
 
 class StandardToolbarPage(ToolbarPage):
     def __init__(self, parent_bar, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
         ToolbarPage.__init__(self, parent_bar, title, kind)
-        if len(parent_bar.pages)>0:
+        if len(parent_bar.pages) > 0:
             parent_bar.standard_tool_bar.AddSeparator()
 
     def create_panel(self, title, kind=ToolbarPanel.TYPE_PANEL_TOOLBAR):
@@ -100,4 +136,3 @@ class StandardToolbarBar(ToolbarBar):
             self.Unbind(e, id=id)
         else:
             self.Unbind(wx.EVT_MENU, id=id)
-

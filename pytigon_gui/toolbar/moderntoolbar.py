@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 
 import wx
@@ -23,7 +23,13 @@ import wx.lib.agw.ribbon as RB
 from wx.lib.agw.ribbon import art
 
 from pytigon_gui.guilib.events import *
-from pytigon_gui.toolbar.basetoolbar import BaseHtmlPanel, ToolbarBar, ToolbarPage, ToolbarPanel, ToolbarButton
+from pytigon_gui.toolbar.basetoolbar import (
+    BaseHtmlPanel,
+    ToolbarBar,
+    ToolbarPage,
+    ToolbarPanel,
+    ToolbarButton,
+)
 
 _ = wx.GetTranslation
 
@@ -32,7 +38,7 @@ MSW_STYLE = True
 ORG_LIKE_PRIMARY = None
 
 
-def like_primary(primary_hsl,h,s,l,x=None):
+def like_primary(primary_hsl, h, s, l, x=None):
     if x != None:
         c1 = ORG_LIKE_PRIMARY(primary_hsl, h, 0, l * 1.5, x)
     else:
@@ -73,20 +79,39 @@ class ModernHtmlPanel(BaseHtmlPanel):
         self.page.parent_bar.update()
         self.page.parent_bar.SetActivePage(self.page)
 
+
 class ModernToolbarButton(ToolbarButton):
-    def __init__(self, parent_panel, id, title, bitmap, bitmap_disabled = None, kind=ToolbarButton.TYPE_SIMPLE):
-        ToolbarButton.__init__(self, parent_panel, id, title, bitmap, bitmap_disabled, kind)
+    def __init__(
+        self,
+        parent_panel,
+        id,
+        title,
+        bitmap,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
+        ToolbarButton.__init__(
+            self, parent_panel, id, title, bitmap, bitmap_disabled, kind
+        )
 
 
 class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
     def __init__(self, parent_page, title, kind=ToolbarPanel.TYPE_PANEL_TOOLBAR):
-        RB.RibbonPanel.__init__(self, parent_page, wx.ID_ANY, title, wx.NullBitmap, wx.DefaultPosition,
-            wx.DefaultSize, RB.RIBBON_PANEL_NO_AUTO_MINIMISE)
+        RB.RibbonPanel.__init__(
+            self,
+            parent_page,
+            wx.ID_ANY,
+            title,
+            wx.NullBitmap,
+            wx.DefaultPosition,
+            wx.DefaultSize,
+            RB.RIBBON_PANEL_NO_AUTO_MINIMISE,
+        )
         ToolbarPanel.__init__(self, parent_page, title, kind)
 
         if self.kind == ToolbarPanel.TYPE_PANEL_TOOLBAR:
             self.toolbar = RB.RibbonToolBar(self)
-            #self.toolbar = SchRibbonToolBar(self)
+            # self.toolbar = SchRibbonToolBar(self)
         elif self.kind == ToolbarPanel.TYPE_PANEL_BUTTONBAR:
             self.toolbar = RB.RibbonButtonBar(self)
 
@@ -110,7 +135,7 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
                 self.toolbar.AddSeparator()
         elif self.kind == ToolbarPanel.TYPE_PANEL_BUTTONBAR:
             if b.kind == ToolbarButton.TYPE_SIMPLE:
-                self.toolbar.AddSimpleButton(b.id, b.title, b.bitmap, '')
+                self.toolbar.AddSimpleButton(b.id, b.title, b.bitmap, "")
             elif b.kind == ToolbarButton.TYPE_DROPDOWN:
                 self.toolbar.AddDropdownButton(b.id, b.title, b.bitmap, "")
             elif b.kind == ToolbarButton.TYPE_HYBRID:
@@ -119,18 +144,27 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
                 self.toolbar.AddToggleButton(b.id, b.title, b.bitmap, "")
             elif b.kind == ToolbarButton.TYPE_PANEL:
                 pass
-            #elif b.kind == ToolbarButton.TYPE_SEPARATOR:
+            # elif b.kind == ToolbarButton.TYPE_SEPARATOR:
             #    self.toolbar.AddSeparator()
         else:
             pass
 
-    def create_button(self, id, title, bitmap=None, bitmap_disabled=None, kind=ToolbarButton.TYPE_SIMPLE):
+    def create_button(
+        self,
+        id,
+        title,
+        bitmap=None,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
         b = ModernToolbarButton(self, id, title, bitmap, bitmap_disabled, kind)
         self.Append(b)
         return b
 
     def add_separator(self):
-        b = ModernToolbarButton(self, 0, '', None, None, kind=ToolbarButton.TYPE_SEPARATOR)
+        b = ModernToolbarButton(
+            self, 0, "", None, None, kind=ToolbarButton.TYPE_SEPARATOR
+        )
         self.Append(b)
         return b
 
@@ -158,9 +192,11 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
 
     def create(self):
         self.Realize()
+
         def _realize():
             for child in self.Children:
                 child.Realize()
+
         wx.CallAfter(_realize)
 
     def close(self):
@@ -191,9 +227,16 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
             self.Unbind(RB.EVT_RIBBONBUTTONBAR_CLICKED, id=id)
 
     def get_bar_height(self):
-        s = (48,48)
-        ret = self.GetArtProvider().GetButtonBarButtonSize(self, self, art.RIBBON_BUTTON_NORMAL,
-            art.RIBBON_BUTTONBAR_BUTTON_LARGE,'TXT',s,s)
+        s = (48, 48)
+        ret = self.GetArtProvider().GetButtonBarButtonSize(
+            self,
+            self,
+            art.RIBBON_BUTTON_NORMAL,
+            art.RIBBON_BUTTONBAR_BUTTON_LARGE,
+            "TXT",
+            s,
+            s,
+        )
         size_ret = ret[1]
         return size_ret.GetHeight()
 

@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 """
 SchNotebook object used as a top window in panels: 'desktop', 'panel', 'header' and 'footer'
@@ -32,8 +32,13 @@ from wx.lib.agw.aui.aui_constants import *
 class SchNotebook(aui.AuiNotebook):
     """SchNotebook class"""
 
-    def __init__(self, parent, pos=wx.DefaultPosition, size=wx.DefaultSize,
-                 style=wx.BORDER_NONE|wx.TAB_TRAVERSAL|wx.WANTS_CHARS):
+    def __init__(
+        self,
+        parent,
+        pos=wx.DefaultPosition,
+        size=wx.DefaultSize,
+        style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS,
+    ):
         """Constructor
 
         Args:
@@ -72,7 +77,6 @@ class SchNotebook(aui.AuiNotebook):
 
         self.SetWindowStyleFlag(wx.WANTS_CHARS)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
-
 
     def on_closing(self, event):
         idn = event.GetSelection()
@@ -124,7 +128,7 @@ class SchNotebook(aui.AuiNotebook):
                 if pane_info.IsOk() and pane_info.IsShown():
                     pane_info.window.SetFocus()
 
-        if len(self._tabs._pages)==1:
+        if len(self._tabs._pages) == 1:
             wx.CallAfter(_close)
 
         return aui.AuiNotebook.DeletePage(self, sel)
@@ -132,10 +136,14 @@ class SchNotebook(aui.AuiNotebook):
     def on_dclick(self, event):
         try:
             txt = self.GetPageText(event.GetSelection())
-            mp, adr = wx.GetApp().read_html(self, '/schwiki/help/' + wiki_from_str(txt) + '/view/', None)
-            if not txt.startswith('?'):
+            mp, adr = wx.GetApp().read_html(
+                self, "/schwiki/help/" + wiki_from_str(txt) + "/view/", None
+            )
+            if not txt.startswith("?"):
                 wiki = wiki_from_str(txt)
-                wx.GetApp().GetTopWindow().new_main_page(mp, '?: ' + wiki, panel='desktop2')
+                wx.GetApp().GetTopWindow().new_main_page(
+                    mp, "?: " + wiki, panel="desktop2"
+                )
         except:
             pass
 
@@ -184,7 +192,11 @@ class SchNotebook(aui.AuiNotebook):
         new_tabs._tabs.SetArtProvider(self._tabs.GetArtProvider().Clone())
         new_tabs._tabs.SetAGWFlags(self._agwFlags)
         dest_tabs = new_tabs._tabs
-        pane_info = framemanager.AuiPaneInfo().CaptionVisible(False).BestSize(split_size.GetWidth(), split_size.GetHeight())
+        pane_info = (
+            framemanager.AuiPaneInfo()
+            .CaptionVisible(False)
+            .BestSize(split_size.GetWidth(), split_size.GetHeight())
+        )
         if direction == wx.LEFT:
             pane_info.Left()
             mouse_pt = wx.Point(0, cli_size.y / 2)
@@ -197,8 +209,8 @@ class SchNotebook(aui.AuiNotebook):
         elif direction == wx.BOTTOM:
             pane_info.Bottom()
             mouse_pt = wx.Point(cli_size.x / 2, cli_size.y)
-        #self._mgr.AddPane(new_tabs, pane_info, mouse_pt)
-        #self._mgr.Update()
+        # self._mgr.AddPane(new_tabs, pane_info, mouse_pt)
+        # self._mgr.Update()
         page_info = aui.AuiNotebookPage()
         page_info.window = page
         page_info.caption = title
@@ -211,12 +223,11 @@ class SchNotebook(aui.AuiNotebook):
         page.Reparent(self)
         self.DoSizing()
         dest_tabs.Refresh()
-        #self.SetSelectionToPage(page_info)
+        # self.SetSelectionToPage(page_info)
         self.UpdateHintWindowSize()
 
         self._mgr.AddPane(new_tabs, pane_info, mouse_pt)
         self._mgr.Update()
-
 
     def on_navigete(self, evt):
         forward = evt.GetDirection()

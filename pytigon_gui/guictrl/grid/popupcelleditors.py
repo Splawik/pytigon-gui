@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import wx
 from pytigon_gui.guictrl.popup import popuphtml
@@ -24,19 +24,17 @@ import datetime
 from pdb import set_trace
 from pytigon_lib.schtools import schjson
 
-from  wx.grid import GridCellEditor
+from wx.grid import GridCellEditor
 
 
 class PopupDataCellControl(popuphtml.DataPopupControl):
-
-    def __init__(self,href,*args,**kwds):
+    def __init__(self, href, *args, **kwds):
         self.href = href
         self.defaultvalue = None
         popuphtml.DataPopupControl.__init__(self, *args, **kwds)
 
 
 class PopupDataCellEditor(GridCellEditor):
-
     def __init__(self):
         GridCellEditor.__init__(self)
         self.address = None
@@ -46,14 +44,13 @@ class PopupDataCellEditor(GridCellEditor):
         return self._address
 
     def set_address(self, address):
-        if address != None and address[0] == '!':
+        if address != None and address[0] == "!":
             set_trace()
         self._address = address
 
     address = property(get_address, set_address)
 
-
-    def Create(self,parent,id,evt_handler):
+    def Create(self, parent, id, evt_handler):
         self.Parent = parent
         self._tc = PopupDataCellControl(self.address, parent, id)
         self._tc.DismissObject = self
@@ -68,7 +65,9 @@ class PopupDataCellEditor(GridCellEditor):
         pass
 
     def SetSize(self, rect):
-        self._tc.SetSize(rect.x, rect.y, rect.width+2, rect.height+2, wx.SIZE_ALLOW_MINUS_ONE)
+        self._tc.SetSize(
+            rect.x, rect.y, rect.width + 2, rect.height + 2, wx.SIZE_ALLOW_MINUS_ONE
+        )
 
     def Show(self, show, attr):
         GridCellEditor.Show(self, show, attr)
@@ -84,14 +83,14 @@ class PopupDataCellEditor(GridCellEditor):
         if value.__class__ == datetime.date:
             self.start_value = value.isoformat()
 
-        if type(value)==str:
+        if type(value) == str:
             self.start_value = value
         else:
             self.start_value = str(value)
 
         self._tc.focus_in(self.start_value)
         if self.start_value:
-            self._tc.set_rec(self.start_value, (self.start_value, ))
+            self._tc.set_rec(self.start_value, (self.start_value,))
         self._tc.SetInsertionPointEnd()
         self._tc.GetTextCtrl().SetSelection(0, -1)
         self._tc.GetTextCtrl().SetFocus()
@@ -109,16 +108,17 @@ class PopupDataCellEditor(GridCellEditor):
     def ApplyEdit(self, row, col, grid):
         val = self._tc.GetValue()
         grid.GetTable().SetValue(row, col, val)
-        self.start_value = ''
-        self._tc.SetValue('')
+        self.start_value = ""
+        self._tc.SetValue("")
 
     def Reset(self):
         self._tc.SetValue(self.start_value)
 
-
     def IsAcceptedKey(self, evt):
-        return (not (evt.ControlDown() or evt.AltDown()) and
-                evt.GetKeyCode() != wx.WXK_SHIFT)
+        return (
+            not (evt.ControlDown() or evt.AltDown())
+            and evt.GetKeyCode() != wx.WXK_SHIFT
+        )
 
     def StartingKey(self, evt):
         key = evt.GetKeyCode()
@@ -126,11 +126,11 @@ class PopupDataCellEditor(GridCellEditor):
         if key < 256 and key >= 0 and chr(key) in string.printable:
             ch = chr(key)
         if ch is not None:
-            self._tc.start_value = ''
+            self._tc.start_value = ""
             self._tc.SetValue(ch)
             if self._tc.popup:
                 self._tc.popup.set_string_value(ch)
-            self._tc.rec_value = (ch, )
+            self._tc.rec_value = (ch,)
             if self._tc.popup:
                 self._tc.popup.Dismiss()
             self._tc.SetInsertionPointEnd()
@@ -151,19 +151,18 @@ class PopupDataCellEditor(GridCellEditor):
 
 
 class DatePopupDataCellEditor(PopupDataCellEditor):
-
     def __init__(self):
         PopupDataCellEditor.__init__(self)
-        self.address = wx.GetApp().make_href('/schsys/datedialog/')
+        self.address = wx.GetApp().make_href("/schsys/datedialog/")
 
     def Create(
         self,
         parent,
         id,
         evt_handler,
-        ):
+    ):
         PopupDataCellEditor.Create(self, parent, id, evt_handler)
-        self._tc.to_masked(autoformat='EUDATEYYYYMMDD.')
+        self._tc.to_masked(autoformat="EUDATEYYYYMMDD.")
 
     def Clone(self):
         ret = DatePopupDataCellEditor()
@@ -173,10 +172,9 @@ class DatePopupDataCellEditor(PopupDataCellEditor):
 
 
 class ListPopupCellEditor(PopupDataCellEditor):
-
     def __init__(self):
         PopupDataCellEditor.__init__(self)
-        self.address = wx.GetApp().make_href('/schsys/listdialog/')
+        self.address = wx.GetApp().make_href("/schsys/listdialog/")
 
     def Create(self, parent, id, evt_handler):
         PopupDataCellEditor.Create(self, parent, id, evt_handler)
@@ -190,8 +188,8 @@ class ListPopupCellEditor(PopupDataCellEditor):
 
     def BeginEdit(self, row, col, grid):
         typ = grid.GetTable().GetTypeName(row, col)
-        id = typ.find(':')
-        self.choices = schjson.loads(typ[id + 1:])
+        id = typ.find(":")
+        self.choices = schjson.loads(typ[id + 1 :])
         PopupDataCellEditor.BeginEdit(self, row, col, grid)
 
     def OnButtonClick(self):
@@ -203,21 +201,20 @@ class ListPopupCellEditor(PopupDataCellEditor):
             self._tc.page.body.refr()
 
     def set_rec(self, value, value_rec, dismiss=True):
-        ret = ''
-        if len(value) > 2 and value[1] == ':':
+        ret = ""
+        if len(value) > 2 and value[1] == ":":
             return value
         else:
             for choice in self.choices:
                 if choice[1].lower().startswith(value.lower()):
-                    ret = choice[0] + ':' + choice[1]
+                    ret = choice[0] + ":" + choice[1]
             return ret
 
 
 class GenericPopupCellEditor(PopupDataCellEditor):
-
     def __init__(self):
         PopupDataCellEditor.__init__(self)
-        self.address = wx.GetApp().make_href('/schsys/datedialog/')
+        self.address = wx.GetApp().make_href("/schsys/datedialog/")
 
     def Clone(self):
         ret = GenericPopupCellEditor()
@@ -226,5 +223,3 @@ class GenericPopupCellEditor(PopupDataCellEditor):
 
     def set_parameters(self, params):
         self.address = params
-
-

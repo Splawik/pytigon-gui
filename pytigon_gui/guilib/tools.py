@@ -20,6 +20,7 @@
 import platform
 import os
 import wx
+
 try:
     from pyshortcuts import make_shortcut
 except:

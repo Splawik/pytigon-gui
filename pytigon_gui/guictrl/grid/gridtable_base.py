@@ -10,19 +10,23 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import wx
-from wx.grid import GridCellAttr, GridTableMessage, GRIDTABLE_NOTIFY_ROWS_DELETED, GRIDTABLE_NOTIFY_ROWS_APPENDED
+from wx.grid import (
+    GridCellAttr,
+    GridTableMessage,
+    GRIDTABLE_NOTIFY_ROWS_DELETED,
+    GRIDTABLE_NOTIFY_ROWS_APPENDED,
+)
 
 
 class SchGridTableBase(wx.grid.GridTableBase):
-
     def __init__(self):
         wx.grid.GridTableBase.__init__(self)
         self.can_append = 0
@@ -39,11 +43,11 @@ class SchGridTableBase(wx.grid.GridTableBase):
 
         self.sel_colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK)
         self.attr_insert = GridCellAttr()
-        self.attr_insert.SetBackgroundColour('PALE GREEN')
+        self.attr_insert.SetBackgroundColour("PALE GREEN")
         self.attr_update = GridCellAttr()
-        self.attr_update.SetBackgroundColour('WHEAT')
+        self.attr_update.SetBackgroundColour("WHEAT")
         self.attr_del = GridCellAttr()
-        self.attr_del.SetBackgroundColour('RED')
+        self.attr_del.SetBackgroundColour("RED")
         self.attr_del.SetFont(wx.Font(8, wx.ROMAN, wx.ITALIC, wx.NORMAL, True))
         self.attr_sel = GridCellAttr()
         self.attr_sel.SetBackgroundColour(self.sel_colour)
@@ -53,7 +57,7 @@ class SchGridTableBase(wx.grid.GridTableBase):
         self.data = []
         self.data_org = None
         self.last_row_count = 0
-        self.auto_size = 'simple'
+        self.auto_size = "simple"
         self.no_actions = False
 
         self.init_data_base()
@@ -142,7 +146,7 @@ class SchGridTableBase(wx.grid.GridTableBase):
         elif option == 1:
             selrows = self.get_sel_rows()
             key = self.get_sel_key()
-            data = [cmd, (key, ) + selrows]
+            data = [cmd, (key,) + selrows]
         else:
             data = [cmd]
         return data
@@ -232,18 +236,20 @@ class SchGridTableBase(wx.grid.GridTableBase):
 
     def get_table_and_state(self):
         tableandstate = []
-        tableandstate.append((
-            self.append_count,
-            self.rec_to_update,
-            self.rec_to_instert,
-            self.rec_to_delete,
-            self.rec_selected,
-            self.tabsort,
-            self.filter_id,
-            self.key,
-            self.sel_mask,
-            self.last_row_count,
-            ))
+        tableandstate.append(
+            (
+                self.append_count,
+                self.rec_to_update,
+                self.rec_to_instert,
+                self.rec_to_delete,
+                self.rec_selected,
+                self.tabsort,
+                self.filter_id,
+                self.key,
+                self.sel_mask,
+                self.last_row_count,
+            )
+        )
         return tableandstate
 
     def duplicate_table_and_state(self):
@@ -278,15 +284,15 @@ class SchGridTableBase(wx.grid.GridTableBase):
         ret = {}
         attrs = self.get_action_list(row, col)
         for attr in attrs:
-            if 'name' in attr:
-                name = attr['name']
-                if 'href' in attr:
-                    href = attr['href']
-                    if 'title' in attr:
-                        title = attr['title']
+            if "name" in attr:
+                name = attr["name"]
+                if "href" in attr:
+                    href = attr["href"]
+                    if "title" in attr:
+                        title = attr["title"]
                     else:
-                        title = ''
-                    ret[name] = ('openurl', href, title, attr)
+                        title = ""
+                    ret[name] = ("openurl", href, title, attr)
         if len(ret) > 0:
             return ret
         return None
@@ -314,10 +320,10 @@ class SchGridTableBase(wx.grid.GridTableBase):
         try:
             return self.get_rec(row)[col]
         except IndexError:
-            return ''
+            return ""
 
     def GetColLabelValue(self, col):
-        return 'COL_' + str(col)
+        return "COL_" + str(col)
 
     def GetTypeName(self, row, col):
         return self.GetValue(row, col).__class__.__name__
@@ -331,7 +337,7 @@ class SchGridTableBase(wx.grid.GridTableBase):
     def CanSetValueAs(self, row, col, type_name):
         return self.CanGetValueAs(row, col, type_name)
 
-    def GetAttr(self,row,col,kind):
+    def GetAttr(self, row, col, kind):
         if row < (self.GetNumberRows() - self.can_append) - self.append_count:
             if row in self.rec_to_update:
                 attr = self.attr_update

@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Sławomir Chołaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Sławomir Chołaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Sławomir Chołaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Sławomir Chołaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import wx
 import sys
@@ -24,24 +24,33 @@ import pytigon_gui.guictrl.ctrl
 
 _ = wx.GetTranslation
 
-class HttpErrorDialog(wx.Dialog):
 
-    def __init__(self,parent,title,text,size=wx.DefaultSize,pos=wx.DefaultPosition,style=wx.DEFAULT_DIALOG_STYLE,
-            use_metal=False):
+class HttpErrorDialog(wx.Dialog):
+    def __init__(
+        self,
+        parent,
+        title,
+        text,
+        size=wx.DefaultSize,
+        pos=wx.DefaultPosition,
+        style=wx.DEFAULT_DIALOG_STYLE,
+        use_metal=False,
+    ):
         try:
             pre = wx.PreDialog()
             pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
-            pre.Create(parent,wx.ID_ANY,title,pos,size,style)
+            pre.Create(parent, wx.ID_ANY, title, pos, size, style)
             self.PostCreate(pre)
         except:
             wx.Dialog.__init__(self, parent, wx.ID_ANY, title, pos, size, style)
 
-        if 'wxMac' in wx.PlatformInfo and use_metal:
+        if "wxMac" in wx.PlatformInfo and use_metal:
             self.SetExtraStyle(wx.DIALOG_EX_METAL)
         sizer = wx.BoxSizer(wx.VERTICAL)
 
-
-        self.label = pytigon_gui.guictrl.ctrl.HTML2(self, size=(1024, 768), name="webbrowser")
+        self.label = pytigon_gui.guictrl.ctrl.HTML2(
+            self, size=(1024, 768), name="webbrowser"
+        )
 
         try:
             sizer.Add(self.label.wb, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
@@ -49,19 +58,19 @@ class HttpErrorDialog(wx.Dialog):
             sizer.Add(self.label, 0, wx.ALIGN_CENTRE | wx.ALL, 5)
 
         btnsizer = wx.StdDialogButtonSizer()
-        btn = wx.Button(self, wx.ID_OK, _('Continue'))
+        btn = wx.Button(self, wx.ID_OK, _("Continue"))
         btn.SetDefault()
         btnsizer.AddButton(btn)
-        btn = wx.Button(self, wx.ID_CANCEL, _('Break'))
-        btn.SetHelpText(_('The Break button breaks the application'))
+        btn = wx.Button(self, wx.ID_CANCEL, _("Break"))
+        btn.SetHelpText(_("The Break button breaks the application"))
         btnsizer.AddButton(btn)
         btnsizer.Realize()
-        #sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
-        sizer.Add(btnsizer, 0,  wx.ALL, 5)
+        # sizer.Add(btnsizer, 0, wx.ALIGN_CENTER_VERTICAL | wx.ALL, 5)
+        sizer.Add(btnsizer, 0, wx.ALL, 5)
         self.SetSizer(sizer)
         sizer.Fit(self)
         wx.CallAfter(self.label.load_str, text)
-        #self.label.load_str(text)
+        # self.label.load_str(text)
 
     def set_acc_key_tab(self, ctrl, tab):
         pass
@@ -78,14 +87,16 @@ def _http_error(parent, content):
     if not lock:
         wx.GetApp().lock = True
 
-        if parent and hasattr(parent,'Invalidate'):
+        if parent and hasattr(parent, "Invalidate"):
             parent.Invalidate()
 
-        if type(content)==str:
+        if type(content) == str:
             c = content
         else:
-            c = content.decode('utf-8')
-        dlg = HttpErrorDialog(wx.GetApp().GetTopWindow(), _("Error message"), c, size=(800,600))
+            c = content.decode("utf-8")
+        dlg = HttpErrorDialog(
+            wx.GetApp().GetTopWindow(), _("Error message"), c, size=(800, 600)
+        )
         dlg.CenterOnScreen()
         try:
             val = dlg.ShowModal()
@@ -95,6 +106,7 @@ def _http_error(parent, content):
 
         if val == wx.ID_CANCEL:
             sys.exit()
+
 
 def http_error(parent, content):
     wx.CallAfter(_http_error, parent, content)

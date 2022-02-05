@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 """
 Module contains base classes for toolbars and menu:
@@ -50,7 +50,7 @@ from pytigon_gui.guiframe.page import SchPage
 _ = wx.GetTranslation
 
 
-class BaseHtmlPanel():
+class BaseHtmlPanel:
     def __init__(self, page, real_panel):
         self.page = page
         self.real_panel = real_panel
@@ -79,7 +79,7 @@ class BaseHtmlPanel():
         self.sizer.Fit(self.real_panel)
 
 
-class ToolbarButton():
+class ToolbarButton:
     """Toolbar button"""
 
     TYPE_SIMPLE = 0
@@ -89,7 +89,15 @@ class ToolbarButton():
     TYPE_PANEL = 4
     TYPE_SEPARATOR = 5
 
-    def __init__(self, parent_panel, id, title, bitmap = None, bitmap_disabled = None, kind=TYPE_SIMPLE):
+    def __init__(
+        self,
+        parent_panel,
+        id,
+        title,
+        bitmap=None,
+        bitmap_disabled=None,
+        kind=TYPE_SIMPLE,
+    ):
         """Constructor, creating a new toolbar button
 
         Args:
@@ -142,13 +150,20 @@ class ToolbarPanel(object):
 
     def _transform_bitmaps_parm(self, bitmaps):
         b = [None, None]
-        if len(bitmaps)>0:
+        if len(bitmaps) > 0:
             b[0] = bitmaps[0]
-        if len(bitmaps)>1:
+        if len(bitmaps) > 1:
             b[1] = bitmaps[1]
         return b
 
-    def create_button(self, id, title, bitmap=None, bitmap_disabled=None, kind=ToolbarButton.TYPE_SIMPLE):
+    def create_button(
+        self,
+        id,
+        title,
+        bitmap=None,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
         """Function return new ToolbarButton, shoud be derived. In derived class shoud return ToolbarButton
         derived object.
 
@@ -156,7 +171,14 @@ class ToolbarPanel(object):
         """
         return ToolbarButton(self, id, title, bitmap, bitmap_disabled, kind)
 
-    def append(self, id, title, bitmap=None, bitmap_disabled=None, kind=ToolbarButton.TYPE_SIMPLE):
+    def append(
+        self,
+        id,
+        title,
+        bitmap=None,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
         """Append button to panel.
 
         Args: see ToolbarButton contructor
@@ -175,7 +197,7 @@ class ToolbarPanel(object):
                 first bitmap is used for tool in normal state, second for disabled tool.
         """
         b = self._transform_bitmaps_parm(bitmaps)
-        return self.append(id, title, b[0], b[1], kind = ToolbarButton.TYPE_SIMPLE)
+        return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_SIMPLE)
 
     def add_dropdown_tool(self, id, title, bitmaps):
         """Append simple tool to toolbar.
@@ -187,7 +209,7 @@ class ToolbarPanel(object):
                 first bitmap is used for tool in normal state, second for disabled tool.
         """
         b = self._transform_bitmaps_parm(bitmaps)
-        return self.append(id, title, b[0], b[1], kind = ToolbarButton.TYPE_DROPDOWN)
+        return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_DROPDOWN)
 
     def add_hybrid_tool(self, id, title, bitmaps):
         """Append hybrid tool to toolbar.
@@ -199,7 +221,7 @@ class ToolbarPanel(object):
                 first bitmap is used for tool in normal state, second for disabled tool.
         """
         b = self._transform_bitmaps_parm(bitmaps)
-        return self.append(id, title, b[0], b[1], kind = ToolbarButton.TYPE_HYBRID)
+        return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_HYBRID)
 
     def add_toogle_tool(self, id, title, bitmaps):
         """Append toogle tool to toolbar.
@@ -211,7 +233,7 @@ class ToolbarPanel(object):
                 first bitmap is used for tool in normal state, second for disabled tool.
         """
         b = self._transform_bitmaps_parm(bitmaps)
-        return self.append(id, title, b[0], b[1], kind = ToolbarButton.TYPE_TOOGLE)
+        return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_TOOGLE)
 
     def add_separator(self):
         """Append separator to toolbar."""
@@ -345,7 +367,7 @@ class ToolbarBar(object):
             kind - type of new panel - see ToolbarPanel constructor.
         """
         if not self.main_page:
-            self.append('main tools')
+            self.append("main tools")
         return self.main_page.create_panel(title, kind)
 
     def bind(self, fun, id=wx.ID_ANY, e=None):
@@ -368,7 +390,9 @@ class ToolbarBar(object):
         else:
             self.parent.Unbind(wx.EVT_MENU, id=id)
 
-    def create_html_win(self, toolbar_page, address_or_parser, parameters, callback=None):
+    def create_html_win(
+        self, toolbar_page, address_or_parser, parameters, callback=None
+    ):
         """Create html page in toolbar. Not all toolbars may be used
 
         Args:
@@ -376,19 +400,19 @@ class ToolbarBar(object):
             address_or_parser - addres of http page
             parameters - parameters for http request
         """
-        page=None
+        page = None
         if not toolbar_page:
-            u_name = 'main tools'
-            page_name = _('main tools')
-            panel_name = 'main tools'
+            u_name = "main tools"
+            page_name = _("main tools")
+            panel_name = "main tools"
         else:
             u_name = toolbar_page
-            names = toolbar_page.split('__')
+            names = toolbar_page.split("__")
             if len(names) > 1:
-                page_name = names[0].replace('_', ' ')
-                panel_name = names[1].replace('_', ' ')
+                page_name = names[0].replace("_", " ")
+                panel_name = names[1].replace("_", " ")
             else:
-                page_name = toolbar_page.replace('_', ' ')
+                page_name = toolbar_page.replace("_", " ")
                 panel_name = page_name
 
         if u_name in self.user_panels:
@@ -404,7 +428,13 @@ class ToolbarBar(object):
             dx = panel.get_width() + 3
             dy = panel.get_height() + 5
 
-            page2 = SchPage(panel.get_window(), address_or_parser, parameters, size=wx.Size(dx, dy), pos=wx.Point(2, 2))
+            page2 = SchPage(
+                panel.get_window(),
+                address_or_parser,
+                parameters,
+                size=wx.Size(dx, dy),
+                pos=wx.Point(2, 2),
+            )
             best = page2.body.calculate_best_size()
             page2.SetSize(wx.Size(best[0], best[1]))
             panel.set_page(page2)
@@ -415,7 +445,7 @@ class ToolbarBar(object):
             def init_page(callback):
                 page2.init_frame()
                 page2.activate_page()
-                #wx.GetApp().GetTopWindow()._mgr.GetPane("desktop").Show()
+                # wx.GetApp().GetTopWindow()._mgr.GetPane("desktop").Show()
                 page2.Update()
 
             wx.CallAfter(init_page, callback)
@@ -424,6 +454,6 @@ class ToolbarBar(object):
 
         return None
 
-    def new_child_page(self,address_or_parser,title='',param=None, callback=None):
+    def new_child_page(self, address_or_parser, title="", param=None, callback=None):
         """Crate new chid page, for toolbar child page is transfered to desktop window"""
-        return wx.GetApp().GetTopWindow().new_main_page(address_or_parser, title,param)
+        return wx.GetApp().GetTopWindow().new_main_page(address_or_parser, title, param)

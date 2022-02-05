@@ -10,21 +10,34 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import wx
 
 from pytigon_gui.guilib.events import *
-from pytigon_gui.toolbar.basetoolbar import ToolbarBar, ToolbarPage, ToolbarPanel, ToolbarButton
+from pytigon_gui.toolbar.basetoolbar import (
+    ToolbarBar,
+    ToolbarPage,
+    ToolbarPanel,
+    ToolbarButton,
+)
 
 
 class MenuToolbarButton(ToolbarButton, wx.MenuItem):
-    def __init__(self, parent_panel, id, title, bitmap=None, bitmap_disabled=None,  kind=ToolbarButton.TYPE_SIMPLE):
+    def __init__(
+        self,
+        parent_panel,
+        id,
+        title,
+        bitmap=None,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
         wx.MenuItem.__init__(self, parentMenu=parent_panel, id=id, text=title)
         if bitmap and bitmap.IsOk():
             self.SetBitmap(bitmap)
@@ -36,7 +49,14 @@ class MenuToolbarPanel(ToolbarPanel, wx.Menu):
         ToolbarPanel.__init__(self, parent_page, title, kind)
         self.parent_page.parent_bar.Append(self, title)
 
-    def create_button(self, id, title, bitmap=None, bitmap_disabled=None, kind=ToolbarButton.TYPE_SIMPLE):
+    def create_button(
+        self,
+        id,
+        title,
+        bitmap=None,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
         b = MenuToolbarButton(self, id, title, bitmap, bitmap_disabled, kind)
         self.Append(b)
         return b
@@ -47,7 +67,7 @@ class MenuToolbarPage(ToolbarPage):
         ToolbarPage.__init__(self, parent_bar, title, kind)
 
     def create_panel(self, title, kind=ToolbarPanel.TYPE_PANEL_TOOLBAR):
-        m =  MenuToolbarPanel(self, title, kind)
+        m = MenuToolbarPanel(self, title, kind)
         return m
 
 
@@ -61,4 +81,3 @@ class MenuToolbarBar(ToolbarBar, wx.MenuBar):
 
     def update_bar(self, obj):
         obj.SetMenuBar(self.bar)
-

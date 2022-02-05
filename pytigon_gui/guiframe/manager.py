@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 """
     Top window
@@ -24,13 +24,13 @@
 from wx.lib.agw import aui
 import wx
 
-class SChAuiBaseManager(aui.framemanager.AuiManager):
 
+class SChAuiBaseManager(aui.framemanager.AuiManager):
     def __init__(self, *argi, **argv):
         aui.framemanager.AuiManager.__init__(self, *argi, **argv)
         self.Bind(wx.EVT_WINDOW_CREATE, self.DoUpdateEvt)
 
-    #def Update(self):
+    # def Update(self):
     #    if '__WXGTK__' in wx.PlatformInfo:
     #        def _fun():
     #            self.DoUpdate()
@@ -40,8 +40,7 @@ class SChAuiBaseManager(aui.framemanager.AuiManager):
     #    else:
     #        super().Update()
 
-
-    #def OnRender(self, event):
+    # def OnRender(self, event):
     #    if self._frame and self._frame.GetHandle():
     #        super().OnRender(event)
     #    else:
@@ -49,9 +48,8 @@ class SChAuiBaseManager(aui.framemanager.AuiManager):
 
     def OnLeftDown(self, event):
         part = self.HitTest(*event.GetPosition())
-        if not part.type in [0,1]:
+        if not part.type in [0, 1]:
             super().OnLeftDown(event)
-
 
 
 class SChAuiManager(SChAuiBaseManager):
@@ -60,7 +58,7 @@ class SChAuiManager(SChAuiBaseManager):
 
     def AddPane(self, window, arg1, *argi, **argv):
         ret = aui.AuiManager.AddPane(self, window, arg1, *argi, **argv)
-        if hasattr(window, 'SetPanel'):
+        if hasattr(window, "SetPanel"):
             window.SetPanel(arg1)
         return ret
 

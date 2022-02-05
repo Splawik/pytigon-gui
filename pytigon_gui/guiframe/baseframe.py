@@ -28,12 +28,20 @@ from pytigon_lib.schtools.cc import compile, import_plugin
 
 class SchBaseFrame(wx.Frame):
     """
-        This is main window of pytigon application
+    This is main window of pytigon application
     """
 
-    def __init__(self, parent, gui_style="tree(toolbar,statusbar)", id=-1, title="", pos=wx.DefaultPosition,
-                 size=wx.DefaultSize, style=wx.DEFAULT_FRAME_STYLE |
-                                            wx.CLIP_CHILDREN | wx.WANTS_CHARS, name="MainWindow"):
+    def __init__(
+        self,
+        parent,
+        gui_style="tree(toolbar,statusbar)",
+        id=-1,
+        title="",
+        pos=wx.DefaultPosition,
+        size=wx.DefaultSize,
+        style=wx.DEFAULT_FRAME_STYLE | wx.CLIP_CHILDREN | wx.WANTS_CHARS,
+        name="MainWindow",
+    ):
         wx.Frame.__init__(self, None, wx.ID_ANY, title, pos, size, style, "MainWindow")
         self.run_on_close = []
         self.Bind(wx.EVT_CLOSE, self.on_close)
@@ -41,9 +49,12 @@ class SchBaseFrame(wx.Frame):
     def init_plugins(self):
         home_dir = wx.GetApp().get_working_dir()
         app_plugins = os.path.join(wx.GetApp().cwd, "plugins")
-        dirnames = [os.path.join(wx.GetApp().pytigon_path, "appdata", "plugins"),
-                    os.path.join(wx.GetApp().data_path, "plugins"), app_plugins]
-        auto_plugins = wx.GetApp().config['Global settings']['auto_plugins'].split(';')
+        dirnames = [
+            os.path.join(wx.GetApp().pytigon_path, "appdata", "plugins"),
+            os.path.join(wx.GetApp().data_path, "plugins"),
+            app_plugins,
+        ]
+        auto_plugins = wx.GetApp().config["Global settings"]["auto_plugins"].split(";")
         for dirname in dirnames:
             if not os.path.exists(dirname):
                 continue
@@ -61,17 +72,28 @@ class SchBaseFrame(wx.Frame):
                             if os.path.isdir(os.path.join(dirname2, f)):
                                 # p = dirname2.split('/')
                                 mod_name = ff + "." + f
-                                x = mod_name.replace('.', '/')
-                                if ff == 'auto' or (
-                                        wx.GetApp().plugins and x in wx.GetApp().plugins) or x in auto_plugins:
-                                    if '.__' in mod_name:
+                                x = mod_name.replace(".", "/")
+                                if (
+                                    ff == "auto"
+                                    or (
+                                        wx.GetApp().plugins and x in wx.GetApp().plugins
+                                    )
+                                    or x in auto_plugins
+                                ):
+                                    if ".__" in mod_name:
                                         break
                                     mod = import_plugin(mod_name)
                                     if hasattr(mod, "init_plugin"):
                                         print("BINGO")
-                                        destroy = mod.init_plugin(wx.GetApp(), self, self.desktop, self._mgr,
-                                                                  self.get_menu_bar(), self.toolbar_interface,
-                                                                  self.aTable)
+                                        destroy = mod.init_plugin(
+                                            wx.GetApp(),
+                                            self,
+                                            self.desktop,
+                                            self._mgr,
+                                            self.get_menu_bar(),
+                                            self.toolbar_interface,
+                                            self.aTable,
+                                        )
                                         if destroy != None:
                                             self.destroy_fun_tab.append(destroy)
                         # except:

@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Sławomir Chołaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Sławomir Chołaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Sławomir Chołaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Sławomir Chołaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 """
 Module contains helper classes for popup widgets.
@@ -41,7 +41,6 @@ from pytigon_lib.schtools import schjson
 from pytigon_lib.schtools.tools import bencode, bdecode
 
 
-
 class DataPopup(wx.ComboPopup):
     def __init__(self, size, combo, href):
         self.href = href
@@ -54,7 +53,7 @@ class DataPopup(wx.ComboPopup):
         self.html = self.combo.on_create(parent)
         parent.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         box = wx.BoxSizer(wx.VERTICAL)
-        box.Add(self.html, 1, wx.ALL|wx.GROW, 1)
+        box.Add(self.html, 1, wx.ALL | wx.GROW, 1)
         parent.SetSizer(box)
         parent.SetAutoLayout(True)
         parent.Fit()
@@ -87,19 +86,17 @@ class DataPopup(wx.ComboPopup):
         return wx.ComboPopup.GetAdjustedSize(self, width, height, maxHeight)
 
 
-
 class DataPopupControl(ComboCtrl):
-
     def __init__(self, *args, **kwds):
         """Constructor"""
         if "style" in kwds:
-            kwds['style'] |= wx.TE_PROCESS_ENTER
+            kwds["style"] |= wx.TE_PROCESS_ENTER
         else:
-            kwds['style'] = wx.TE_PROCESS_ENTER
+            kwds["style"] = wx.TE_PROCESS_ENTER
 
-        if 'dialog_with_value' in kwds:
-            self.dialog_with_value = kwds['dialog_with_value']
-            del kwds['dialog_with_value']
+        if "dialog_with_value" in kwds:
+            self.dialog_with_value = kwds["dialog_with_value"]
+            del kwds["dialog_with_value"]
         else:
             self.dialog_with_value = True
         ComboCtrl.__init__(self, *args, **kwds)
@@ -117,12 +114,12 @@ class DataPopupControl(ComboCtrl):
         else:
             self.clear_str = ""
 
-        href = self.href.split(';')
-        if len(href)>1:
+        href = self.href.split(";")
+        if len(href) > 1:
             self.href = href[0]
             self.href2 = href[1]
         else:
-            self.href2=None
+            self.href2 = None
 
         self.http = wx.GetApp().get_http(self)
         response = self.http.get(self, str(self.href) + "size/")
@@ -137,7 +134,6 @@ class DataPopupControl(ComboCtrl):
         popoup = self._create_popoup()
         self.SetPopupControl(popoup)
 
-
     def _create_popoup(self):
         if not self.popup:
             self.popup = DataPopup(size=self.size, combo=self, href=self.href)
@@ -146,14 +142,13 @@ class DataPopupControl(ComboCtrl):
     def to_masked(self, **kwds):
         self.win = ComboCtrl.GetTextCtrl(self)
         self.win.__class__ = masked.TextCtrl
-        self.win._PostInit(setupEventHandling = True, name = 'maskedTextCtrl', value = '')
+        self.win._PostInit(setupEventHandling=True, name="maskedTextCtrl", value="")
         self.win.SetCtrlParameters(**kwds)
 
     def GetTextCtrl(self):
         if self.win:
             return self.win
         return ComboCtrl.GetTextCtrl(self)
-
 
     def KillFocus(self):
         value = ComboCtrl.GetValue(self)
@@ -168,7 +163,7 @@ class DataPopupControl(ComboCtrl):
             parent = parent.GetParent()
         return None
 
-    #def on_setfocus(self, event):
+    # def on_setfocus(self, event):
     #    value = ComboCtrl.GetValue(self)
     #    self.focus_in(value)
     #    event.Skip()
@@ -226,12 +221,11 @@ class DataPopupControl(ComboCtrl):
                     self.set_rec(tab[1], tab[2], False)
 
     def has_parm(self, parm):
-        return True if parm=='value' else False
+        return True if parm == "value" else False
 
     def get_parm(self, parm):
-        """For param = 'value' return field value bencoded
-        """
-        return bencode(ComboCtrl.GetValue(self)) if parm=='value' else None
+        """For param = 'value' return field value bencoded"""
+        return bencode(ComboCtrl.GetValue(self)) if parm == "value" else None
 
     def set_rec(self, value, value_rec, dismiss=False):
         """Set field value
@@ -240,9 +234,9 @@ class DataPopupControl(ComboCtrl):
             value: element id
             value_rec: element
         """
-        #if 'value' in value_rec.attrs:
+        # if 'value' in value_rec.attrs:
         #    value2 = value_rec.data
-        #else:
+        # else:
         #    value2 = value
         value2 = value_rec.data
 
@@ -273,7 +267,12 @@ class DataPopupControl(ComboCtrl):
 
     def on_create(self, parent):
         from pytigon_gui.guiframe.page import SchPage
-        href = self.href + "dialog/|value" if self.dialog_with_value else self.href + "dialog/"
+
+        href = (
+            self.href + "dialog/|value"
+            if self.dialog_with_value
+            else self.href + "dialog/"
+        )
         self.html = SchPage(parent, href, self)
         self.html.body.parent_combo = self
         return self.html
@@ -282,16 +281,20 @@ class DataPopupControl(ComboCtrl):
         if self.html:
             wx.BeginBusyCursor()
             self.html.body.Hide()
+
             def _after():
                 self.html.refresh_html()
                 self.html.SetFocus()
                 self.html.on_size(None)
                 self.html.body.init()
+
                 def _after2():
                     self.html.body.refr(self.start_value)
                     self.html.body.Show()
+
                 wx.CallAfter(_after2)
                 wx.EndBusyCursor()
+
             wx.CallAfter(_after)
 
     def Dismiss(self):
@@ -302,7 +305,6 @@ class DataPopupControl(ComboCtrl):
             super().Dismiss()
         self.SetFocus()
 
-
     def set_new_href(self, href):
         """Set new base address to server service
 
@@ -311,12 +313,12 @@ class DataPopupControl(ComboCtrl):
         """
         self.href = href
 
-        href3 = self.href.split(';')
-        if len(href3)>1:
+        href3 = self.href.split(";")
+        if len(href3) > 1:
             self.href = href3[0]
             self.href2 = href3[1]
         else:
-            self.href2=None
+            self.href2 = None
 
         if self.href2:
             href3 = self.href2

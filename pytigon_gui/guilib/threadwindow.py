@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import wx
 import wx.html
@@ -27,7 +27,6 @@ EVT_THREAD_INFO = wx.PyEventBinder(schEVT_THREAD_INFO, 1)
 
 
 class ThreadEvent(wx.PyCommandEvent):
-
     def __init__(self, evt_type, id):
         wx.PyCommandEvent.__init__(self, evt_type, id)
         self.info = None
@@ -40,22 +39,21 @@ class ThreadEvent(wx.PyCommandEvent):
 
 
 class SchThreadWindow(wx.Panel):
-
-    def __init__(self,manager,thread_name,*args,**kwds):
+    def __init__(self, manager, thread_name, *args, **kwds):
 
         wx.Panel.__init__(self, *args, **kwds)
         self.thread_name = thread_name
         self.manager = manager
         self.closed = False
-        self.SetBackgroundColour(wx.NamedColour('#eec'))
+        self.SetBackgroundColour(wx.NamedColour("#eec"))
         self.gauge = wx.Gauge(self, range=100, size=(100, 1))
         self.gauge.SetValue(0)
-        self.html = wx.html.HtmlWindow(self, size=(50, 50),
-                                       style=wx.html.HW_SCROLLBAR_NEVER)
+        self.html = wx.html.HtmlWindow(
+            self, size=(50, 50), style=wx.html.HW_SCROLLBAR_NEVER
+        )
         self.html.SetBorders(0)
         self.html.SetPage("<body bgcolor='#eec'></body>")
-        bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_TO_PARENT, wx.ART_TOOLBAR,
-                                       (16, 16))
+        bmp = wx.ArtProvider.GetBitmap(wx.ART_GO_TO_PARENT, wx.ART_TOOLBAR, (16, 16))
         bmp = bmp.ConvertToImage().Rescale(16, 8).ConvertToBitmap()
         bmp2 = wx.ArtProvider.GetBitmap(wx.ART_QUIT, wx.ART_TOOLBAR, (16, 16))
         bmp2 = bmp2.ConvertToImage().Rescale(16, 8).ConvertToBitmap()
@@ -76,36 +74,36 @@ class SchThreadWindow(wx.Panel):
 
     def timer(self):
         http = wx.GetApp().http
-        response = http.get(self, 'http://local.net/schsys/thread_short_info/'
-                  + self.thread_name)
+        response = http.get(
+            self, "http://local.net/schsys/thread_short_info/" + self.thread_name
+        )
         info_json = response.str()
         info = schjson.loads(info_json)
 
-        if type(info)==str and info == '$$$':
+        if type(info) == str and info == "$$$":
             self.closed = True
             evt = ThreadEvent(schEVT_THREAD_INFO, -1)
             evt.set_info(self.thread_name)
             wx.GetApp().GetTopWindow().GetEventHandler().ProcessEvent(evt)
         else:
             if info:
-                if 'progress' in info:
-                    progress = info['progress']
+                if "progress" in info:
+                    progress = info["progress"]
                     self.gauge.SetValue(int(progress))
-                if 'description' in info:
-                    description = info['description']
-                    self.html.SetPage("<body bgcolor='#eec'>" + description + '</body>')
+                if "description" in info:
+                    description = info["description"]
+                    self.html.SetPage("<body bgcolor='#eec'>" + description + "</body>")
 
     def on_expand(self, event):
-        address = 'http://local.net/schsys/thread_long_info/' + self.thread_name
-        wx.GetApp().GetTopWindow().new_main_page(address, 'aplikacja')
+        address = "http://local.net/schsys/thread_long_info/" + self.thread_name
+        wx.GetApp().GetTopWindow().new_main_page(address, "aplikacja")
 
     def on_kill(self, event):
         http = wx.GetApp().http
-        http.get(self, 'http://local.net/schsys/thread_kill/' + self.thread_name)
+        http.get(self, "http://local.net/schsys/thread_kill/" + self.thread_name)
 
 
 class SchThreadManager(object):
-
     def __init__(self, app, statusbar):
         self.app = app
         self.statusbar = statusbar
@@ -115,8 +113,7 @@ class SchThreadManager(object):
         statusbar.Bind(wx.EVT_IDLE, self.on_idle)
 
     def append(self, thread_address):
-        self.windows.append(SchThreadWindow(self, thread_address,
-                            self.statusbar))
+        self.windows.append(SchThreadWindow(self, thread_address, self.statusbar))
 
     def reposition(self):
         x = len(self.windows)
@@ -144,5 +141,3 @@ class SchThreadManager(object):
                     self.windows.remove(win)
                 else:
                     win.timer()
-
-

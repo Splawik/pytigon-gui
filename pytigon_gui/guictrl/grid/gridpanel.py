@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import collections
 import wx
@@ -27,12 +27,18 @@ _ = wx.GetTranslation
 
 class SchGridPanel(wx.Panel):
     """Panel for grid widget with toolbar"""
+
     def __init__(self, *args, **argv):
         self.grid = None
         self.icon_size = 2
         wx.Panel.__init__(self, *args, **argv)
         self.vertical = False
-        self._bitmaps = {'edit': 'wx.ART_FILE_OPEN', 'edit_inline': 'wx.ART_FILE_OPEN', 'delete': 'wx.ART_DELETE', 'view_row': 'wx.ART_INFORMATION'}
+        self._bitmaps = {
+            "edit": "wx.ART_FILE_OPEN",
+            "edit_inline": "wx.ART_FILE_OPEN",
+            "delete": "wx.ART_DELETE",
+            "view_row": "wx.ART_INFORMATION",
+        }
         self._menu_buttons = collections.OrderedDict()
 
     def set_bitmap(self, action, path):
@@ -53,89 +59,106 @@ class SchGridPanel(wx.Panel):
 
     def _add_action(self, action):
         test = False
-        if 'name' in action:
-            name = action['name']
-            label = action['data']
-            if 'title' in action:
-                title = action['title']
+        if "name" in action:
+            name = action["name"]
+            label = action["data"]
+            if "title" in action:
+                title = action["title"]
                 if not label:
                     label = title
             else:
-                title = ''
-            if not name in ('insert', 'edit', 'delete', 'new', 'get_row', 'view_row') and not name in self.commands:
+                title = ""
+            if (
+                not name in ("insert", "edit", "delete", "new", "get_row", "view_row")
+                and not name in self.commands
+            ):
                 if name in self._bitmaps:
                     b = self._get_bmp(name)
                 else:
-                    if 'src' in action:
-                        b = bitmap_from_href(action['src'])
+                    if "src" in action:
+                        b = bitmap_from_href(action["src"])
                     else:
                         b = bitmap_from_href("fa://fa-chevron-right?size=1")
-                if '(' in label and ')' in label:
-                    x = label.split('(')
+                if "(" in label and ")" in label:
+                    x = label.split("(")
                     label1 = x[0]
-                    label2 = x[1].split(')')[0]
+                    label2 = x[1].split(")")[0]
                     if not label2 in self._menu_buttons:
-                        self.toolbar.AddTool(self.lp2, label2, b, wx.NullBitmap, wx.ITEM_NORMAL, label2, title)
+                        self.toolbar.AddTool(
+                            self.lp2,
+                            label2,
+                            b,
+                            wx.NullBitmap,
+                            wx.ITEM_NORMAL,
+                            label2,
+                            title,
+                        )
                         self._menu_buttons[label2] = []
                         self.lp2 += 1
                     tab_menu = self._menu_buttons[label2]
                     tab_menu.append((self.lp, label1))
                 else:
-                    self.toolbar.AddTool(self.lp,label,b,wx.NullBitmap,wx.ITEM_NORMAL,label,title)
+                    self.toolbar.AddTool(
+                        self.lp, label, b, wx.NullBitmap, wx.ITEM_NORMAL, label, title
+                    )
                 self.commands.append(name)
                 test = True
-                self.lp+=1
+                self.lp += 1
         return test
 
     def create_toolbar(self, grid):
-        self.GetParent().signal_from_child(self, 'set_bitmap_list')
+        self.GetParent().signal_from_child(self, "set_bitmap_list")
         self.grid = grid
-        self.spanel = wx.ScrolledWindow(self, style=wx.VSCROLL if self.vertical else wx.HSCROLL)
+        self.spanel = wx.ScrolledWindow(
+            self, style=wx.VSCROLL if self.vertical else wx.HSCROLL
+        )
         self.commands = []
         self.lp = 101
         self.lp2 = 201
         (standard, akcje) = grid.get_action_list()
         if standard or akcje and len(akcje) > 0:
             if self.vertical:
-                self.toolbar = wx.ToolBar(self.spanel, -1, wx.DefaultPosition,
-                        wx.DefaultSize, wx.TB_VERTICAL)
+                self.toolbar = wx.ToolBar(
+                    self.spanel, -1, wx.DefaultPosition, wx.DefaultSize, wx.TB_VERTICAL
+                )
             else:
-                self.toolbar = wx.ToolBar(self.spanel, -1, wx.DefaultPosition,
-                        wx.DefaultSize, 0)
+                self.toolbar = wx.ToolBar(
+                    self.spanel, -1, wx.DefaultPosition, wx.DefaultSize, 0
+                )
             tsize = (22, 22)
             self.toolbar.SetToolBitmapSize(tsize)
             if standard:
                 self.toolbar.AddTool(
                     self.lp,
-                    _('Edit'),
-                    self._get_bmp('edit'),
+                    _("Edit"),
+                    self._get_bmp("edit"),
                     wx.NullBitmap,
                     wx.ITEM_NORMAL,
-                    _('Edit'),
-                    _('Edit'),
-                    )
+                    _("Edit"),
+                    _("Edit"),
+                )
                 self.toolbar.AddTool(
                     self.lp + 1,
-                    _('Delete'),
-                    self._get_bmp('delete'),
+                    _("Delete"),
+                    self._get_bmp("delete"),
                     wx.NullBitmap,
                     wx.ITEM_NORMAL,
-                    _('Delete'),
-                    _('Delete'),
-                    )
+                    _("Delete"),
+                    _("Delete"),
+                )
                 self.toolbar.AddTool(
                     self.lp + 2,
-                    _('view_row'),
-                    self._get_bmp('view_row'),
+                    _("view_row"),
+                    self._get_bmp("view_row"),
                     wx.NullBitmap,
                     wx.ITEM_NORMAL,
-                    _('View row'),
-                    _('View row'),
-                    )
+                    _("View row"),
+                    _("View row"),
+                )
                 self.toolbar.AddSeparator()
-                self.commands.append('edit')
-                self.commands.append('delete')
-                self.commands.append('view_row')
+                self.commands.append("edit")
+                self.commands.append("delete")
+                self.commands.append("view_row")
                 self.lp += 3
             if akcje:
                 for action in akcje:
@@ -166,20 +189,24 @@ class SchGridPanel(wx.Panel):
             else:
                 dx = toolbar_size[0]
             self.spanel.SetRect(wx.Rect(0, 0, dx, panel_size[1]))
-            self.grid.SetRect(wx.Rect(dx + 2, 0, (panel_size[1] - dx) - 2,panel_size[1]))
+            self.grid.SetRect(
+                wx.Rect(dx + 2, 0, (panel_size[1] - dx) - 2, panel_size[1])
+            )
         else:
             if toolbar_size[0] >= panel_size[0]:
                 dy = toolbar_size[1] + wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y)
             else:
                 dy = toolbar_size[1]
             self.spanel.SetRect(wx.Rect(0, 0, panel_size[0], dy))
-            self.grid.SetRect(wx.Rect(0, dy + 2, panel_size[0], (panel_size[1] - dy) - 2))
+            self.grid.SetRect(
+                wx.Rect(0, dy + 2, panel_size[0], (panel_size[1] - dy) - 2)
+            )
         if event:
             event.Skip()
 
     def on_tool_click(self, event):
         id = event.GetId()
-        if id>200:
+        if id > 200:
             id2 = id - 201
             tab_menu = list(self._menu_buttons.values())[id2]
             menu = wx.Menu()
@@ -197,9 +224,9 @@ class SchGridPanel(wx.Panel):
             test = False
             if akcje:
                 for action in akcje:
-                    if not 'name' in action:
+                    if not "name" in action:
                         continue
-                    akcje_dict[action['name']] = akcje
+                    akcje_dict[action["name"]] = akcje
                     if self._add_action(action):
                         test = True
             if test:
@@ -212,5 +239,3 @@ class SchGridPanel(wx.Panel):
                 else:
                     self.toolbar.EnableTool(i, False)
                 i = i + 1
-
-

@@ -10,26 +10,32 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import wx
 from wx.lib.agw import customtreectrl as CT
 from wx.lib.agw.ribbon import art
 
 from pytigon_gui.guilib.events import *
-from pytigon_gui.toolbar.basetoolbar import BaseHtmlPanel, ToolbarBar, ToolbarPage, ToolbarPanel, ToolbarButton
+from pytigon_gui.toolbar.basetoolbar import (
+    BaseHtmlPanel,
+    ToolbarBar,
+    ToolbarPage,
+    ToolbarPanel,
+    ToolbarButton,
+)
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 
 
 _ = wx.GetTranslation
 
 
-def _tree_list(tree, parent_item, list = None):
+def _tree_list(tree, parent_item, list=None):
     if list == None:
         list2 = []
     else:
@@ -54,32 +60,53 @@ class TreeHtmlPanel(BaseHtmlPanel):
 
     def set_page(self, html_page):
         super().set_page(html_page)
-        #self.page.parent_bar.update()
-        #self.page.parent_bar.SetActivePage(self.page)
+        # self.page.parent_bar.update()
+        # self.page.parent_bar.SetActivePage(self.page)
 
 
 class TreeToolbarButton(ToolbarButton):
-    def __init__(self, parent_panel, id, title, bitmap, bitmap_disabled = None, kind=ToolbarButton.TYPE_SIMPLE):
-        ToolbarButton.__init__(self, parent_panel, id, title, bitmap, bitmap_disabled, kind)
+    def __init__(
+        self,
+        parent_panel,
+        id,
+        title,
+        bitmap,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
+        ToolbarButton.__init__(
+            self, parent_panel, id, title, bitmap, bitmap_disabled, kind
+        )
 
 
 class TreeToolbarPanel(ToolbarPanel):
     def __init__(self, parent_page, title, kind=ToolbarPanel.TYPE_PANEL_TOOLBAR):
         ToolbarPanel.__init__(self, parent_page, title, kind)
-        bar =  self.parent_page.parent_bar
+        bar = self.parent_page.parent_bar
         self.tree_item = bar.append_to_tree(parent_page.tree_item, title)
 
     def _append(self, b):
         item = None
-        if self.kind in (ToolbarPanel.TYPE_PANEL_TOOLBAR, ToolbarPanel.TYPE_PANEL_BUTTONBAR):
+        if self.kind in (
+            ToolbarPanel.TYPE_PANEL_TOOLBAR,
+            ToolbarPanel.TYPE_PANEL_BUTTONBAR,
+        ):
             if b.kind == ToolbarButton.TYPE_SIMPLE:
-                item = self.parent_page.parent_bar.append_to_tree(self.tree_item, b.title, b.bitmap, ct_type=0)
+                item = self.parent_page.parent_bar.append_to_tree(
+                    self.tree_item, b.title, b.bitmap, ct_type=0
+                )
             elif b.kind == ToolbarButton.TYPE_DROPDOWN:
-                item = self.parent_page.parent_bar.append_to_tree(self.tree_item, b.title, b.bitmap, ct_type=0)
+                item = self.parent_page.parent_bar.append_to_tree(
+                    self.tree_item, b.title, b.bitmap, ct_type=0
+                )
             elif b.kind == ToolbarButton.TYPE_HYBRID:
-                item = self.parent_page.parent_bar.append_to_tree(self.tree_item, b.title, b.bitmap, ct_type=0)
+                item = self.parent_page.parent_bar.append_to_tree(
+                    self.tree_item, b.title, b.bitmap, ct_type=0
+                )
             elif b.kind == ToolbarButton.TYPE_TOOGLE:
-                item = self.parent_page.parent_bar.append_to_tree(self.tree_item, b.title, b.bitmap, ct_type=1)
+                item = self.parent_page.parent_bar.append_to_tree(
+                    self.tree_item, b.title, b.bitmap, ct_type=1
+                )
             elif b.kind == ToolbarButton.TYPE_PANEL:
                 pass
             elif b.kind == ToolbarButton.TYPE_SEPARATOR:
@@ -89,13 +116,22 @@ class TreeToolbarPanel(ToolbarPanel):
             self.parent_page.parent_bar.SetItemHyperText(item, True)
             self.parent_page.parent_bar.SetPyData(item, b.id)
 
-    def create_button(self, id, title, bitmap=None, bitmap_disabled=None, kind=ToolbarButton.TYPE_SIMPLE):
+    def create_button(
+        self,
+        id,
+        title,
+        bitmap=None,
+        bitmap_disabled=None,
+        kind=ToolbarButton.TYPE_SIMPLE,
+    ):
         b = TreeToolbarButton(self, id, title, bitmap, bitmap_disabled, kind)
         self._append(b)
         return b
 
     def add_separator(self):
-        b = TreeToolbarButton(self, 0, '', None, None, kind=ToolbarButton.TYPE_SEPARATOR)
+        b = TreeToolbarButton(
+            self, 0, "", None, None, kind=ToolbarButton.TYPE_SEPARATOR
+        )
         self._append(b)
         return b
 
@@ -109,7 +145,7 @@ class TreeToolbarPage(ToolbarPage):
         return TreeToolbarPanel(self, title, kind)
 
     def create_html_panel(self, title):
-        p = wx.Panel(self.parent_bar, size=wx.Size(200,200))
+        p = wx.Panel(self.parent_bar, size=wx.Size(200, 200))
         self.parent_bar.AppendItem(self.tree_item, title, 0, p)
         self.parent_bar.Expand(self.tree_item)
         return TreeHtmlPanel(self, p)
@@ -117,11 +153,16 @@ class TreeToolbarPage(ToolbarPage):
 
 class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
     def __init__(self, parent, gui_style):
-        agwStyle =  CT.TR_HIDE_ROOT | CT.TR_HAS_BUTTONS | CT.TR_HAS_VARIABLE_ROW_HEIGHT | CT.TR_NO_LINES
+        agwStyle = (
+            CT.TR_HIDE_ROOT
+            | CT.TR_HAS_BUTTONS
+            | CT.TR_HAS_VARIABLE_ROW_HEIGHT
+            | CT.TR_NO_LINES
+        )
         CT.CustomTreeCtrl.__init__(self, parent, agwStyle=agwStyle)
 
         self._indent = 8
-        self.tree_main_page = self.AddRoot('The Root Item')
+        self.tree_main_page = self.AddRoot("The Root Item")
         self.images = wx.ImageList(32, 32)
         self.image_id = 0
         self.show_titles = True
@@ -146,7 +187,6 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
 
         wx.GetApp().GetTopWindow().idle_objects.append(self)
 
-
     def append_to_tree(self, parent_elem, title, bitmap=None, ct_type=0):
         if bitmap is not None and bitmap.IsOk():
             if bitmap.GetWidth() < 32 or bitmap.GetHeight() < 32:
@@ -154,12 +194,18 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
             else:
                 b = bitmap
             self.images.Add(b)
-            item = self.AppendItem(parent_elem, title if self.show_titles else '', image=self.image_id, ct_type=ct_type)
+            item = self.AppendItem(
+                parent_elem,
+                title if self.show_titles else "",
+                image=self.image_id,
+                ct_type=ct_type,
+            )
             self.image_id += 1
         else:
-            item = self.AppendItem(parent_elem, title if self.show_titles else '', ct_type=ct_type)
+            item = self.AppendItem(
+                parent_elem, title if self.show_titles else "", ct_type=ct_type
+            )
         return item
-
 
     def create_page(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
         return TreeToolbarPage(self, title, kind)
@@ -187,7 +233,8 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
     def on_hyper_link(self, event):
         wx.Event.EventType
         item = event.GetItem()
-        if item: wx.CallAfter(self.send_menu_event, item)
+        if item:
+            wx.CallAfter(self.send_menu_event, item)
 
     def send_menu_event(self, item):
         e = wx.CommandEvent(wx.EVT_MENU.typeId, self.GetPyData(item))
@@ -202,7 +249,9 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
         for item in _tree_list(self, self.tree_main_page):
             id = self.GetPyData(item)
             if id:
-                if (id >= ID_START and id < ID_END) or (id >= wx.ID_LOWEST and id < wx.ID_HIGHEST ):
+                if (id >= ID_START and id < ID_END) or (
+                    id >= wx.ID_LOWEST and id < wx.ID_HIGHEST
+                ):
                     event = wx.UpdateUIEvent(id)
                     event.Enable(False)
                     event.SetEventObject(self.GetParent())
@@ -276,4 +325,3 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
             self.Unbind(e, id=id)
         else:
             self.Unbind(wx.EVT_MENU, id=id)
-

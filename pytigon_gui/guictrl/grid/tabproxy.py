@@ -10,12 +10,12 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-#Pytigon - wxpython and django application framework
+# Pytigon - wxpython and django application framework
 
-#author: "Sławomir Chołaj (slawomir.cholaj@gmail.com)"
-#copyright: "Copyright (C) ????/2012 Sławomir Chołaj"
-#license: "LGPL 3.0"
-#version: "0.1a"
+# author: "Sławomir Chołaj (slawomir.cholaj@gmail.com)"
+# copyright: "Copyright (C) ????/2012 Sławomir Chołaj"
+# license: "LGPL 3.0"
+# version: "0.1a"
 
 import sys
 
@@ -43,7 +43,6 @@ def process_post_parm(obj):
 
 
 class DataProxy:
-
     def __init__(self, http, tabaddress):
         self.max_count = 1000000
         self.var_count = -1
@@ -56,7 +55,15 @@ class DataProxy:
         self.parm = dict()
         self.is_valid = True
 
-        response = self.http.post(self.parent, self.tabaddress, process_post_parm({'cmd': CMD_INFO, }))
+        response = self.http.post(
+            self.parent,
+            self.tabaddress,
+            process_post_parm(
+                {
+                    "cmd": CMD_INFO,
+                }
+            ),
+        )
         ret = schjson.loads(response.str())
 
         self.col_names = ret["col_names"]
@@ -73,8 +80,14 @@ class DataProxy:
         for col in self.col_types:
             self.col_types2.append(col.split(":")[0])
 
-        self.tab_conw = {"long": self.conw_long, "string": self.conw_none, "double": self.conw_float,
-            "bool": self.conw_bool, "choice": self.conw_none, "x": self.conw_none}
+        self.tab_conw = {
+            "long": self.conw_long,
+            "string": self.conw_none,
+            "double": self.conw_float,
+            "bool": self.conw_bool,
+            "choice": self.conw_none,
+            "x": self.conw_none,
+        }
 
     def set_parent(self, parent):
         self.parent = parent
@@ -131,7 +144,7 @@ class DataProxy:
         (self.parm)[key] = value
 
     def get_page(self, nrPage):
-        c = {'cmd': CMD_PAGE, 'nr': nrPage}
+        c = {"cmd": CMD_PAGE, "nr": nrPage}
         if self.parm:
             for (key, value) in list(self.parm.items()):
                 c[key] = value
@@ -142,20 +155,19 @@ class DataProxy:
             retpage = page["page"]
         except:
             retpage = None
-            #from pytigon_lib.schhttptools.httperror import http_error
-            #http_error(wx.GetApp().GetTopWindow(), self.http.str())
+            # from pytigon_lib.schhttptools.httperror import http_error
+            # http_error(wx.GetApp().GetTopWindow(), self.http.str())
             self.http.show(wx.GetApp().GetTopWindow())
             retpage = []
         return retpage
-
 
     def get_max_count(self):
         return self.max_count
 
     def get_count(self):
-        parm = {'cmd': CMD_COUNT}
-        if 'value' in self.parm:
-            parm['value']=self.parm['value']
+        parm = {"cmd": CMD_COUNT}
+        if "value" in self.parm:
+            parm["value"] = self.parm["value"]
         response = self.http.post(self.parent, self.tabaddress, process_post_parm(parm))
         s = response.str()
         ret = schjson.loads(s)
@@ -166,7 +178,7 @@ class DataProxy:
         update = schjson.dumps(listaRecUpdate)
         insert = schjson.dumps(listaRecInsert)
         delete = schjson.dumps(listaRecDelete)
-        c = {'cmd': CMD_SYNC, 'update': update, 'insert': insert, 'delete': delete}
+        c = {"cmd": CMD_SYNC, "update": update, "insert": insert, "delete": delete}
         self.http.post(self.parent, self.tabaddress, process_post_parm(c))
 
     def auto_update(self, col_name, col_names, rec):
@@ -176,7 +188,12 @@ class DataProxy:
         col_names2 = schjson.dumps(col_names)
         rec2 = schjson.dumps(rec)
 
-        c = {'cmd': CMD_AUTO, 'col_name': col_name2, 'col_names': col_names2, "rec": rec2}
+        c = {
+            "cmd": CMD_AUTO,
+            "col_name": col_name2,
+            "col_names": col_names2,
+            "rec": rec2,
+        }
 
         response = self.http.post(self.parent, self.tabaddress, process_post_parm(c))
         ret = schjson.loads(response.str())
@@ -191,7 +208,7 @@ class DataProxy:
         return c
 
     def exec(self, parm):
-        c = {'cmd': CMD_EXEC, 'value': parm}
+        c = {"cmd": CMD_EXEC, "value": parm}
         response = self.http.post(self.parent, self.tabaddress, process_post_parm(c))
         ret = schjson.loads(response.str())
         return ret
@@ -200,7 +217,11 @@ class DataProxy:
         return self.default_rec
 
     def GetRecAsStr(self, nrRec):
-        response = self.http.post(self.parent, self.tabaddress, process_post_parm({'cmd': CMD_RECASSTR, 'nr': nrRec}))
+        response = self.http.post(
+            self.parent,
+            self.tabaddress,
+            process_post_parm({"cmd": CMD_RECASSTR, "nr": nrRec}),
+        )
         ret = schjson.loads(response.str())
         return ret["recasstr"]
 
