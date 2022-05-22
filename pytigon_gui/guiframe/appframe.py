@@ -319,8 +319,8 @@ class SchAppFrame(SchBaseFrame):
             self._create_pane_info("panel", _("Tools"))
             .CaptionVisible(True)
             .Left()
-            .MinSize((400, s_dy / 2))
-            .BestSize((s_dx / 2 - 50, s_dy - 100))
+            .MinSize((400, int(s_dy / 2)))
+            .BestSize((int(s_dx / 2) - 50, s_dy - 100))
             .Show(),
         )
         self._mgr.AddPane(
@@ -328,8 +328,8 @@ class SchAppFrame(SchBaseFrame):
             self._create_pane_info("header", _("Header"))
             .CaptionVisible(False)
             .Top()
-            .MinSize((s_dx, s_dy / 10))
-            .BestSize((s_dx, s_dy / 5))
+            .MinSize((int(s_dx), int(s_dy / 10)))
+            .BestSize((int(s_dx), int(s_dy / 5)))
             .Show(),
         )
         self._mgr.AddPane(
@@ -337,8 +337,8 @@ class SchAppFrame(SchBaseFrame):
             self._create_pane_info("footer", _("Footer"))
             .CaptionVisible(False)
             .Bottom()
-            .MinSize((s_dx, s_dy / 10))
-            .BestSize((s_dx, s_dy / 5))
+            .MinSize((int(s_dx), int(s_dy / 10)))
+            .BestSize((int(s_dx), int(s_dy / 5)))
             .Show(),
         )
         self._mgr.AddPane(
