@@ -229,7 +229,7 @@ class SchForm(ScrolledPanel):
                 return (0, 0)
             # dx -= wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
             # dy -= wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y) + 1
-            return (dx, dy)
+            return (int(dx), int(dy))
 
     def _calculate_size(self, width):
         dc = wx.ClientDC(self)
@@ -306,8 +306,9 @@ class SchForm(ScrolledPanel):
                         w2 = w2 + wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
                     if self.hscroll:
                         h2 = h2 + wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y)
-                    self._best_virtual_size = (w2, h2)
+                    self._best_virtual_size = (int(w2), int(h2))
                     self.EnableScrolling(self.hscroll, self.vscroll)
+                    self._SetupAfter(False)
                 self.SetVirtualSize((w2, h2))
             else:
                 self.EnableScrolling(False, False)
@@ -512,7 +513,7 @@ class SchForm(ScrolledPanel):
             for obj in self.obj_action_dict["href"]:
                 if type == 1 or obj.can_hover():
                     for r in obj.rendered_rects:
-                        rect = wx.Rect(r[0], r[1], r[2], r[3])
+                        rect = wx.Rect(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
                         if rect.Contains(pos):
                             return obj
         if type == 1:
@@ -572,7 +573,7 @@ class SchForm(ScrolledPanel):
         if "href" in self.obj_action_dict:
             for obj in self.obj_action_dict["href"]:
                 for r in obj.rendered_rects:
-                    rect = wx.Rect(r[0], r[1], r[2], r[3])
+                    rect = wx.Rect(int(r[0]), int(r[1]), int(r[2]), int(r[3]))
                     if rect.Contains(pos2):
                         self.href_clicked(self, obj.attrs)
                         evt.Skip()
@@ -794,9 +795,9 @@ class SchForm(ScrolledPanel):
         if max_y > 0:
             self.vscroll = True
             self.no_vscrollbar = False
-            self.SetupScrolling(self.hscroll, self.vscroll, rate_y=1)
             self.EnableScrolling(self.hscroll, self.vscroll)
             self.SetVirtualSize(size[0], max_y)
+            wx.CallAfter(self.SetupScrolling, self.hscroll, self.vscroll, rate_y=1)
             self.wxdc = None
             self.draw_background(True, size)
             self.Refresh()

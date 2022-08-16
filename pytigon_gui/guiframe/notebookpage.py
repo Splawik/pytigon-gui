@@ -100,32 +100,46 @@ class SchNotebookPage(wx.Window):
                 else:
                     col = wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVEBORDER)
                 dc.SetPen(wx.Pen(col, margin))
-                dc.DrawLine(x, y, x + dx, y)
-                dc.DrawLine(x + dx, y, x + dx, y + dy)
-                dc.DrawLine(x, y - margin / 2, x, y + dy)
-                dc.DrawLine(x, y + dy, x + dx, y + dy)
+                dc.DrawLine(int(x), int(y), int(x + dx), int(y))
+                dc.DrawLine(int(x + dx), int(y), int(x + dx), int(y + dy))
+                dc.DrawLine(int(x), int(y - margin / 2), int(x), int(y + dy))
+                dc.DrawLine(int(x), int(y + dy), int(x + dx), int(y + dy))
                 if self._layout_style > 0:
                     col = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
                     dc.SetPen(wx.Pen(col, 1))
                     if self._layout_style in (1, 3):
-                        dc.DrawLine(x - margin, y, x - margin, y + dy)
-                        dc.DrawLine(x - 5 * margin, y, x - 5 * margin, y + dy)
+                        dc.DrawLine(
+                            int(x - margin), int(y), int(x - margin), int(y + dy)
+                        )
+                        dc.DrawLine(
+                            int(x - 5 * margin),
+                            int(y),
+                            int(x - 5 * margin),
+                            int(y + dy),
+                        )
                         for i in range(-4, 5, 2):
                             dc.DrawLine(
-                                x - 5 * margin + 2,
-                                y + dy / 2 + margin * i,
-                                (x - margin) - 1,
-                                y + dy / 2 + margin * i,
+                                int(x - 5 * margin + 2),
+                                int(y + dy / 2 + margin * i),
+                                int((x - margin) - 1),
+                                int(y + dy / 2 + margin * i),
                             )
                     if self._layout_style in (2, 3):
-                        dc.DrawLine(x, y - margin, x + dx, y - margin)
-                        dc.DrawLine(x, y - 5 * margin, x + dx, y - 5 * margin)
+                        dc.DrawLine(
+                            int(x), int(y - margin), int(x + dx), int(y - margin)
+                        )
+                        dc.DrawLine(
+                            int(x),
+                            int(y - 5 * margin),
+                            int(x + dx),
+                            int(y - 5 * margin),
+                        )
                         for i in range(-4, 5, 2):
                             dc.DrawLine(
-                                x + dx / 2 + margin * i,
-                                y - 5 * margin + 2,
-                                x + dx / 2 + margin * i,
-                                (y - margin) - 1,
+                                int(x + dx / 2 + margin * i),
+                                int(y - 5 * margin + 2),
+                                int(x + dx / 2 + margin * i),
+                                int((y - margin) - 1),
                             )
 
     def on_left_down(self, event):
@@ -189,14 +203,14 @@ class SchNotebookPage(wx.Window):
         if x > 0 and y > 0 and width >= 0 and height >= 0:
             if self.child_panels[-1].vertical_position:
                 if self.child_panels[-1].vertical_position == "top":
-                    page.SetSize(x, dy - height - y, width, height)
+                    page.SetSize(int(x), int(dy - height - y), int(width), int(height))
                 else:
-                    page.SetSize(x, y, width, height)
+                    page.SetSize(int(x), int(y), int(width), int(height))
             else:
                 if self.reverse_style:
-                    page.SetSize(x, dy - height - y, width, height)
+                    page.SetSize(int(x), int(dy - height - y), int(width), int(height))
                 else:
-                    page.SetSize(x, y, width, height)
+                    page.SetSize(int(x), int(y), int(width), int(height))
 
     def _layout(self, size=None):
         if self.get_page_count() > 0:

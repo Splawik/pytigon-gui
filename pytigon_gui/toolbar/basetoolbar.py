@@ -436,7 +436,7 @@ class ToolbarBar(object):
                 pos=wx.Point(2, 2),
             )
             best = page2.body.calculate_best_size()
-            page2.SetSize(wx.Size(best[0], best[1]))
+            page2.SetSize(wx.Size(int(best[0]), int(best[1])))
             panel.set_page(page2)
             self.user_panels[u_name] = panel
             page2.body.toolbar_interface = self

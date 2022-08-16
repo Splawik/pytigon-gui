@@ -752,7 +752,7 @@ class SchApp(App, _BASE_APP):
 
         if hasattr(self, "StartCoroutine"):
             if self.base_address.startswith("http://127.0.0.2"):
-                self.StartCoroutine(self.init_websockets, frame)
+                wx.CallAfter(self.StartCoroutine, self.init_websockets, frame)
             # if _DEBUG:
             #    self.StartCoroutine(self.test_websockets, frame)
 

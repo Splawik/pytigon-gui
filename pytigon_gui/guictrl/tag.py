@@ -383,10 +383,10 @@ class CtrlTag(TableTag):
         if dc.rec:
             if self.obj:
                 self.obj.SetSize(
-                    dc.x + self.padding[0],
-                    dc.y + self.padding[2],
-                    (self.width - self.padding[0]) - self.padding[1],
-                    (self.height - self.padding[2]) - self.padding[3],
+                    int(dc.x + self.padding[0]),
+                    int(dc.y + self.padding[2]),
+                    int((self.width - self.padding[0]) - self.padding[1]),
+                    int((self.height - self.padding[2]) - self.padding[3]),
                 )
                 x2 = self.obj.GetSize()
         return (self.height, False)
@@ -455,8 +455,8 @@ class CtrlTag(TableTag):
             value = self.attrs["strvalue"]
 
         self.kwargs["size"] = wx.Size(
-            (self.width - self.padding[0]) - self.padding[1],
-            (self.height - self.padding[2]) - self.padding[3],
+            int((self.width - self.padding[0]) - self.padding[1]),
+            int((self.height - self.padding[2]) - self.padding[3]),
         )
         try:
             if tag.upper().startswith("CTRL-"):
