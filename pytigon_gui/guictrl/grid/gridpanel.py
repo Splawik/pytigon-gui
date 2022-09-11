@@ -55,7 +55,7 @@ class SchGridPanel(wx.Panel):
         if id_str in self._bitmaps:
             value = self._bitmaps[id_str]
             return bitmap_from_href(value, self.icon_size)
-        return wx.ArtProvider.GetBitmap(wx.ART_NEW, wx.ART_TOOLBAR, (32, 32))
+        return wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32))
 
     def _add_action(self, action):
         test = False
@@ -125,7 +125,7 @@ class SchGridPanel(wx.Panel):
                 self.toolbar = wx.ToolBar(
                     self.spanel, -1, wx.DefaultPosition, wx.DefaultSize, 0
                 )
-            tsize = (22, 22)
+            tsize = (32, 32)
             self.toolbar.SetToolBitmapSize(tsize)
             if standard:
                 self.toolbar.AddTool(
