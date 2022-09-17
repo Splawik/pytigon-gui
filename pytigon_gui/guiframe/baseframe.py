@@ -66,8 +66,9 @@ class SchBaseFrame(wx.Frame):
                         pliki.append(f)
                     pliki.sort()
 
-                    for f in pliki:
+                    for f in pliki: 
                         print("PLUGIN:", dirname, ff, f)
+                        print(dirname)
                         if True:
                             if os.path.isdir(os.path.join(dirname2, f)):
                                 # p = dirname2.split('/')
@@ -84,7 +85,6 @@ class SchBaseFrame(wx.Frame):
                                         break
                                     mod = import_plugin(mod_name)
                                     if hasattr(mod, "init_plugin"):
-                                        print("BINGO")
                                         destroy = mod.init_plugin(
                                             wx.GetApp(),
                                             self,

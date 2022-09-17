@@ -191,9 +191,13 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
                 stream = BytesIO(s)
                 bmp = wx.Bitmap(wx.Image(stream))
             else:
-                bmp = wx.Bitmap()
+                bmp = wx.ArtProvider.GetBitmap(
+                    wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32)
+                )
         else:
-            bmp = None
+            bmp = wx.ArtProvider.GetBitmap(
+                wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32)
+            )
     return bmp
 
 

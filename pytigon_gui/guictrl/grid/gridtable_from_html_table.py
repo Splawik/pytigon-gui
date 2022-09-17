@@ -19,6 +19,7 @@
 
 import urllib
 import wx
+import time
 
 from .gridtable_base import SchGridTableBase
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
@@ -84,8 +85,19 @@ class PageData(object):
                 ret = None
             return ret
         else:
+            wx.BeginBusyCursor()
+
+            def y(self):
+                time.sleep(0.1)
+
+            old_y = wx.GetApp().Yield
+            wx.GetApp().Yield = y
             data = self.get_page(page)
             self.pages[page] = data
+            wx.GetApp().Yield = old_y
+            wx.EndBusyCursor()
+            # data = self.get_page(page)
+            # self.pages[page] = data
             return self.__getitem__(id)
 
     def sort(self, key):
@@ -124,12 +136,22 @@ class SimpleDataTable(SchGridTableBase):
                 self.colLabels[0].data = l[0]
 
         if self.per_page > 0:
-            self.data = PageData(
-                self._parent, int(self.per_page), self.count, tab[1 : self.per_page + 1]
-            )
             self.simple_data = False
             if self.count > 128:
                 self.auto_size = "short"
+                self.data = PageData(
+                    self._parent,
+                    int(self.per_page),
+                    int(self.per_page),
+                    tab[1 : self.per_page + 1],
+                )
+            else:
+                self.data = PageData(
+                    self._parent,
+                    int(self.per_page),
+                    self.count,
+                    tab[1 : self.per_page + 1],
+                )
         else:
             self.data = tab[1:]
             self.per_page = len(self.data)
