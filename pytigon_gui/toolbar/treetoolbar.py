@@ -169,9 +169,9 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
 
         c2 = wx.SystemSettings.GetColour(wx.SYS_COLOUR_MENU)
         m = 1.0
-        x1 = (int(c2.Red() * m) + 255) / 2
-        x2 = (int(c2.Green() * m) + 255) / 2
-        x3 = (int(c2.Blue() * m) + 255) / 2
+        x1 = int((int(c2.Red() * m) + 255) / 2)
+        x2 = int((int(c2.Green() * m) + 255) / 2)
+        x3 = int((int(c2.Blue() * m) + 255) / 2)
         c = wx.Colour(x1, x2, x3)
         self.bg = c
         self.SetBackgroundColour(c)
