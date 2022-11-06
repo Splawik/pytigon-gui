@@ -226,7 +226,14 @@ class SchAppFrame(SchBaseFrame):
         self.SetIcon(icon)
 
         if "tray" in gui_style:
-            self.tbIcon = wx.adv.TaskBarIcon()
+            parent = self
+
+            class _TaskBarIcon(wx.adv.TaskBarIcon):
+                def CreatePopupMenu(self):
+                    nonlocal parent
+                    return parent.PopupMenu(parent.menu_tray)
+
+            self.tbIcon = _TaskBarIcon()
             self.tbIcon.SetIcon(icon, "Pytigon")
         else:
             self.tbIcon = None
@@ -299,7 +306,7 @@ class SchAppFrame(SchBaseFrame):
 
         self.SetSizer(self._sizer)
 
-        if len(wx.GetApp().get_tab(2)) > 1:
+        if wx.GetApp().get_tab(2) and len(wx.GetApp().get_tab(2)) > 1:
             self._menu_bar_lp = 2
         else:
             if wx.GetApp().menu_always:
@@ -429,17 +436,17 @@ class SchAppFrame(SchBaseFrame):
             self.SetMenuBar(self.menubar_interface)
 
         if self.tbIcon:
-            wx.adv.EVT_TASKBAR_LEFT_DCLICK(self.tbIcon, self.on_taskbar_toogle)
-            wx.adv.EVT_TASKBAR_RIGHT_UP(self.tbIcon, self.on_taskbar_show_menu)
+            # self.tbIcon.Bind(wx.adv.EVT_TASKBAR_LEFT_DCLICK, self.on_taskbar_toogle)
+            # self.tbIcon.Bind(wx.adv.EVT_TASKBAR_RIGHT_UP, self.on_taskbar_show_menu)
 
             self.menu_tray = wx.Menu()
             self.menu_tray.Append(ID_TASKBAR_SHOW, _("Show It"))
-            wx.EVT_MENU(self, ID_TASKBAR_SHOW, self.on_taskbar_show)
+            self.Bind(wx.EVT_MENU, self.on_taskbar_show, id=ID_TASKBAR_SHOW)
             self.menu_tray.Append(ID_TASKBAR_HIDE, _("Minimize It"))
-            wx.EVT_MENU(self, ID_TASKBAR_HIDE, self.on_taskbar_hide)
+            self.Bind(wx.EVT_MENU, self.on_taskbar_hide, id=ID_TASKBAR_HIDE)
             self.menu_tray.AppendSeparator()
             self.menu_tray.Append(ID_TASKBAR_CLOSE, _("Close It"))
-            wx.EVT_MENU(self, ID_TASKBAR_CLOSE, self.on_close)
+            self.Bind(wx.EVT_MENU, self.on_close, id=ID_TASKBAR_CLOSE)
 
         self.SetExtraStyle(wx.WS_EX_PROCESS_UI_UPDATES)
         wx.UpdateUIEvent.SetUpdateInterval(50)
@@ -811,9 +818,6 @@ class SchAppFrame(SchBaseFrame):
             self.Hide()
         else:
             self.Show()
-
-    def on_taskbar_show_menu(self, event):
-        self.PopupMenu(self.menu_tray)
 
     def on_taskbar_show(self, event):
         self.Show()

@@ -95,6 +95,7 @@ def process_argv(argv):
 
             -b --embededbrowser - run embeded browseer window
             -s --embededserver - run in background embeded http server
+            --listen=<address>:<port> - set address and port for embeded serwer
             --menu_always - show menu event then configuration says otherwise
             --no_splash - do not show splash window
             --no_gui - run program without gui
@@ -109,15 +110,15 @@ def process_argv(argv):
 
             --rpc=<port> - set tcp port of rpc
             --video - record video session
-
             -p <parameters>, --param=<parameters> - parametres of request to http server
 
             -d --debug - debug mode
+
             --inspection - turn on wxPython inspection
             --trace - show trace of python calls
     """
     try:
-        (opts, args) = getopt.getopt(
+        (opts, args) = getopt.gnu_getopt(
             argv,
             "h:dmpbsu:p:",
             [
@@ -141,6 +142,8 @@ def process_argv(argv):
                 "no_gui",
                 "no_splash",
                 "menu_always",
+                "listen=",
+                "extra=",
             ],
         )
     except getopt.GetoptError:
@@ -163,6 +166,10 @@ def process_argv(argv):
             ret["username"] = arg
         elif opt in ("-p" "--password"):
             ret["password"] = arg
+        elif opt in ("--listen",):
+            ret["listen"] = arg
+        elif opt in ("--extra",):
+            ret["extra"] = arg
         elif opt in ("-b" "--embededbrowser"):
             ret["embeded_browser"] = True
         elif opt in ("-s", "--embededserver"):
@@ -751,7 +758,7 @@ class SchApp(App, _BASE_APP):
             self.ShowInspectionTool()
 
         if hasattr(self, "StartCoroutine"):
-            if self.base_address.startswith("http://127.0.0.2"):
+            if self.base_address and self.base_address.startswith("http://127.0.0.2"):
                 wx.CallAfter(self.StartCoroutine, self.init_websockets, frame)
             # if _DEBUG:
             #    self.StartCoroutine(self.test_websockets, frame)
@@ -844,7 +851,10 @@ class SchApp(App, _BASE_APP):
             table - :class:'~pytigon_lib.schparser.html_parsers.SimpleTabParser' object
 
         """
-        return self.mp.tables[nr]
+        if self.mp:
+            return self.mp.tables[nr]
+        else:
+            return None
 
     # def get_active_window(self):
     #    return self.GetTopWindow()
@@ -1139,7 +1149,7 @@ def _main_init():
 
     port = 0
     if "server_only" in _PARAM:
-        port = 80
+        port = 8000
         if ":" in address:
             l = address.split(":")
             if len(l) == 3:
@@ -1151,6 +1161,13 @@ def _main_init():
 
         if "server_only" in _PARAM:
             address = "127.0.0.1"
+            if "listen" in _PARAM:
+                if ":" in _PARAM["listen"]:
+                    address, port = _PARAM["listen"].split(":")
+                    port = int(port)
+                else:
+                    address = _PARAM["listen"]
+                    port = 8000
         else:
             address = "127.0.0.3"
         if port == 0:
@@ -1166,7 +1183,10 @@ def _main_init():
             except:
                 port += 1
 
-        server = run_server(address, port, prod=False)
+        if "extra" in _PARAM:
+            server = run_server(address, port, prod=False, params=_PARAM["extra"])
+        else:
+            server = run_server(address, port, prod=False)
         address = "http://" + address + ":" + str(port)
     else:
         #    from pytigon_lib.schtasks.base_task import get_process_manager
@@ -1192,9 +1212,10 @@ def _main_init():
 
     settings.BASE_URL = "http://" + address
     settings.URL_ROOT_FOLDER = ""
-    init_ret = app._init2(address, app_name)
-    if init_ret != 200:
-        return (False, False)
+    if not "server_only" in _PARAM:
+        init_ret = app._init2(address, app_name)
+        if init_ret != 200:
+            return (False, False)
 
     if app.authorized:
         reinit = False
@@ -1209,28 +1230,31 @@ def _main_init():
 
     app.title = app_title
     autologin = True
-    for row in tab:
-        if row[0].data == "autologin":
-            if row[1].data == "1":
-                autologin = True
-            else:
-                autologin = False
-        elif row[0].data == "gui_style":
-            app.gui_style = row[1].data
-        elif row[0].data == "csrf_token":
-            app.csrf_token = row[1].data
-        elif "start_page" in row[0].data:
-            app.start_pages.extend(
-                [x for x in row[1].data.split(";") if x and x != "None"]
-            )
-        elif row[0].data == "title":
-            app.title = row[1].data
-        elif row[0].data == "plugins":
-            if row[1].data and row[1].data != "":
-                app.plugins = row[1].data.split(";")
-
     if "server_only" in _PARAM:
         app.gui_style = "app.gui_style = tray(file(exit,open))"
+        app.authorized = True
+        reinit = False
+    else:
+        for row in tab:
+            if row[0].data == "autologin":
+                if row[1].data == "1":
+                    autologin = True
+                else:
+                    autologin = False
+            elif row[0].data == "gui_style":
+                app.gui_style = row[1].data
+            elif row[0].data == "csrf_token":
+                app.csrf_token = row[1].data
+            elif "start_page" in row[0].data:
+                app.start_pages.extend(
+                    [x for x in row[1].data.split(";") if x and x != "None"]
+                )
+            elif row[0].data == "title":
+                app.title = row[1].data
+            elif row[0].data == "plugins":
+                if row[1].data and row[1].data != "":
+                    app.plugins = row[1].data.split(";")
+
     app._install_plugins()
 
     ready_to_run = True
@@ -1324,13 +1348,17 @@ def _main_run():
     if _RPC:
         reactor.listenTCP(app.rpc, server.Site(app))
 
-    if _WEBSOCKET:
+    if _WEBSOCKET and app.base_address:
         if ";" in _WEBSOCKET:
             websockets = _WEBSOCKET.split(";")
         else:
             websockets = [_WEBSOCKET]
 
-        local = True if app.base_address.startswith("http://127.0.0.2") else False
+        local = (
+            True
+            if app.base_address and app.base_address.startswith("http://127.0.0.2")
+            else False
+        )
 
         for websocket_id in websockets:
             create_websocket_client(app, websocket_id, local)
