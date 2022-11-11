@@ -231,7 +231,8 @@ class SchAppFrame(SchBaseFrame):
             class _TaskBarIcon(wx.adv.TaskBarIcon):
                 def CreatePopupMenu(self):
                     nonlocal parent
-                    return parent.PopupMenu(parent.menu_tray)
+                    parent.PopupMenu(parent.menu_tray)
+                    return None
 
             self.tbIcon = _TaskBarIcon()
             self.tbIcon.SetIcon(icon, "Pytigon")
@@ -820,6 +821,7 @@ class SchAppFrame(SchBaseFrame):
             self.Show()
 
     def on_taskbar_show(self, event):
+        print("SHOW")
         self.Show()
 
     def bind_command(self, fun, id=wx.ID_ANY):
