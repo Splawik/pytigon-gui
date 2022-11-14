@@ -749,8 +749,7 @@ class TABLE(SchGridPanel, SchBaseCtrl):
             table = SimpleDataTable(self, tdata)
             if (
                 self.param
-                and "param" in self.param
-                and "no_actions" in self.param["param"]
+                and "no_actions" in self.param
             ):
                 table.set_no_actions(True)
         else:
@@ -973,8 +972,7 @@ class TEXT(SchBaseCtrl, wx.TextCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
         if (
             self.param
-            and "param" in self.param
-            and "PROCESS_ENTER" in self.param["param"]
+            and "process_enter" in self.param
         ):
             kwds["style"] = wx.TE_PROCESS_ENTER
         wx.TextCtrl.__init__(self, parent, **kwds)
@@ -1303,8 +1301,7 @@ class NUM(wx.SpinCtrl, SchBaseCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
         if (
             self.param
-            and "param" in self.param
-            and "PROCESS_ENTER" in self.param["param"]
+            and "process_enter" in self.param
         ):
             kwds["style"] = wx.TE_PROCESS_ENTER
         if self.readonly:
@@ -1327,8 +1324,7 @@ class AMOUNT(wx.SpinCtrlDouble, SchBaseCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
         if (
             self.param
-            and "param" in self.param
-            and "PROCESS_ENTER" in self.param["param"]
+            and "process_enter" in self.param
         ):
             kwds["style"] = wx.TE_PROCESS_ENTER
         if self.readonly:
@@ -1366,8 +1362,7 @@ class FLOAT(wx.SpinCtrlDouble, SchBaseCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
         if (
             self.param
-            and "param" in self.param
-            and "PROCESS_ENTER" in self.param["param"]
+            and "process_enter" in self.param
         ):
             kwds["style"] = wx.TE_PROCESS_ENTER
         if self.readonly:
@@ -1886,7 +1881,6 @@ if platform.system() == "Linux":
         def GetBestSize(self):
             dx, dy = POPUPHTML.GetBestSize(self)
             return (130, dy)
-
 
 else:
 
