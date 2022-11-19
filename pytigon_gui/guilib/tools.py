@@ -124,7 +124,8 @@ def find_focus_in_form():
             return win_focus
         win = win.GetParent()
     if LAST_FOCUS_CTRL_IN_FORM and (
-        not LAST_FOCUS_CTRL_IN_FORM.parent
+        not hasattr(LAST_FOCUS_CTRL_IN_FORM, "parent")
+        or not LAST_FOCUS_CTRL_IN_FORM.parent
         or (
             hasattr(LAST_FOCUS_CTRL_IN_FORM.parent, "closing")
             and LAST_FOCUS_CTRL_IN_FORM.parent.closing
