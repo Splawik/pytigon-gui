@@ -123,8 +123,14 @@ def find_focus_in_form():
             LAST_FOCUS_CTRL_IN_FORM = win_focus
             return win_focus
         win = win.GetParent()
-    if LAST_FOCUS_CTRL_IN_FORM and LAST_FOCUS_CTRL_IN_FORM.IsBeingDeleted():
-        LAST_FOCUS_CTRL_IN_FORM
+    if LAST_FOCUS_CTRL_IN_FORM and (
+        not LAST_FOCUS_CTRL_IN_FORM.parent
+        or (
+            hasattr(LAST_FOCUS_CTRL_IN_FORM.parent, "closing")
+            and LAST_FOCUS_CTRL_IN_FORM.parent.closing
+        )
+    ):
+        LAST_FOCUS_CTRL_IN_FORM = None
         return None
     else:
         return LAST_FOCUS_CTRL_IN_FORM

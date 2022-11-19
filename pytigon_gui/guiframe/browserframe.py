@@ -17,6 +17,7 @@
 # license: "LGPL 3.0"
 # version: "0.1a"
 
+import os
 import wx
 
 from pytigon_lib.schhttptools.httpclient import COOKIES
@@ -24,6 +25,10 @@ from pytigon_lib.schhttptools.httpclient import COOKIES
 import pytigon_gui.guictrl.ctrl
 
 from pytigon_gui.guiframe.baseframe import SchBaseFrame
+
+from django.conf import settings
+
+from pytigon.pytigon_request import init, request
 
 
 class SchBrowserFrame(SchBaseFrame):
@@ -61,20 +66,22 @@ class SchBrowserFrame(SchBaseFrame):
         self.init_plugins()
         self.Bind(wx.EVT_IDLE, self.on_idle)
         self.Bind(wx.EVT_SIZE, self.on_size)
-        self.Bind(wx.EVT_SHOW, self.on_show)
-        self.Show()
+
+        init(os.environ["PRJ_NAME"], "auto", "anawa", user_agent="webviewembeded")
+        start_request = request("/", None, user_agent="webviewembeded")
+        self.start_content = start_request.str()
+
+        self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(
+            self, name="schbrowser", size=self.GetClientSize()
+        )
+        self.ctrl.load_str(self.start_content, "http://127.0.0.5/")
+        self.start_content = ""
+        while not self.ctrl.page_loaded:
+            wx.Yield()
+
         size = wx.GetApp().app_size
         wx.CallAfter(self.SetSize, (size[0], size[1]))
-
-    def on_show(self, event):
-        if event.Show and not self.ctrl:
-            app = wx.GetApp()
-            self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(
-                self, name="schbrowser", size=self.GetClientSize()
-            )
-            # self.ctrl.load_url(app.base_address+"/", cookies = COOKIES)
-            self.ctrl.load_url(app.base_path + "/", cookies=COOKIES)
-            # self.ctrl.load_url(app.base_path + "/")
+        wx.CallAfter(self.Show)
 
     def on_size(self, event):
         if event:

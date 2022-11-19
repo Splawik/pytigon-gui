@@ -455,6 +455,7 @@ class SchAppFrame(SchBaseFrame):
         wx.CallAfter(self.UpdateWindowUI)
         self.Layout()
         wx.CallAfter(self.Bind, wx.EVT_IDLE, self.on_idle)
+        wx.CallAfter(self.Show)
 
     def setup_frame(self):
         self.SetMinSize(wx.Size(800, 600))

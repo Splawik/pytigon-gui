@@ -450,7 +450,7 @@ class SchApp(App, _BASE_APP):
             splash = wx.adv.SplashScreen(
                 bitmap,
                 wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT,
-                100,
+                1000,
                 None,
                 -1,
                 wx.DefaultPosition,
@@ -1329,8 +1329,8 @@ def _main_run():
 
     frame.CenterOnScreen()
 
-    if not "tray" in app.gui_style:
-        frame.Show()
+    # if not "tray" in app.gui_style:
+    #    frame.Show()
 
     wx.Log.SetActiveTarget(wx.LogStderr())
 
