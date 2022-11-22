@@ -446,7 +446,13 @@ class SchApp(App, _BASE_APP):
             and not "nogui" in _PARAM
             and not "server_only" in _PARAM
         ):
-            bitmap = wx.Bitmap(SRC_PATH + "/pytigon_splash.jpeg", wx.BITMAP_TYPE_JPEG)
+            # bitmap = wx.Bitmap(SRC_PATH + "/pytigon.svg", wx.BITMAP_TYPE_JPEG)
+            img = wx.svg.SVGimage.CreateFromFile(SRC_PATH + "/pytigon.svg")
+            # img.ConvertAlphaToMask()
+            bitmap = img.ConvertToBitmap(
+                scale=2, width=int(img.width * 2), height=int(img.height * 2)
+            )
+            wx.BITMAP_TYPE_PNG
             splash = wx.adv.SplashScreen(
                 bitmap,
                 wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT,
