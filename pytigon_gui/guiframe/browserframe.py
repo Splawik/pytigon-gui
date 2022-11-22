@@ -18,6 +18,7 @@
 # version: "0.1a"
 
 import os
+import sys
 import wx
 
 from pytigon_lib.schhttptools.httpclient import COOKIES
@@ -69,15 +70,15 @@ class SchBrowserFrame(SchBaseFrame):
 
         init(os.environ["PRJ_NAME"], "auto", "anawa", user_agent="webviewembeded")
         start_request = request("/", None, user_agent="webviewembeded")
-        self.start_content = start_request.str()
 
         self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(
             self, name="schbrowser", size=self.GetClientSize()
         )
-        self.ctrl.load_str(self.start_content, "http://127.0.0.5/")
-        self.start_content = ""
-        while not self.ctrl.page_loaded:
-            wx.Yield()
+        self.ctrl.load_str(start_request.str(), "http://127.0.0.5/")
+
+        if sys.platform != "win32":
+            while not self.ctrl.page_loaded:
+                wx.Yield()
 
         size = wx.GetApp().app_size
         wx.CallAfter(self.SetSize, (size[0], size[1]))
