@@ -325,20 +325,20 @@ class CtrlTag(TableTag):
     def calc_col_sizes(self):
         sizes = self.calc_width()
         if sizes[0] >= 0:
-            self.width = sizes[0] + self.padding[0] + self.padding[1]
+            self.width = sizes[0] + self.extra_space[0] + self.extra_space[1]
         else:
             self.width = 400
 
     def get_height(self):
         height = self.calc_height()
         if height >= 0:
-            self.height = height + self.padding[2] + self.padding[3]
+            self.height = height + self.extra_space[2] + self.extra_space[3]
         else:
             self.height = 200
         return self.height
 
     def calc_width(self):
-        d = self.padding[0] + self.padding[1]
+        d = self.extra_space[0] + self.extra_space[1]
         if self.width < 0:
             if self.obj:
                 (self.width_best, self.height_best) = self.obj.GetBestSize()
@@ -358,7 +358,7 @@ class CtrlTag(TableTag):
             (self.width_best, self.height_best) = self.obj.GetBestSize()
         else:
             self.height_best = 30
-        self.height = self.height_best + self.padding[2] + self.padding[3]
+        self.height = self.height_best + self.extra_space[2] + self.extra_space[3]
         return self.height
 
     def _append_to_tdata(self):
@@ -383,10 +383,10 @@ class CtrlTag(TableTag):
         if dc.rec:
             if self.obj:
                 self.obj.SetSize(
-                    int(dc.x + self.padding[0]),
-                    int(dc.y + self.padding[2]),
-                    int((self.width - self.padding[0]) - self.padding[1]),
-                    int((self.height - self.padding[2]) - self.padding[3]),
+                    int(dc.x + self.extra_space[0]),
+                    int(dc.y + self.extra_space[2]),
+                    int((self.width - self.extra_space[0]) - self.extra_space[1]),
+                    int((self.height - self.extra_space[2]) - self.extra_space[3]),
                 )
                 x2 = self.obj.GetSize()
         return (self.height, False)
@@ -455,8 +455,8 @@ class CtrlTag(TableTag):
             value = self.attrs["strvalue"]
 
         self.kwargs["size"] = wx.Size(
-            int((self.width - self.padding[0]) - self.padding[1]),
-            int((self.height - self.padding[2]) - self.padding[3]),
+            int((self.width - self.extra_space[0]) - self.extra_space[1]),
+            int((self.height - self.extra_space[2]) - self.extra_space[3]),
         )
         try:
             if tag.upper().startswith("CTRL-"):
