@@ -315,6 +315,7 @@ class SchForm(ScrolledPanel):
                 self.SetVirtualSize((w, h))
             p.close()
             self.update_controls = False
+            wx.CallAfter(self.SetupScrolling, self.hscroll, self.vscroll, rate_y=1)
 
     def draw_background(self, refresh_all=False, size=None):
         """drawn a rendered html page as a background"""
@@ -803,8 +804,6 @@ class SchForm(ScrolledPanel):
             self.Refresh()
             return
 
-        # for pos in self.con
-
     def new_local_child_page(self, address, title="", parameters=None):
         return self.new_child_page("http://local.net/" + address, title, parameters)
 
@@ -837,10 +836,10 @@ class SchForm(ScrolledPanel):
         )
 
     def new_main_page(
-        self, address_or_parser, title=None, parameters=None, panel="desktop"
+        self, address_or_parser, title=None, parameters=None, view_in=None
     ):
         return self.any_parent_command(
-            "new_main_page", address_or_parser, title, parameters, panel
+            "new_main_page", address_or_parser, title, parameters, view_in
         )
 
     def scroll_to_href(self, href):
@@ -1046,7 +1045,7 @@ class SchForm(ScrolledPanel):
                         mp,
                         is_null(mp.title, title),
                         parameters=self.get_parm_obj(),
-                        panel=None,
+                        view_in=None,
                     )
                     return
                 if target == "refresh_page":
@@ -1060,14 +1059,14 @@ class SchForm(ScrolledPanel):
                             mp,
                             is_null(mp.title, title),
                             parameters=self.get_parm_obj(),
-                            panel=x[1:],
+                            view_in=x[1:],
                         )
                     else:
                         self.new_main_page(
                             mp,
                             is_null(mp.title, title),
                             parameters=self.get_parm_obj(),
-                            panel="desktop2",
+                            view_in="desktop2",
                         )
                     return
                 if target == "_parent":

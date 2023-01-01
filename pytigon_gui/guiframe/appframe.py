@@ -667,7 +667,11 @@ class SchAppFrame(SchBaseFrame):
         return None
 
     def new_main_page(
-        self, address_or_parser, title="", parameters=None, panel="desktop"
+        self,
+        address_or_parser,
+        title="",
+        parameters=None,
+        view_in=None,
     ):
         """Open a new page in main
 
@@ -676,7 +680,7 @@ class SchAppFrame(SchBaseFrame):
             :class:'~pytigon_lib.schparser.html_parsers.ShtmlParser'
             title - new tab title
             parameters - parameters of http request
-            panel - options are: 'desktop', 'panel', 'header', 'footer'
+            view_in - options are: 'desktop', 'panel', 'header', 'footer'
         Returns:
             created form :class:'~pytigon_gui.guiframe.htmlsash.SchPage'
         """
@@ -686,30 +690,19 @@ class SchAppFrame(SchBaseFrame):
         else:
             address = address_or_parser.address
 
-        pdict = {}
-        parm = split2(address, "?")
-        if len(parm) == 2:
-            parm2 = parm[1].split(",")
-            parm3 = [pos.split("=") for pos in parm2]
-            for pos in parm3:
-                if len(pos) == 2:
-                    if pos[1]:
-                        pdict[pos[0]] = pos[1]
-                    else:
-                        pdict[pos[0]] = "browser"
-                else:
-                    pdict[pos[0]] = "browser"
-
-        if parameters and type(parameters) == dict:
-            pdict.update(parameters)
-
-        if "schtml" in pdict:
-            _panel = pdict["schtml"]
+        if view_in:
+            panel = view_in
         else:
-            _panel = panel
-
-        if _panel == "desktop2" or _panel == "1":
-            _panel = "desktop"
+            parm = split2(address, "?")
+            if len(parm) == 2:
+                panel = "desktop"
+                parm2 = parm[1].split(",")
+                parm3 = [pos.split("=") for pos in parm2]
+                for pos in parm3:
+                    if len(pos) == 2:
+                        if pos[0] == "show_in":
+                            panel = pos[1]
+                            break
 
         if panel == "pscript":
             http = wx.GetApp().get_http(self)
@@ -719,16 +712,16 @@ class SchAppFrame(SchBaseFrame):
             return
 
         if not address.startswith("^"):
-            if (not _panel or _panel.startswith("browser")) or (
-                (address.startswith("http") or address.startswith("file://"))
+            if (not panel or panel.startswith("browser")) or (
+                address.startswith("http")
                 and not address.startswith(wx.GetApp().base_address)
             ):
-                if "_" in _panel:
-                    _panel = _panel.split("_")[1]
+                if "_" in panel:
+                    panel = panel.split("_")[1]
                 else:
-                    _panel = "desktop"
+                    panel = "desktop"
                 ret = self.new_main_page(
-                    "^standard/webview/widget_web.html", "Empty page", panel=_panel
+                    "^standard/webview/widget_web.html", "Empty page", panel=panel
                 )
                 if (
                     address.startswith("http://")
@@ -764,9 +757,9 @@ class SchAppFrame(SchBaseFrame):
                     None, address_or_parser, parameters
                 )
 
-        n = self._mgr.GetPane(_panel).window
+        n = self._mgr.GetPane(panel).window
 
-        if not self._mgr.GetPane(_panel).IsShown():
+        if not self._mgr.GetPane(panel).IsShown():
             refr = True
         else:
             refr = False
@@ -777,7 +770,7 @@ class SchAppFrame(SchBaseFrame):
                     n.SetSelection(id)
                     n.activate_page(pos.window)
             if refr:
-                self._mgr.GetPane(_panel).Show()
+                self._mgr.GetPane(panel).Show()
                 self._mgr.Update()
             return None
 
@@ -807,7 +800,7 @@ class SchAppFrame(SchBaseFrame):
         page.http = wx.GetApp().get_http_for_adr(address)
 
         if refr:
-            self._mgr.GetPane(_panel).Show()
+            self._mgr.GetPane(panel).Show()
         self._mgr.Update()
 
         return page.new_child_page(address_or_parser, None, parameters)
@@ -1178,7 +1171,7 @@ class SchAppFrame(SchBaseFrame):
                 "http://127.0.0.2/static/vanillajs_plugins/pdfjs/web/viewer.html?file="
                 + name
             )
-            return self.new_main_page(href, name, parameters={"schtml": 0})
+            return self.new_main_page(href, name, parameters={"view_in": "browser"})
 
         elif "zip" in http_ret.ret_content_type:
             p = http_ret.ptr()

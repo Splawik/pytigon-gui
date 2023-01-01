@@ -472,9 +472,7 @@ class SchNotebookPage(wx.Window):
         wx.CallAfter(init_page)
         return h
 
-    def new_main_page(
-        self, address_or_parser, title="", parameters=None, panel="desktop"
-    ):
+    def new_main_page(self, address_or_parser, title="", parameters=None, view_in=None):
         """Create new top
 
         Args:
@@ -485,11 +483,10 @@ class SchNotebookPage(wx.Window):
 
             parameters - dict
 
-            panel - can be: 'desktop', 'panel', 'header' or 'footer'
+            view_in - can be: 'desktop', 'panel', 'header' or 'footer'
         """
-        if panel == None:
+        if view_in == None:
             pp = self.GetParent().GetParent().GetParent()._mgr.GetPane(self.GetParent())
-            panel = pp.name
             return (
                 wx.GetApp()
                 .GetTopWindow()
@@ -499,5 +496,5 @@ class SchNotebookPage(wx.Window):
             return (
                 wx.GetApp()
                 .GetTopWindow()
-                .new_main_page(address_or_parser, title, parameters, panel)
+                .new_main_page(address_or_parser, title, parameters, view_in)
             )

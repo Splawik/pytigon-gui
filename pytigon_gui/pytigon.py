@@ -38,6 +38,10 @@ import configparser
 from urllib.parse import urljoin
 import pytigon
 
+#import debugpy
+#debugpy.listen(("localhost", 5678))
+#debugpy.wait_for_client()
+
 if platform.system() == "Windows":
     # grouping pytigon applicactions in the windows taskbar
     import ctypes
