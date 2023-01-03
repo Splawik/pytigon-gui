@@ -212,7 +212,7 @@ class CtrlTag(TableTag):
         TableTag.__init__(self, parent, parser, tag, attrs)
 
         self.list = None
-        self.child_tags += ["ul", "li", "data", "option"]
+        self.child_tags += ["ul", "li", "data", "option", "div"]
         self.subtab = True
         self.kwargs = {}
         self.classObj = None
