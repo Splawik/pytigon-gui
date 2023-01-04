@@ -274,8 +274,8 @@ class CtrlTag(TableTag):
             #        height += m[3]
 
             self.height = self._norm_sizes([self.attrs["height"]], height)[0]
-            if self.attrs["height"].strip() == "100%":
-                self.height -= self.get_context()["top"]
+            # if self.attrs["height"].strip() == "100%":
+            #    self.height -= self.get_context()["top"]
 
     def get_context(self):
         if self.parent and hasattr(self.parent, "y"):
