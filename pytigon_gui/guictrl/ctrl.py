@@ -119,6 +119,30 @@ def BUTTON(parent, **kwds):
         MENUBUTTON
         MENUTOOLBARBUTTON
     """
+    if "param" in kwds and "btn-class" in kwds["param"]:
+        c = kwds["param"]["btn-class"]
+        if c == "SIMPLE_BUTTON":
+            return SIMPLE_BUTTON(parent, **kwds)
+        elif c == "BITMAPBUTTON":
+            return BITMAPBUTTON(parent, **kwds)
+        elif c == "PLATEBUTTON":
+            return PLATEBUTTON(parent, **kwds)
+        elif c == "GENBITMAPBUTTON":
+            return GENBITMAPBUTTON(parent, **kwds)
+        elif c == "GENBITMAPBUTTONTXT":
+            return GENBITMAPBUTTONTXT(parent, **kwds)
+        elif c == "GENBITMAPBUTTONTXT_SMALL":
+            return GENBITMAPBUTTONTXT_SMALL(parent, **kwds)
+        elif c == "NOBG_BUTTON":
+            return NOBG_BUTTON(parent, **kwds)
+        elif c == "NOBG_BUTTON_TXT":
+            return NOBG_BUTTON_TXT(parent, **kwds)
+        elif c == "CLOSEBUTTON":
+            return CLOSEBUTTON(parent, **kwds)
+        elif c == "MENUBUTTON":
+            return MENUBUTTON(parent, **kwds)
+        elif c == "MENUTOOLBARBUTTON":
+            return MENUTOOLBARBUTTON(parent, **kwds)
     if "src" in kwds:
         ctrl = BITMAPBUTTON(parent, **kwds)
     else:
@@ -747,10 +771,7 @@ class TABLE(SchGridPanel, SchBaseCtrl):
             print("no tdata:", self.href, self.src)
         if tdata:
             table = SimpleDataTable(self, tdata)
-            if (
-                self.param
-                and "no_actions" in self.param
-            ):
+            if self.param and "no_actions" in self.param:
                 table.set_no_actions(True)
         else:
             table = None
@@ -970,10 +991,7 @@ class TEXT(SchBaseCtrl, wx.TextCtrl):
 
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
-        if (
-            self.param
-            and "process_enter" in self.param
-        ):
+        if self.param and "process_enter" in self.param:
             kwds["style"] = wx.TE_PROCESS_ENTER
         wx.TextCtrl.__init__(self, parent, **kwds)
         if self.hidden:
@@ -1010,10 +1028,7 @@ class SEARCH(wx.SearchCtrl, SchBaseCtrl):
             kwds["size"] = (200, 28)
         else:
             kwds["size"] = (200, -1)
-        if (
-            self.param
-            and "process_enter" in self.param
-        ):
+        if self.param and "process_enter" in self.param:
             kwds["style"] = wx.TE_PROCESS_ENTER
 
         wx.SearchCtrl.__init__(self, parent, **kwds)
@@ -1304,10 +1319,7 @@ class NUM(wx.SpinCtrl, SchBaseCtrl):
 
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
-        if (
-            self.param
-            and "process_enter" in self.param
-        ):
+        if self.param and "process_enter" in self.param:
             kwds["style"] = wx.TE_PROCESS_ENTER
         if self.readonly:
             style = 0
@@ -1327,10 +1339,7 @@ class AMOUNT(wx.SpinCtrlDouble, SchBaseCtrl):
 
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
-        if (
-            self.param
-            and "process_enter" in self.param
-        ):
+        if self.param and "process_enter" in self.param:
             kwds["style"] = wx.TE_PROCESS_ENTER
         if self.readonly:
             style = 0
@@ -1365,10 +1374,7 @@ class FLOAT(wx.SpinCtrlDouble, SchBaseCtrl):
 
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
-        if (
-            self.param
-            and "process_enter" in self.param
-        ):
+        if self.param and "process_enter" in self.param:
             kwds["style"] = wx.TE_PROCESS_ENTER
         if self.readonly:
             style = 0
