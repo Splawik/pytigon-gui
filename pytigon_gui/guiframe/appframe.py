@@ -27,6 +27,7 @@ import os
 import sys
 import platform
 import subprocess
+import base64
 
 from tempfile import NamedTemporaryFile
 from pydispatch import dispatcher
@@ -42,6 +43,8 @@ from django.conf import settings
 
 from pytigon_lib.schfs.vfstools import get_temp_filename
 from pytigon_lib.schdjangoext.tools import gettempdir
+from pytigon_lib.schhttptools.httpclient import HttpResponse
+
 
 from pytigon_lib.schtools.tools import split2
 
@@ -666,12 +669,74 @@ class SchAppFrame(SchBaseFrame):
                     return htmlwin
         return None
 
-    def new_main_page(
+    def open_page(
         self,
-        address_or_parser,
+        address,
         title="",
         parameters=None,
         view_in=None,
+    ):
+        http = wx.GetApp().get_http_for_adr(address)
+        if parameters:
+            response = http.post(self, address, parameters)
+        else:
+            response = http.get(self, address)
+
+        # html: text/html
+        # js: text/javascript
+        # jsnon: application/json
+        if "text/" in response.ret_content_type:
+            return self.new_main_page(http, title, parameters, view_in)
+
+        # html: text/python
+        if "text/python" in response.ret_content_type:
+            exec(http.str())
+            return
+
+        # pdf: "application/pdf"
+        if "application/pdf" in response.ret_content_type:
+            return self.show_pdf(response, title, parameters)
+
+        # spdf: "application/spdf"
+        if "application/spdf" in response.ret_content_type:
+            if "?print=" in address:
+                return self.show_spdf(response, title, parameters)
+            else:
+                return self.print_spdf(response, title, parameters)
+            # return self.show_spdf(response, title, parameters)
+
+        # ods: "application/vnd.oasis.opendocument.spreadsheet"
+        # odp: "application/vnd.oasis.opendocument.text"
+        # xlsx: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        # docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document
+
+        if "application/vnd" in response.ret_content_type:
+            return self.show_document(response, title, parameters)
+
+        if "application/" in response.ret_content_type:
+            return self.download_data(response, title, parameters)
+
+        if (
+            "video/" in response.ret_content_type
+            or "audio/" in response.ret_content_type
+        ):
+            return self.show_document(response, title, parameters)
+
+        # "image/"
+        if "image/" in response.ret_content_type:
+            return self.show_image(response, title, parameters)
+
+        # zip: application/zip
+        if "application/zip" in response.ret_content_type:
+            return self.download_data(response, title, parameters)
+
+        if "application/json" in response.ret_content_type:
+            return self.download_data(response, title, parameters, view_in)
+
+        return self.download_data(response, title, parameters)
+
+    def new_main_page(
+        self, address_or_parser, title="", parameters=None, view_in="desktop", http=None
     ):
         """Open a new page in main
 
@@ -687,8 +752,29 @@ class SchAppFrame(SchBaseFrame):
 
         if type(address_or_parser) == str:
             address = address_or_parser
+
+        elif type(address_or_parser) == HttpResponse:
+            address = address_or_parser.url
         else:
             address = address_or_parser.address
+
+        ext = address.split("?")[0].split(".")[-1]
+        if ext in (
+            "pdf",
+            "spdf",
+            "ods",
+            "odp",
+            "odt",
+            "docx",
+            "xlsx",
+            "pptx",
+            "zip",
+            "avi",
+            "mpeg",
+            "mp3",
+            "mp4",
+        ):
+            return self.open_page(address, title, parameters, view_in)
 
         if view_in:
             panel = view_in
@@ -705,23 +791,24 @@ class SchAppFrame(SchBaseFrame):
                             break
 
         if panel == "pscript":
-            http = wx.GetApp().get_http(self)
+            if not http:
+                http = wx.GetApp().get_http(self)
             response = http.get(self, address)
             ptr = response.str()
             exec(ptr)
             return
 
         if not address.startswith("^"):
-            if (not panel or panel.startswith("browser")) or (
+            if (not view_in or view_in.startswith("browser")) or (
                 address.startswith("http")
                 and not address.startswith(wx.GetApp().base_address)
             ):
-                if "_" in panel:
-                    panel = panel.split("_")[1]
+                if "_" in view_in:
+                    panel = view_in.split("_")[1]
                 else:
                     panel = "desktop"
                 ret = self.new_main_page(
-                    "^standard/webview/widget_web.html", "Empty page", panel=panel
+                    "^standard/webview/widget_web.html", "Empty page", view_in=panel
                 )
                 if (
                     address.startswith("http://")
@@ -730,13 +817,19 @@ class SchAppFrame(SchBaseFrame):
                 ):
 
                     def _ret_fun():
-                        ret.body.WEB.go(address)
+                        if type(address_or_parser) == str:
+                            ret.body.WEB.go(address)
+                        else:
+                            ret.body.WEB.load_str(address_or_parser.ptr())
 
                     wx.CallAfter(_ret_fun)
                 else:
 
                     def _ret_fun():
-                        ret.body.WEB.go(wx.GetApp().base_path + address)
+                        if type(address_or_parser) == str:
+                            ret.body.WEB.go(wx.GetApp().base_path + address)
+                        else:
+                            ret.body.WEB.load_str(address_or_parser.ptr())
 
                     wx.CallAfter(_ret_fun)
                 return ret
@@ -797,7 +890,10 @@ class SchAppFrame(SchBaseFrame):
         else:
             address = address_or_parser.address
 
-        page.http = wx.GetApp().get_http_for_adr(address)
+        if http:
+            page.http = http
+        else:
+            page.http = wx.GetApp().get_http_for_adr(address)
 
         if refr:
             self._mgr.GetPane(panel).Show()
@@ -1107,101 +1203,107 @@ class SchAppFrame(SchBaseFrame):
     def on_goto_desktop(self, event):
         self.desktop.SetFocus()
 
-    def show_pdf(self, page):
+    def show_pdf(self, response, title, parameters):
         """show pdf downloaded from web server
 
         Args:
             page: web page address
         """
-        http = wx.GetApp().get_http(self)
-        response = http.get(self, str(page))  # , user_agent='webkit')
-        form_frame = self._open_binary_data(response, page)
+
+        p = response.ptr()
+        f = NamedTemporaryFile(delete=False, suffix=".pdf")
+        f.write(p)
+        name = f.name
+        f.close()
+
+        print(">>> ", name)
+        form_frame = self.new_main_page("file://" + name, name, view_in="browser")
 
         def _after_init():
-            form_frame.body.WEB.execute_javascript("document.title = '%s';" % page)
+            form_frame.body.WEB.execute_javascript("document.title = '%s';" % title)
 
         wx.CallAfter(_after_init)
 
         return form_frame
 
-    def show_odf(self, page):
-        """show odf document downloaded from web server
+    def show_spdf(self, response, title, parameters):
+        p = response.ptr()
+        f = NamedTemporaryFile(delete=False)
+        f.write(p)
+        name = f.name
+        f.close()
+        return self.new_main_page(
+            "^standard/html_print/html_print.html", name, parameters=name
+        )
 
-        Args:
-            page: web page address
-        """
-        http = wx.GetApp().get_http(self)
-        response = http.get(self, str(page))  # , user_agent='webkit')
-        return self._open_binary_data(response, page)
-
-    def _open_binary_data(self, http_ret, page):
-        if "application/vnd.oasis.opendocument" in http_ret.ret_content_type:
-
-            cd = http_ret.response.headers.get("content-disposition")
-            if cd:
-                name = cd.split("filename=")[1]
-            else:
-                name = None
-            p = http_ret.ptr()
-
-            postfix = name.split("_")[-1][-12:]
-            fname = get_temp_filename(postfix)
-            with open(fname, "wb") as f:
-                f.write(p)
-
-            file_name = fname
-            if not name:
-                name = file_name
-            if not hasattr(wx.GetApp(), "download_files"):
-                wx.GetApp().download_files = []
-            wx.GetApp().download_files.append(
-                (file_name, name, datetime.datetime.now())
-            )
-
-            return self.new_main_page(
-                "^standard/odf_view/odf_view.html", name, parameters=name
-            )
-        elif "application/pdf" in http_ret.ret_content_type:
-            p = http_ret.ptr()
+    def print_spdf(self, response, title, parameters):
+        if hasattr(wx.GetApp(), "get_printout"):
+            p = response.ptr()
             f = NamedTemporaryFile(delete=False)
             f.write(p)
             name = f.name
             f.close()
-            href = (
-                "http://127.0.0.2/static/vanillajs_plugins/pdfjs/web/viewer.html?file="
-                + name
-            )
-            return self.new_main_page(href, name, parameters={"view_in": "browser"})
 
-        elif "zip" in http_ret.ret_content_type:
-            p = http_ret.ptr()
-            f = NamedTemporaryFile(delete=False)
-            f.write(p)
-            name = f.name
-            f.close()
-            return self.new_main_page(
-                "^standard/html_print/html_print.html", name, parameters=name
-            )
+            printer = wx.Printer()
+            printout = wx.GetApp().get_printout(name)
+            printer.Print(self, printout, True)
+
+            os.unlink(name)
+
+        return
+
+    def show_document(self, response, title, parameters):
+        cd = response.response.headers.get("content-disposition")
+        if cd:
+            name = cd.split("filename=")[1].replace('"', "")
         else:
-            cd = http_ret.response.headers.get("content-disposition")
-            if cd:
-                name = cd.split("filename=")[1].replace('"', "")
-            else:
-                name = "data.dat"
+            name = "data.dat"
 
-            p = http_ret.ptr()
+        p = response.ptr()
+        path = gettempdir()
 
-            path = gettempdir()
+        file_path = os.path.join(path, name)
 
-            with open(os.path.join(path, name), "wb") as f:
-                f.write(p)
+        with open(file_path, "wb") as f:
+            f.write(p)
 
-            if platform.system() == "Windows":
-                os.startfile(path)
-            elif platform.system() == "Darwin":
-                subprocess.Popen(["open", path])
-            else:
-                subprocess.Popen(["xdg-open", path])
+        if platform.system() == "Windows":
+            os.startfile(file_path)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", file_path])
+        else:
+            subprocess.Popen(["xdg-open", file_path])
+
+    def show_image(self, response, title, parameters):
+        p = response.ptr()
+        f = NamedTemporaryFile(delete=False)
+        f.write(p)
+        name = f.name
+        f.close()
+        return self.new_main_page(
+            "^standard/image_viewer/viewer.html", name, view_in="desktop"
+        )
+
+    def download_data(self, response, title, parameters):
+        cd = response.response.headers.get("content-disposition")
+        if cd:
+            name = cd.split("filename=")[1].replace('"', "")
+        else:
+            name = "data.dat"
+
+        p = response.ptr()
+
+        path = str(Path.home() / "Downloads")
+
+        with open(os.path.join(path, name), "wb") as f:
+            f.write(p)
+
+        if platform.system() == "Windows":
+            os.startfile(path)
+        elif platform.system() == "Darwin":
+            subprocess.Popen(["open", path])
+        else:
+            subprocess.Popen(["xdg-open", path])
 
         return True
 
