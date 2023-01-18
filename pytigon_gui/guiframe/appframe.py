@@ -44,7 +44,7 @@ from django.conf import settings
 from pytigon_lib.schfs.vfstools import get_temp_filename
 from pytigon_lib.schdjangoext.tools import gettempdir
 from pytigon_lib.schhttptools.httpclient import HttpResponse
-
+from pytigon_lib import schfs
 
 from pytigon_lib.schtools.tools import split2
 
@@ -759,7 +759,7 @@ class SchAppFrame(SchBaseFrame):
             address = address_or_parser.address
 
         ext = address.split("?")[0].split(".")[-1]
-        if ext in (
+        if (not "browser" in view_in) and ext in (
             "pdf",
             "spdf",
             "ods",
@@ -1211,13 +1211,19 @@ class SchAppFrame(SchBaseFrame):
         """
 
         p = response.ptr()
-        f = NamedTemporaryFile(delete=False, suffix=".pdf")
-        f.write(p)
-        name = f.name
-        f.close()
+        temp_filename = schfs.get_temp_filename(ext="pdf")
+        with schfs.open_file(temp_filename, "wb") as f:
+            f.write(p)
 
-        print(">>> ", name)
-        form_frame = self.new_main_page("file://" + name, name, view_in="browser")
+        # f = NamedTemporaryFile(delete=False, suffix=".pdf")
+        # f.write(p)
+        # name = f.name
+        # f.close()
+
+        print(">>> ", temp_filename)
+        form_frame = self.new_main_page(
+            "file://" + temp_filename, temp_filename, view_in="browser"
+        )
 
         def _after_init():
             form_frame.body.WEB.execute_javascript("document.title = '%s';" % title)

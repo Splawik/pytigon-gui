@@ -66,9 +66,7 @@ class SchBaseFrame(wx.Frame):
                         pliki.append(f)
                     pliki.sort()
 
-                    for f in pliki: 
-                        print("PLUGIN:", dirname, ff, f)
-                        print(dirname)
+                    for f in pliki:
                         if True:
                             if os.path.isdir(os.path.join(dirname2, f)):
                                 # p = dirname2.split('/')
