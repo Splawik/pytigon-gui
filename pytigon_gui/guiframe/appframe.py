@@ -28,8 +28,6 @@ import sys
 import platform
 import subprocess
 import base64
-
-from tempfile import NamedTemporaryFile
 from pydispatch import dispatcher
 from pathlib import Path
 
@@ -765,20 +763,25 @@ class SchAppFrame(SchBaseFrame):
             address = address_or_parser.address
 
         ext = address.split("?")[0].split(".")[-1]
-        if (not "browser" in view_in) and ext in (
-            "pdf",
-            "spdf",
-            "ods",
-            "odp",
-            "odt",
-            "docx",
-            "xlsx",
-            "pptx",
-            "zip",
-            "avi",
-            "mpeg",
-            "mp3",
-            "mp4",
+        if (
+            (not view_in or not "browser" in view_in)
+            and ext
+            and ext
+            in (
+                "pdf",
+                "spdf",
+                "ods",
+                "odp",
+                "odt",
+                "docx",
+                "xlsx",
+                "pptx",
+                "zip",
+                "avi",
+                "mpeg",
+                "mp3",
+                "mp4",
+            )
         ):
             return self.open_page(address, title, parameters, view_in)
 
@@ -809,7 +812,7 @@ class SchAppFrame(SchBaseFrame):
                 address.startswith("http")
                 and not address.startswith(wx.GetApp().base_address)
             ):
-                if "_" in view_in:
+                if view_in and "_" in view_in:
                     panel = view_in.split("_")[1]
                 else:
                     panel = "desktop"
@@ -1219,15 +1222,9 @@ class SchAppFrame(SchBaseFrame):
             page: web page address
         """
 
-        p = response.ptr()
         temp_filename = schfs.get_temp_filename(ext="pdf")
         with schfs.open_file(temp_filename, "wb") as f:
-            f.write(p)
-
-        # f = NamedTemporaryFile(delete=False, suffix=".pdf")
-        # f.write(p)
-        # name = f.name
-        # f.close()
+            f.write(response.ptr())
 
         form_frame = self.new_main_page(
             "file://" + temp_filename, temp_filename, view_in="browser"
@@ -1241,29 +1238,28 @@ class SchAppFrame(SchBaseFrame):
         return form_frame
 
     def show_spdf(self, response, title, parameters):
-        p = response.ptr()
-        f = NamedTemporaryFile(delete=False)
-        f.write(p)
-        name = f.name
-        f.close()
+
+        temp_filename = schfs.get_temp_filename(ext="spdf", for_vfs=False)
+        with schfs.open_file(temp_filename, "wb", for_vfs=False) as f:
+            f.write(response.ptr())
+
         return self.new_main_page(
-            "^standard/html_print/html_print.html", name, parameters=name
+            "^standard/html_print/html_print.html",
+            "file://" + temp_filename,
+            parameters=temp_filename,
         )
 
     def print_spdf(self, response, title, parameters):
         if hasattr(wx.GetApp(), "get_printout"):
-            p = response.ptr()
-            f = NamedTemporaryFile(delete=False)
-            f.write(p)
-            name = f.name
-            f.close()
+            temp_filename = schfs.get_temp_filename(ext="spdf", for_vfs=False)
+            with schfs.open_file(temp_filename, "wb", for_vfs=False) as f:
+                f.write(response.ptr())
 
             printer = wx.Printer()
-            printout = wx.GetApp().get_printout(name)
+            printout = wx.GetApp().get_printout(temp_filename)
             printer.Print(self, printout, True)
 
             os.unlink(name)
-
         return
 
     def show_document(self, response, title, parameters):
@@ -1289,13 +1285,12 @@ class SchAppFrame(SchBaseFrame):
             subprocess.Popen(["xdg-open", file_path])
 
     def show_image(self, response, title, parameters):
-        p = response.ptr()
-        f = NamedTemporaryFile(delete=False)
-        f.write(p)
-        name = f.name
-        f.close()
+        temp_filename = schfs.get_temp_filename(ext="spdf", for_vfs=False)
+        with schfs.open_file(temp_filename, "wb", for_vfs=False) as f:
+            f.write(response.ptr())
+
         return self.new_main_page(
-            "^standard/image_viewer/viewer.html", name, view_in="desktop"
+            "^standard/image_viewer/viewer.html", temp_filename, view_in="desktop"
         )
 
     def download_data(self, response, title, parameters):
