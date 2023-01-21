@@ -338,6 +338,7 @@ from pytigon_lib.schparser.html_parsers import SimpleTabParser
 from pytigon_gui.guilib.tools import standard_tab_colour, colour_to_html
 from pytigon_lib.schhttptools import httpclient
 from pytigon_gui.guilib.httperror import http_error
+from pytigon_lib.schhttptools.httpclient import HttpResponse
 from pytigon_gui.guiframe import browserframe
 from pytigon_lib.schtools import createparm
 from pytigon_lib.schparser.html_parsers import ShtmlParser
@@ -837,6 +838,12 @@ class SchApp(App, _BASE_APP):
             ptr = response.str()
             mp = ShtmlParser()
             mp.process(ptr, address_or_parser)
+            mp.address = adr
+        elif type(address_or_parser) == HttpResponse:
+            adr = address_or_parser.url
+            ptr = address_or_parser.str()
+            mp = ShtmlParser()
+            mp.process(ptr, adr)
             mp.address = adr
         else:
             adr = None

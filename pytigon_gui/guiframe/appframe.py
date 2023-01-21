@@ -686,7 +686,7 @@ class SchAppFrame(SchBaseFrame):
         # js: text/javascript
         # jsnon: application/json
         if "text/" in response.ret_content_type:
-            return self.new_main_page(http, title, parameters, view_in)
+            return self.new_main_page(response, title, parameters, view_in)
 
         # html: text/python
         if "text/python" in response.ret_content_type:
@@ -752,6 +752,12 @@ class SchAppFrame(SchBaseFrame):
 
         if type(address_or_parser) == str:
             address = address_or_parser
+            if (
+                not address.startswith("^")
+                and not address.startswith("file://")
+                and view_in == "desktop"
+            ):
+                return self.open_page(address_or_parser, title, parameters, view_in)
 
         elif type(address_or_parser) == HttpResponse:
             address = address_or_parser.url
@@ -887,6 +893,9 @@ class SchAppFrame(SchBaseFrame):
 
         if type(address_or_parser) == str:
             address = address_or_parser
+        elif type(address_or_parser) == HttpResponse:
+            address = address_or_parser.url
+
         else:
             address = address_or_parser.address
 
