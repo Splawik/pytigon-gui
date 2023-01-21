@@ -700,9 +700,9 @@ class SchAppFrame(SchBaseFrame):
         # spdf: "application/spdf"
         if "application/spdf" in response.ret_content_type:
             if "?print=" in address:
-                return self.show_spdf(response, title, parameters)
-            else:
                 return self.print_spdf(response, title, parameters)
+            else:
+                return self.show_spdf(response, title, parameters)
             # return self.show_spdf(response, title, parameters)
 
         # ods: "application/vnd.oasis.opendocument.spreadsheet"
@@ -1220,7 +1220,6 @@ class SchAppFrame(SchBaseFrame):
         # name = f.name
         # f.close()
 
-        print(">>> ", temp_filename)
         form_frame = self.new_main_page(
             "file://" + temp_filename, temp_filename, view_in="browser"
         )

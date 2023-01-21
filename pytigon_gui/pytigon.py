@@ -1127,6 +1127,25 @@ def _main_init():
     os.environ["DJANGO_SETTINGS_MODULE"] = "settings_app"
     from django.conf import settings
 
+    if wx.Font.CanUsePrivateFont():
+        fonts_path = os.path.join(settings.STATIC_ROOT, "fonts")
+        font_names = [
+            "DejaVuSansCondensed.ttf",
+            "DejaVuSansCondensed-Bold.ttf",
+            "DejaVuSansCondensed-Oblique.ttf",
+            "DejaVuSansCondensed-BoldOblique.ttf",
+            "DejaVuSerifCondensed.ttf",
+            "DejaVuSerifCondensed-Bold.ttf",
+            "DejaVuSerifCondensed-Italic.ttf",
+            "DejaVuSerifCondensed-BoldItalic.ttf",
+            "DejaVuSansMono.ttf",
+            "DejaVuSansMono-Bold.ttf",
+            "DejaVuSansMono-Oblique.ttf",
+            "DejaVuSansMono-BoldOblique.ttf",
+        ]
+        for font_name in font_names:
+            wx.Font.AddPrivateFont(os.path.join(fonts_path, font_name))
+
     if "sync" in _PARAM:
         from django.core.management.commands.migrate import Command as migrate_command
 
