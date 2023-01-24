@@ -786,7 +786,9 @@ def div_convert(parent, attrs):
             if obj:
                 obj.handle_endtag("th")
             return ("th", attrs)
-    return ("none", attrs)
+        if 'td_information' in attrs["class"] or 'td_action' in attrs["class"]:
+            return ("none", attrs)       
+    return ("div", attrs)
 
 
 register_tag_preprocess_map("div", div_convert)

@@ -667,19 +667,14 @@ class SchAppFrame(SchBaseFrame):
                     return htmlwin
         return None
 
-    def open_page(
+    def _open_page(
         self,
-        address,
+        response,
         title="",
         parameters=None,
         view_in=None,
     ):
-        http = wx.GetApp().get_http_for_adr(address)
-        if parameters:
-            response = http.post(self, address, parameters)
-        else:
-            response = http.get(self, address)
-
+        address = response.url
         # html: text/html
         # js: text/javascript
         # jsnon: application/json
@@ -732,6 +727,21 @@ class SchAppFrame(SchBaseFrame):
             return self.download_data(response, title, parameters, view_in)
 
         return self.download_data(response, title, parameters)
+
+    def open_page(
+        self,
+        address,
+        title="",
+        parameters=None,
+        view_in=None,
+    ):
+        http = wx.GetApp().get_http_for_adr(address)
+        if parameters:
+            response = http.post(self, address, parameters)
+        else:
+            response = http.get(self, address)
+
+        return self._open_page(response, title, parameters, view_in)
 
     def new_main_page(
         self, address_or_parser, title="", parameters=None, view_in="desktop", http=None
@@ -1215,7 +1225,7 @@ class SchAppFrame(SchBaseFrame):
     def on_goto_desktop(self, event):
         self.desktop.SetFocus()
 
-    def show_pdf(self, response, title, parameters):
+    def show_pdf(self, response, title="", parameters=None):
         """show pdf downloaded from web server
 
         Args:
@@ -1237,7 +1247,7 @@ class SchAppFrame(SchBaseFrame):
 
         return form_frame
 
-    def show_spdf(self, response, title, parameters):
+    def show_spdf(self, response, title="", parameters=None):
 
         temp_filename = schfs.get_temp_filename(ext="spdf", for_vfs=False)
         with schfs.open_file(temp_filename, "wb", for_vfs=False) as f:
@@ -1249,7 +1259,7 @@ class SchAppFrame(SchBaseFrame):
             parameters=temp_filename,
         )
 
-    def print_spdf(self, response, title, parameters):
+    def print_spdf(self, response, title="", parameters=None):
         if hasattr(wx.GetApp(), "get_printout"):
             temp_filename = schfs.get_temp_filename(ext="spdf", for_vfs=False)
             with schfs.open_file(temp_filename, "wb", for_vfs=False) as f:
@@ -1259,10 +1269,10 @@ class SchAppFrame(SchBaseFrame):
             printout = wx.GetApp().get_printout(temp_filename)
             printer.Print(self, printout, True)
 
-            os.unlink(name)
+            os.unlink(temp_filename)
         return
 
-    def show_document(self, response, title, parameters):
+    def show_document(self, response, title="", parameters=None):
         cd = response.response.headers.get("content-disposition")
         if cd:
             name = cd.split("filename=")[1].replace('"', "")
@@ -1284,7 +1294,7 @@ class SchAppFrame(SchBaseFrame):
         else:
             subprocess.Popen(["xdg-open", file_path])
 
-    def show_image(self, response, title, parameters):
+    def show_image(self, response, title="", parameters=None):
         temp_filename = schfs.get_temp_filename(ext="spdf", for_vfs=False)
         with schfs.open_file(temp_filename, "wb", for_vfs=False) as f:
             f.write(response.ptr())
@@ -1293,7 +1303,7 @@ class SchAppFrame(SchBaseFrame):
             "^standard/image_viewer/viewer.html", temp_filename, view_in="desktop"
         )
 
-    def download_data(self, response, title, parameters):
+    def download_data(self, response, title="", parameters=None):
         cd = response.response.headers.get("content-disposition")
         if cd:
             name = cd.split("filename=")[1].replace('"', "")

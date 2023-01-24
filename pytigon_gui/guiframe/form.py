@@ -992,8 +992,8 @@ class SchForm(ScrolledPanel):
                 okno.body.EDITOR.SetValue(s)
                 okno.body.EDITOR.GotoPos(0)
             else:
-                if "application" in response.ret_content_type:
-                    wx.GetApp().GetTopWindow()._open_binary_data(response, href)
+                if not "text/" in response.ret_content_type:
+                    wx.GetApp().GetTopWindow()._open_page(response)
                     return
 
                 s = response.str()
