@@ -769,6 +769,12 @@ def a_to_button(parent, attrs):
 register_tag_preprocess_map("a", a_to_button)
 
 
+HIDDEN_DIVS = [
+    'ajax-region',
+    'td_information',
+    'td_action',
+]
+
 def div_convert(parent, attrs):
     if "class" in attrs:
         if "popup" in attrs["class"]:
@@ -786,8 +792,9 @@ def div_convert(parent, attrs):
             if obj:
                 obj.handle_endtag("th")
             return ("th", attrs)
-        if 'td_information' in attrs["class"] or 'td_action' in attrs["class"]:
-            return ("none", attrs)       
+        for div in HIDDEN_DIVS:
+            if div in attrs["class"]:
+                return ("none", attrs)       
     return ("div", attrs)
 
 
