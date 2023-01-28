@@ -115,9 +115,14 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
         elif self.kind == ToolbarPanel.TYPE_PANEL_BUTTONBAR:
             self.toolbar = RB.RibbonButtonBar(self)
 
+        self.lock = False
+
     def OnInternalIdle(self):
-        if self.toolbar:
-            self.toolbar.UpdateWindowUI(wx.UPDATE_UI_FROMIDLE)
+        if not self.lock:
+            self.lock = True
+            if self.toolbar:
+                self.toolbar.UpdateWindowUI(wx.UPDATE_UI_FROMIDLE)
+            self.lock = False
 
     def Append(self, b):
         if self.kind == ToolbarPanel.TYPE_PANEL_TOOLBAR:
