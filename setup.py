@@ -47,8 +47,8 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
     entry_points={
-        "console_scripts": [
-            "ptig=pytigon.pytigon_run:run",
+        "gui_scripts": [
+            "ptigw=pytigon.pytigon_run:run",
         ]
     },
 )
