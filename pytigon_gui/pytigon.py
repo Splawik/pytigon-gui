@@ -28,7 +28,8 @@ Function :func:`~pytigon_gui.pytigon.main` process pytigon command line argument
 """
 
 import os
-#os.environ["G_DEBUG"] = "fatal-criticals"
+
+# os.environ["G_DEBUG"] = "fatal-criticals"
 import sys
 import time
 import platform
