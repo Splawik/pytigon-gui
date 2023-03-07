@@ -1328,6 +1328,8 @@ def _main_init():
         if "$$RETURN_OK" in ret_str:
             app.authorized = True
             ready_to_run = True
+        else:
+            print("Error: %s" % ret_str)
     if not app.authorized and "username" in _PARAM:
         ready_to_run = False
         href = "/" + app_name + "/" if app_name else "/"
