@@ -1016,14 +1016,15 @@ def login(base_href, auth_type=None, username=None):
             "client_param": wx.GetApp()._get_parm_for_server(),
         }
         if auth_type == None:
-            wx.GetApp().http.post(
+            ret = wx.GetApp().http.post(
                 wx.GetApp(),
                 "/schsys/do_login/?from_pytigon=1",
                 parm,
                 credentials=(username, password),
             )
 
-            ret_str = wx.GetApp().http.str()
+            ret_str = ret.str()
+
             if "$$RETURN_OK" in ret_str:
                 dlg.Destroy()
                 return True
