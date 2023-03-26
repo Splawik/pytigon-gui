@@ -293,16 +293,15 @@ def process_adv_argv():
             sys.exit(0)
         else:
             sys.path.insert(0, CWD_PATH)
-            try:
-                from apps import GUI_COMMAND_LINE
 
-                x = GUI_COMMAND_LINE.split(" ")
+            import settings_app
+
+            if hasattr(settings_app, "GUI_COMMAND_LINE"):
+                x = settings_app.GUI_COMMAND_LINE.split(" ")
                 param = process_argv(x)
                 for key, value in param.items():
                     if not key in _PARAM:
                         _PARAM[key] = value
-            except:
-                pass
 
 
 process_adv_argv()
