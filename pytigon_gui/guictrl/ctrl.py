@@ -344,8 +344,11 @@ def _make_menu_button_class(base_class):
             if ldata:
                 menu = wx.Menu()
                 for row in ldata:
-                    menu.Append(wx.NewId(), row[0], row[2]["href"])
-                    self.href_dict[row[0]] = row[2]
+                    if row[0].replace('-','').strip():
+                        menu.Append(wx.NewId(), row[0], row[2]["href"])
+                        self.href_dict[row[0]] = row[2]
+                    else:
+                        menu.AppendSeparator()
                 self.SetMenu(menu)
 
             self.Bind(wx.EVT_MENU, self.on_menu)

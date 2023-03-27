@@ -183,8 +183,8 @@ class SchNotebook(aui.AuiNotebook):
             split_size = self.CalculateNewSplitSize()
         else:
             split_size = self.GetClientSize()
-            split_size.x /= 2
-            split_size.y /= 2
+            split_size.x = int(split_size.x / 2)
+            split_size.y = int(split_size.y / 2)
         new_tabs = aui.TabFrame(self)
         new_tabs.SetTabCtrlHeight(self._tab_ctrl_height)
         self._tab_id_counter += 1
@@ -199,16 +199,16 @@ class SchNotebook(aui.AuiNotebook):
         )
         if direction == wx.LEFT:
             pane_info.Left()
-            mouse_pt = wx.Point(0, cli_size.y / 2)
+            mouse_pt = wx.Point(0, int(cli_size.y / 2))
         elif direction == wx.RIGHT:
             pane_info.Right()
-            mouse_pt = wx.Point(cli_size.x, cli_size.y / 2)
+            mouse_pt = wx.Point(cli_size.x, int(cli_size.y / 2))
         elif direction == wx.TOP:
             pane_info.Top()
-            mouse_pt = wx.Point(cli_size.x / 2, 0)
+            mouse_pt = wx.Point(int(cli_size.x / 2), 0)
         elif direction == wx.BOTTOM:
             pane_info.Bottom()
-            mouse_pt = wx.Point(cli_size.x / 2, cli_size.y)
+            mouse_pt = wx.Point(int(cli_size.x / 2), cli_size.y)
         # self._mgr.AddPane(new_tabs, pane_info, mouse_pt)
         # self._mgr.Update()
         page_info = aui.AuiNotebookPage()

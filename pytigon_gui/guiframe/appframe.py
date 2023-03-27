@@ -868,8 +868,10 @@ class SchAppFrame(SchBaseFrame):
                 return self.toolbar_interface.create_html_win(
                     None, address_or_parser, parameters
                 )
-
-        n = self._mgr.GetPane(panel).window
+        if panel == "desktop2":
+            n = self._mgr.GetPane("desktop").window
+        else:
+            n = self._mgr.GetPane(panel).window
 
         if not self._mgr.GetPane(panel).IsShown():
             refr = True
