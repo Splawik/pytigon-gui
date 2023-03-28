@@ -706,25 +706,13 @@ def input_to_ctrltab(parent, attrs):
 register_tag_preprocess_map("input", input_to_ctrltab)
 
 
+
 def textarea_to_ctrltab(parent, attrs):
     attrs_ret = {}
-    if not "width" in attrs:
-        if "cols" in attrs:
-            width = 7 * int(is_null(attrs["cols"], "80"))
-            if width > 480:
-                width = 480
-            attrs_ret["width"] = str(width)
-        else:
-            attrs_ret["width"] = "100%"
-    else:
-        attrs_ret["width"] = attrs["width"]
-    if not "height" in attrs:
-        if "rows" in attrs:
-            attrs_ret["height"] = str(14 + 14 * int(is_null(attrs["rows"], "3")))
-        else:
-            attrs_ret["height"] = "100%"
-    else:
-        attrs_ret["height"] = attrs["height"]
+    if "cols" in attrs:
+        attrs_ret["cols"] = attrs["cols"]
+    if "rows" in attrs:
+        attrs_ret["rows"] = attrs["rows"]
     if "src" in attrs:
         attrs_ret["src"] = attrs["src"]
     if "name" in attrs:
@@ -770,10 +758,11 @@ register_tag_preprocess_map("a", a_to_button)
 
 
 HIDDEN_DIVS = [
-    'ajax-region',
-    'td_information',
-    'td_action',
+    "ajax-region",
+    "td_information",
+    "td_action",
 ]
+
 
 def div_convert(parent, attrs):
     if "class" in attrs:
@@ -794,7 +783,7 @@ def div_convert(parent, attrs):
             return ("th", attrs)
         for div in HIDDEN_DIVS:
             if div in attrs["class"]:
-                return ("none", attrs)       
+                return ("none", attrs)
     return ("div", attrs)
 
 

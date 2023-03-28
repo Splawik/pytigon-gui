@@ -41,6 +41,7 @@ from pytigon_lib.schparser.html_parsers import ShtmlParser
 from pytigon_lib.schhtml.wxdc import DcDc
 from pytigon_lib.schhtml.htmlviewer import HtmlViewerParser
 from pytigon_lib.schparser.html_parsers import Td
+from pytigon_lib.schtools.tools import is_null
 
 from pytigon_gui.guictrl.grid import grid, gridtable_from_proxy, tabproxy
 from pytigon_gui.guiframe import page
@@ -344,7 +345,7 @@ def _make_menu_button_class(base_class):
             if ldata:
                 menu = wx.Menu()
                 for row in ldata:
-                    if row[0].replace('-','').strip():
+                    if row[0].replace("-", "").strip():
                         menu.Append(wx.NewId(), row[0], row[2]["href"])
                         self.href_dict[row[0]] = row[2]
                     else:
@@ -1468,6 +1469,32 @@ def TEXTAREA(parent, **kwds):
             if data.startswith("\n"):
                 data = data[1:]
                 kwds["param"]["data"] = data
+
+    size = [-1, -1]
+
+    if not "width" in kwds["param"]:
+        if "cols" in kwds["param"]:
+            width = 7 * int(is_null(kwds["param"]["cols"], "80"))
+            if width > 480:
+                width = 480
+            kwds["param"]["width"] = str(width)
+            size[0] = width
+        else:
+            kwds["param"]["width"] = "100%"
+    if not "height" in kwds["param"]:
+        if "rows" in kwds["param"]:
+            size[1] = 14 + 14 * int(is_null(kwds["param"]["rows"], "3"))
+            kwds["param"]["height"] = str(size[1])
+        else:
+            kwds["param"]["height"] = "100%"
+
+    kwds["size"] = size
+
+    if "cols" in kwds:
+        del kwds["cols"]
+
+    if "rows" in kwds:
+        del kwds["rows"]
 
     if "src" in kwds:
         if kwds["src"] in ("c", "python", "html"):
