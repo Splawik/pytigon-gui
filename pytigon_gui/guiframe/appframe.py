@@ -1019,7 +1019,7 @@ class SchAppFrame(SchBaseFrame):
                     except:
                         if row[4].data and row[4].data != "" and row[4].data != "None":
                             try:
-                                bitmap = bitmap_from_href(row[4].data)
+                                bitmap = bitmap_from_href(row[4].data.split("<=")[0])
                             except:
                                 bitmap = (wx.GetApp().images)[0]
                         else:

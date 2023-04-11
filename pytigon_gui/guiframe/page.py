@@ -31,8 +31,10 @@ from pytigon_gui.guilib import events
 from pytigon_gui.guilib.signal import Signal
 from pytigon_lib.schtools import createparm
 from pytigon_lib.schparser.html_parsers import ShtmlParser
+from pytigon_lib.schhttptools.httpclient import HttpResponse
 from pytigon_gui.guiframe.form import SchForm
 from pytigon_gui.guilib.events import *
+
 
 
 class SchPage(wx.Window, Signal):
@@ -320,7 +322,10 @@ class SchPage(wx.Window, Signal):
             else:
                 mp = self._read_html(self.address_or_parser, self.parameters)
         else:
-            mp = self._read_html(self.address_or_parser, self.parameters)
+            if type(self.address_or_parser) == HttpResponse:
+                mp = self._read_html(self.address_or_parser.url, self.parameters)
+            else:
+                mp = self._read_html(self.address_or_parser, self.parameters)
         if not mp:
             return
         address = mp.address
