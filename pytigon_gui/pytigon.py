@@ -701,10 +701,12 @@ class SchApp(App, _BASE_APP):
                 if value.status == 1:
                     value.status = 2
                     tasks.append(
-                        httpclient.local_websocket(
-                            self.base_address.replace("http://", "ws://") + key,
-                            value.input_queue,
-                            value,
+                        asyncio.create_task(
+                            httpclient.local_websocket(
+                                self.base_address.replace("http://", "ws://") + key,
+                                value.input_queue,
+                                value,
+                            )
                         )
                     )
             if tasks:
