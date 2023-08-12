@@ -19,8 +19,12 @@
 
 
 import wx
+from functools import cmp_to_key
+
+# import wx.lib.agw.ribbon as RB
 import wx.lib.agw.ribbon as RB
 from wx.lib.agw.ribbon import art
+from wx.lib.agw.ribbon.art import *
 
 from pytigon_gui.guilib.events import *
 from pytigon_gui.toolbar.basetoolbar import (
@@ -273,3 +277,191 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
             provider = RB.RibbonAUIArtProvider()
         self.SetArtProvider(provider)
         RB.RibbonBar.Realize(self)
+
+    def RecalculateTabSizes(self):
+        """Recalculates the :class:`RibbonBar` tab sizes."""
+
+        numtabs = len(self._pages)
+
+        if numtabs == 0:
+            return
+
+        width = (
+            self.GetSize().GetWidth() - self._tab_margin_left - self._tab_margin_right
+        )
+        tabsep = self._art.GetMetric(RIBBON_ART_TAB_SEPARATION_SIZE)
+        x = self._tab_margin_left
+        y = 0
+
+        if width >= self._tabs_total_width_ideal:
+            # Simple case: everything at ideal width
+            for info in self._pages:
+                info.rect.x = x
+                info.rect.y = y
+                info.rect.width = info.ideal_width
+                info.rect.height = self._tab_height
+                x += info.rect.width + tabsep
+
+            self._tab_scroll_buttons_shown = False
+            self._tab_scroll_left_button_rect.SetWidth(0)
+            self._tab_scroll_right_button_rect.SetWidth(0)
+
+        elif width < self._tabs_total_width_minimum:
+            # Simple case: everything minimum with scrollbar
+            for info in self._pages:
+                info.rect.x = x
+                info.rect.y = y
+                info.rect.width = info.minimum_width
+                info.rect.height = self._tab_height
+                x += info.rect.width + tabsep
+
+            if not self._tab_scroll_buttons_shown:
+                self._tab_scroll_left_button_state = RIBBON_SCROLL_BTN_NORMAL
+                self._tab_scroll_right_button_state = RIBBON_SCROLL_BTN_NORMAL
+                self._tab_scroll_buttons_shown = True
+
+            temp_dc = wx.ClientDC(self)
+            self._tab_scroll_left_button_rect.SetWidth(
+                self._art.GetScrollButtonMinimumSize(
+                    temp_dc,
+                    self,
+                    RIBBON_SCROLL_BTN_LEFT
+                    | RIBBON_SCROLL_BTN_NORMAL
+                    | RIBBON_SCROLL_BTN_FOR_TABS,
+                ).GetWidth()
+            )
+            self._tab_scroll_left_button_rect.SetHeight(self._tab_height)
+            self._tab_scroll_left_button_rect.SetX(self._tab_margin_left)
+            self._tab_scroll_left_button_rect.SetY(0)
+            self._tab_scroll_right_button_rect.SetWidth(
+                self._art.GetScrollButtonMinimumSize(
+                    temp_dc,
+                    self,
+                    RIBBON_SCROLL_BTN_RIGHT
+                    | RIBBON_SCROLL_BTN_NORMAL
+                    | RIBBON_SCROLL_BTN_FOR_TABS,
+                ).GetWidth()
+            )
+            self._tab_scroll_right_button_rect.SetHeight(self._tab_height)
+            self._tab_scroll_right_button_rect.SetX(
+                self.GetClientSize().GetWidth()
+                - self._tab_margin_right
+                - self._tab_scroll_right_button_rect.GetWidth()
+            )
+            self._tab_scroll_right_button_rect.SetY(0)
+
+            if self._tab_scroll_amount == 0:
+                self._tab_scroll_left_button_rect.SetWidth(0)
+
+            elif self._tab_scroll_amount + width >= self._tabs_total_width_minimum:
+                self._tab_scroll_amount = self._tabs_total_width_minimum - width
+                self._tab_scroll_right_button_rect.SetX(
+                    self._tab_scroll_right_button_rect.GetX()
+                    + self._tab_scroll_right_button_rect.GetWidth()
+                )
+                self._tab_scroll_right_button_rect.SetWidth(0)
+
+            for info in self._pages:
+                info.rect.x -= self._tab_scroll_amount
+
+        else:
+            self._tab_scroll_buttons_shown = False
+            self._tab_scroll_left_button_rect.SetWidth(0)
+            self._tab_scroll_right_button_rect.SetWidth(0)
+            # Complex case: everything sized such that: minimum <= width < ideal
+            #
+            #   Strategy:
+            #     1) Uniformly reduce all tab widths from ideal to small_must_have_separator_width
+            #     2) Reduce the largest tab by 1 pixel, repeating until all tabs are same width (or at minimum)
+            #     3) Uniformly reduce all tabs down to their minimum width
+            #
+            smallest_tab_width = 10000
+            total_small_width = tabsep * (numtabs - 1)
+
+            for info in self._pages:
+                if info.small_must_have_separator_width < smallest_tab_width:
+                    smallest_tab_width = info.small_must_have_separator_width
+
+                total_small_width += info.small_must_have_separator_width
+
+            if width >= total_small_width:
+                # Do (1)
+                total_delta = self._tabs_total_width_ideal - total_small_width
+                total_small_width -= tabsep * (numtabs - 1)
+                width -= tabsep * (numtabs - 1)
+                for info in self._pages:
+                    delta = info.ideal_width - info.small_must_have_separator_width
+                    info.rect.x = x
+                    info.rect.y = y
+                    info.rect.width = (
+                        info.small_must_have_separator_width
+                        + delta * (width - total_small_width) // total_delta
+                    )
+                    info.rect.height = self._tab_height
+
+                    x += info.rect.width + tabsep
+                    total_delta -= delta
+                    total_small_width -= info.small_must_have_separator_width
+                    width -= info.rect.width
+
+            else:
+                total_small_width = tabsep * (numtabs - 1)
+                for info in self._pages:
+                    if info.minimum_width < smallest_tab_width:
+                        total_small_width += smallest_tab_width
+                    else:
+                        total_small_width += info.minimum_width
+
+                if width >= total_small_width:
+                    # Do (2)
+                    sorted_pages = []
+                    for info in self._pages:
+                        # Sneaky obj array trickery to not copy the tab descriptors
+                        sorted_pages.append(info)
+
+                    sorted_pages.sort(
+                        key=cmp_to_key(self.OrderPageTabInfoBySmallWidthAsc)
+                    )
+                    width -= tabsep * (numtabs - 1)
+
+                    for i, info in enumerate(self._pages):
+                        if (
+                            info.small_must_have_separator_width * (numtabs - i)
+                            <= width
+                        ):
+                            info.rect.width = info.small_must_have_separator_width
+                        else:
+                            info.rect.width = width // (numtabs - i)
+
+                        width -= info.rect.width
+
+                    for i, info in enumerate(self._pages):
+                        info.rect.x = x
+                        info.rect.y = y
+                        info.rect.height = self._tab_height
+                        x += info.rect.width + tabsep
+                        sorted_pages.pop(numtabs - (i + 1))
+
+                else:
+                    # Do (3)
+                    total_small_width = (smallest_tab_width + tabsep) * numtabs - tabsep
+                    total_delta = total_small_width - self._tabs_total_width_minimum
+                    total_small_width = self._tabs_total_width_minimum - tabsep * (
+                        numtabs - 1
+                    )
+                    width -= tabsep * (numtabs - 1)
+
+                    for info in self._pages:
+                        delta = smallest_tab_width - info.minimum_width
+                        info.rect.x = x
+                        info.rect.y = y
+                        info.rect.width = (
+                            info.minimum_width
+                            + delta * (width - total_small_width) // total_delta
+                        )
+                        info.rect.height = self._tab_height
+
+                        x += info.rect.width + tabsep
+                        total_delta -= delta
+                        total_small_width -= info.minimum_width
+                        width -= info.rect.width

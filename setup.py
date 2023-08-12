@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 def package_files(directory, ext=None):
     paths = []
-    for (path, directories, filenames) in os.walk(directory):
+    for path, directories, filenames in os.walk(directory):
         for filename in filenames:
             if not ext or (ext and filename.endswith(ext)):
                 paths.append(os.path.join("..", path, filename))
@@ -21,7 +21,7 @@ with open("requirements.txt") as f:
 
 setup(
     name="pytigon-gui",
-    version="0.230508",
+    version="0.230812",
     description="Pytigon GUI",
     author="Sławomir Chołaj",
     author_email="slawomir.cholaj@gmail.com",
