@@ -37,7 +37,9 @@ class WxAuto:
             print("ERROR! ", window_name)
         pos = win.GetScreenPosition()
         size = win.GetSize()
-        pyautogui.moveTo(pos[0] + int(size.GetWidth() / 2), pos[1] + int(size.GetHeight() / 2))
+        pyautogui.moveTo(
+            pos[0] + int(size.GetWidth() / 2), pos[1] + int(size.GetHeight() / 2)
+        )
         # pyautogui.click()
         await sleep(self.sys_time_unit / 3)
         return win
@@ -91,7 +93,9 @@ class WxAuto:
             t2.second,
             t2.microsecond // 1000,
         )
-        with open(self.script_name + ".srt", "wt" if self.subtitle_id == 1 else "at") as f:
+        with open(
+            self.script_name + ".srt", "wt" if self.subtitle_id == 1 else "at"
+        ) as f:
             f.write(s)
             f.write(txt)
             f.write("\n\n")
@@ -192,14 +196,15 @@ def autoit(win):
     wx.GetApp().StartCoroutine(astart, win)
 
 
-setattr(wx, "pseudoimport", autoit)
+if __name__ == "__main__":
+    setattr(wx, "pseudoimport", autoit)
 
-sys.argv = [
-    __file__.replace("pytigon-gui", "pytigon").replace("wxauto.py", "ptig.py"),
-    "--video=%s.avi" % SCRIPT,
-    "--rpc=8090",
-    "schdevtools",
-    "--inspection",
-]
+    sys.argv = [
+        __file__.replace("pytigon-gui", "pytigon").replace("wxauto.py", "ptig.py"),
+        "--video=%s.avi" % SCRIPT,
+        "--rpc=8090",
+        "schdevtools",
+        "--inspection",
+    ]
 
-run()
+    run()
