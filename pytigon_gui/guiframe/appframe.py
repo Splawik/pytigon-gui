@@ -78,7 +78,7 @@ def save_video_frame(win):
             # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
             fourcc = cv2.VideoWriter_fourcc(*"XVID")
             _RECORD_VIDEO_OUT = cv2.VideoWriter(
-                "video.avi", fourcc, 4, (size.width, size.height)
+                win._video, fourcc, 4, (size.width, size.height)
             )
             _RECORD_VIDEO_MONITOR = {
                 "top": pos.y,
@@ -136,7 +136,7 @@ class SchAppFrame(SchBaseFrame):
         pos=wx.DefaultPosition,
         size=wx.DefaultSize,
         style=wx.DEFAULT_FRAME_STYLE | wx.CLIP_CHILDREN | wx.WANTS_CHARS,
-        video=False,
+        video_name="",
     ):
         """Constructor
 
@@ -181,7 +181,7 @@ class SchAppFrame(SchBaseFrame):
         self._menu_bar_lp = 0
         self._toolbar_bar_lp = 1
         self._proc_mannager = None
-        self._video = video
+        self._video = video_name
         self.gui_style = gui_style
         self.idle_objects = []
         self.gui_style = gui_style
@@ -1250,7 +1250,6 @@ class SchAppFrame(SchBaseFrame):
         return form_frame
 
     def show_spdf(self, response, title="", parameters=None):
-
         temp_filename = schfs.get_temp_filename(ext="spdf", for_vfs=False)
         with schfs.open_file(temp_filename, "wb", for_vfs=False) as f:
             f.write(response.ptr())
