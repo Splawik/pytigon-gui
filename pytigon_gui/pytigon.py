@@ -270,7 +270,8 @@ def process_adv_argv():
         choices = [
             ff
             for ff in os.listdir(PATHS["PRJ_PATH"])
-            if not ff.startswith("_") and os.path.isdir(os.path.join(PATHS["PRJ_PATH"], ff))
+            if not ff.startswith("_")
+            and os.path.isdir(os.path.join(PATHS["PRJ_PATH"], ff))
         ]
         dlg = wx.SingleChoiceDialog(
             None,
@@ -407,7 +408,11 @@ if _INSPECTION:
             for pos in ("process_window_event", "idle", "timer", "update_ui"):
                 if pos in func_name:
                     return
-            if "process_window_event" in func_name or "idle" in func_name or "idle" in func_name:
+            if (
+                "process_window_event" in func_name
+                or "idle" in func_name
+                or "idle" in func_name
+            ):
                 return
             func_line_no = frame.f_lineno
             func_filename = co.co_filename
@@ -458,11 +463,17 @@ class SchApp(App, _BASE_APP):
         if _RPC:
             xmlrpc.XMLRPC.__init__(self)
 
-        if not "no_splash" in _PARAM and not "nogui" in _PARAM and not "server_only" in _PARAM:
+        if (
+            not "no_splash" in _PARAM
+            and not "nogui" in _PARAM
+            and not "server_only" in _PARAM
+        ):
             # bitmap = wx.Bitmap(SRC_PATH + "/pytigon.svg", wx.BITMAP_TYPE_JPEG)
             img = wx.svg.SVGimage.CreateFromFile(SRC_PATH + "/pytigon.svg")
             # img.ConvertAlphaToMask()
-            bitmap = img.ConvertToBitmap(scale=2, width=int(img.width * 2), height=int(img.height * 2))
+            bitmap = img.ConvertToBitmap(
+                scale=2, width=int(img.width * 2), height=int(img.height * 2)
+            )
             wx.BITMAP_TYPE_PNG
             splash = wx.adv.SplashScreen(
                 bitmap,
@@ -520,14 +531,28 @@ class SchApp(App, _BASE_APP):
         self.websockets = {}
         self.websockets_callbacks = {}
 
-        self.gui_style = "app.gui_style = tree(toolbar(file(exit,open),clipboard, statusbar))"
+        self.gui_style = (
+            "app.gui_style = tree(toolbar(file(exit,open),clipboard, statusbar))"
+        )
 
-        self.COLOUR_HIGHLIGHT = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
-        self.COLOUR_BACKGROUND = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
-        self.COLOUR_SHADOW = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
-        self.COLOUR_DKSHADOW = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW))
-        self.COLOUR_ACTIVECATPION = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_ACTIVECAPTION))
-        self.COLOUR_INFOBK = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK))
+        self.COLOUR_HIGHLIGHT = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+        )
+        self.COLOUR_BACKGROUND = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+        )
+        self.COLOUR_SHADOW = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+        )
+        self.COLOUR_DKSHADOW = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW)
+        )
+        self.COLOUR_ACTIVECATPION = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_ACTIVECAPTION)
+        )
+        self.COLOUR_INFOBK = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK)
+        )
 
         self.ctrl_process = {}
 
@@ -647,7 +672,9 @@ class SchApp(App, _BASE_APP):
         count = 999
         while True:
             await asyncio.sleep(1)
-            await self.websocket_send("/schbuilder/clock/channel/", {"title": "Hello world %s" % count})
+            await self.websocket_send(
+                "/schbuilder/clock/channel/", {"title": "Hello world %s" % count}
+            )
             count -= 1
 
     async def init_websockets(self):
@@ -735,7 +762,9 @@ class SchApp(App, _BASE_APP):
                         # done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
                         assert not pending
                         (future,) = done  # unpack a set of length one
-                        print(future.result())  # raise an exception or use future.exception(
+                        print(
+                            future.result()
+                        )  # raise an exception or use future.exception(
 
                     self.StartCoroutine(reinit_websockets, self.GetTopWindow())
 
@@ -906,7 +935,9 @@ class SchApp(App, _BASE_APP):
                     plugins_cache = "plugins_cache/"
                 if not os.path.exists(home_dir + plugins_cache + str(app_name)):
                     os.mkdir(home_dir + plugins_cache + str(app_name))
-                    ini = open(home_dir + plugins_cache + str(app_name) + "/__init__.py", "w")
+                    ini = open(
+                        home_dir + plugins_cache + str(app_name) + "/__init__.py", "w"
+                    )
                     ini.write(" ")
                     ini.close()
                 if not os.path.exists(home_dir + plugins_cache + str(plugin) + ".zip"):
@@ -975,7 +1006,9 @@ class SchApp(App, _BASE_APP):
                     getattr(callback, event_name)(**argv)
 
     def on_websocket_connect(self, client, websocket_id, response):
-        return self.on_websocket_callback(client, "on_websocket_connect", {"response": response})
+        return self.on_websocket_callback(
+            client, "on_websocket_connect", {"response": response}
+        )
 
     def on_websocket_open(self, client, websocket_id):
         return self.on_websocket_callback(client, "on_websocket_open", {})
@@ -1018,12 +1051,16 @@ def login(base_href, auth_type=None, username=None):
                 else:
                     dlg.message.SetLabel(_("Failed login attempt!"))
         else:
-            result = wx.GetApp().http.get(wx.GetApp(), base_href, credentials=(username, password))
+            result = wx.GetApp().http.get(
+                wx.GetApp(), base_href, credentials=(username, password)
+            )
             if result.ret_code == 200:
                 dlg.Destroy()
                 return True
             else:
-                dlg.message.SetLabel(_("Failed login attempt! http error: %s") % result.ret_code)
+                dlg.message.SetLabel(
+                    _("Failed login attempt! http error: %s") % result.ret_code
+                )
     dlg.Destroy()
     return False
 
@@ -1219,7 +1256,9 @@ def _main_init():
         # try:
         if True:
             # qcluster.run_from_argv(["manage.py", "qcluster"])
-            app.task_manager = Process(target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],))
+            app.task_manager = Process(
+                target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],)
+            )
             app.task_manager.start()
             print("Task manager started")
             # p.join()
@@ -1262,7 +1301,9 @@ def _main_init():
             elif row[0].data == "csrf_token":
                 app.csrf_token = row[1].data
             elif "start_page" in row[0].data:
-                app.start_pages.extend([x for x in row[1].data.split(";") if x and x != "None"])
+                app.start_pages.extend(
+                    [x for x in row[1].data.split(";") if x and x != "None"]
+                )
             elif row[0].data == "title":
                 app.title = row[1].data
             elif row[0].data == "plugins":
@@ -1274,7 +1315,8 @@ def _main_init():
     ready_to_run = True
 
     if not app.authorized and (
-        (autologin and not "username" in _PARAM) or ("username" in _PARAM and "password" in _PARAM)
+        (autologin and not "username" in _PARAM)
+        or ("username" in _PARAM and "password" in _PARAM)
     ):
         if "username" in _PARAM:
             username2 = _PARAM["username"]
@@ -1286,12 +1328,16 @@ def _main_init():
         ready_to_run = False
         response = app.http.post(
             app,
-            "/" + app_name + "/schsys/do_login/?from_pytigon=1" if app_name else "/schsys/do_login/?from_pytigon",
+            "/" + app_name + "/schsys/do_login/?from_pytigon=1"
+            if app_name
+            else "/schsys/do_login/?from_pytigon",
             {
                 #'csrfmiddlewaretoken': app.csrf_token,
                 "username": username2,
                 "password": password2,
-                "next": address + "/" + app_name + "/schsys/ok/" if app_name else address + "/schsys/ok/",
+                "next": address + "/" + app_name + "/schsys/ok/"
+                if app_name
+                else address + "/schsys/ok/",
                 "client_param": app._get_parm_for_server(),
             },
         )
@@ -1353,7 +1399,6 @@ def _main_run():
 
     httpclient.set_http_idle_func(idle_fun)
 
-
     if _RPC:
         reactor.listenTCP(app.rpc, server.Site(app))
 
@@ -1363,19 +1408,22 @@ def _main_run():
         else:
             websockets = [_WEBSOCKET]
 
-        local = True if app.base_address and app.base_address.startswith("http://127.0.0.2") else False
+        local = (
+            True
+            if app.base_address and app.base_address.startswith("http://127.0.0.2")
+            else False
+        )
 
         for websocket_id in websockets:
             create_websocket_client(app, websocket_id, local)
-
 
     if "import" in _PARAM:
         x = __import__(_PARAM["import"])
 
         def s():
-          nonlocal frame, x
+            nonlocal frame, x
             x(frame)
-  
+
         wx.CallAfter(s)
 
     if hasattr(wx, "pseudoimport"):
