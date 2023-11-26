@@ -101,12 +101,23 @@ class WxAuto:
             f.write("\n\n")
         self.subtitle_id += 1
 
-    async def process(self, txt):
+    async def process(self, txt, change_tab=None):
         if txt.startswith("@"):
             with open(txt[1:], "rt") as f:
                 txt2 = f.read()
         else:
             txt2 = txt
+        if change_tab:
+            if type(change_tab) == str:
+                change_tab2 = change_tab.replace(";;", "\n").split("\n")
+            else:
+                change_tab2 = change_tab
+            change_tab2.reverse()
+            for item in change_tab2:
+                if ":" in item:
+                    x = item.split(":", 1)
+                    txt2 = txt2.replace("$" + x[0], x[1])
+
         for line in txt2.split("\n"):
             l = line.strip()
             if l.startswith("."):
