@@ -689,7 +689,6 @@ class LIST(wx.ListCtrl, SchBaseCtrl):
         if tdata:
             test = False
             for row in tdata:
-
                 if test == False:
                     test = True
                     l = len(row)
@@ -791,10 +790,45 @@ class TABLE(SchGridPanel, SchBaseCtrl):
         self.create_toolbar(self.grid)
         # self.Bind(wx.EVT_CLOSE, self.on_close)
         self._table = table
+        self.get_parent_page().register_signal(self, "update_row_ok")
 
-    # def on_close(self, event):
-    #    self.get_parent_page().unregister_signal(self, "refresh_controls")
-    #    event.Skip()
+    def on_close(self, event):
+        self.get_parent_page().unregister_signal(self, "update_row_ok")
+        event.Skip()
+
+    def update_row_ok(self, data):
+        url = self.GetParent().address
+        row_id = self.grid.GetGridCursorRow()
+        if url:
+            if "id" in data:
+                pk = data["id"]
+            else:
+                pk = data["pk"]
+            if "?" in url:
+                url += "&json=1&pk=" + str(pk)
+            else:
+                url += "?&json=1&pk=" + str(pk)
+            url = url.replace("/form/", "/json/")
+            http = wx.GetApp().get_http(self)
+            response = http.get(self, url)
+            if response.ret_code == 404:
+                return
+            data = response.json()
+            if "total" in data:
+                if int(data["total"]) == 1:
+                    row = data["rows"][0]
+                    print(row)
+                    for key, value in row.items():
+                        print("X1: ", key)
+                        if key in ("id", "cid"):
+                            pass
+                        elif key in ("caction", "cid", "class", "style"):
+                            pass
+                        else:
+                            id = int(key)
+                            self.grid.GetTable().data[row_id][id - 1].data = value
+                            self.grid.GetTable().GetView().ForceRefresh()
+                    return True
 
     def GetMinSize(self):
         return SchGridPanel.GetMinSize(self)
@@ -859,7 +893,6 @@ class RADIOBOX(wx.RadioBox, SchBaseCtrl):
         self.refresh_tdata()
         tdata = self.get_tdata()
         if tdata:
-
             for row in tdata:
                 self.Append(row[0].data)
 
@@ -1225,7 +1258,7 @@ class CALENDAR(CalendarCtrl, SchBaseCtrl):
                 style=wx.adv.CAL_MONDAY_FIRST
                 | wx.adv.CAL_SHOW_HOLIDAYS
                 | wx.adv.CAL_SEQUENTIAL_MONTH_SELECTION,
-                **kwds
+                **kwds,
             )
         except:
             CalendarCtrl.__init__(
@@ -1234,7 +1267,7 @@ class CALENDAR(CalendarCtrl, SchBaseCtrl):
                 style=wx.calendar.CAL_MONDAY_FIRST
                 | wx.calendar.CAL_SHOW_HOLIDAYS
                 | wx.calendar.CAL_SEQUENTIAL_MONTH_SELECTION,
-                **kwds
+                **kwds,
             )
 
 
@@ -1773,7 +1806,6 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
             self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(parent), str(parm[0]))
             self.proxy.set_address_parm(parm[2])
         else:
-
             self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(parent), str(self.src))
         table = gridtable_from_proxy.DataSource(self.proxy)
 
@@ -1793,7 +1825,6 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
             self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(self), str(parm[0]))
             self.proxy.SetAddressParm(parm[2])
         else:
-
             self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(self), str(self.src))
         table = gridtable_from_proxy.DataSource(self.proxy)
         self.SetTable(table)
@@ -2028,7 +2059,6 @@ class CHOICE(POPUPHTML):
     """
 
     def __init__(self, parent, **kwds):
-
         if not ("href" in kwds or "href" in kwds):
             kwds["href"] = wx.GetApp().make_href("/schsys/listdialog/")
 
