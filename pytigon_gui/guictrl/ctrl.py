@@ -39,7 +39,7 @@ from pytigon_lib.schtools import createparm
 from pytigon_lib.schparser.html_parsers import ShtmlParser
 
 from pytigon_lib.schhtml.wxdc import DcDc
-from pytigon_lib.schhtml.htmlviewer import HtmlViewerParser
+from pytigon_lib.schhtml.htmlviewer import HtmlViewerParser, tdata_from_html
 from pytigon_lib.schparser.html_parsers import Td
 from pytigon_lib.schtools.tools import is_null
 
@@ -788,47 +788,53 @@ class TABLE(SchGridPanel, SchBaseCtrl):
         )
         # self.get_parent_page().register_signal(self, "refresh_controls")
         self.create_toolbar(self.grid)
-        # self.Bind(wx.EVT_CLOSE, self.on_close)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
         self._table = table
-        self.get_parent_page().register_signal(self, "update_row_ok")
+        for signal_name in ("update_row_ok", "new_row_ok"):
+            self.get_parent_page().register_signal(self, signal_name)
 
     def on_close(self, event):
-        self.get_parent_page().unregister_signal(self, "update_row_ok")
+        for signal_name in ("update_row_ok", "new_row_ok"):
+            self.get_parent_page().unregister_signal(self, signal_name)
         event.Skip()
 
     def update_row_ok(self, data):
+        return self._row_ok(data, insert=False)
+
+    def new_row_ok(self, data):
+        return self._row_ok(data, insert=True)
+
+    def _row_ok(self, data, insert=False):
         url = self.GetParent().address
-        row_id = self.grid.GetGridCursorRow()
         if url:
             if "id" in data:
                 pk = data["id"]
             else:
                 pk = data["pk"]
             if "?" in url:
-                url += "&json=1&pk=" + str(pk)
+                url += "&pk=" + str(pk)
             else:
-                url += "?&json=1&pk=" + str(pk)
-            url = url.replace("/form/", "/json/")
+                url += "?pk=" + str(pk)
             http = wx.GetApp().get_http(self)
             response = http.get(self, url)
             if response.ret_code == 404:
                 return
-            data = response.json()
-            if "total" in data:
-                if int(data["total"]) == 1:
-                    row = data["rows"][0]
-                    print(row)
-                    for key, value in row.items():
-                        print("X1: ", key)
-                        if key in ("id", "cid"):
-                            pass
-                        elif key in ("caction", "cid", "class", "style"):
-                            pass
-                        else:
-                            id = int(key)
-                            self.grid.GetTable().data[row_id][id - 1].data = value
-                            self.grid.GetTable().GetView().ForceRefresh()
-                    return True
+            data = response.str()
+            tdatabuf = tdata_from_html(data, wx.GetApp().http)
+            if len(tdatabuf) == 2:
+                row = tdatabuf[1]
+                if insert:
+                    count = self.grid.GetNumberRows()
+                    self.grid.GetTable().append_row(row)
+                    self.grid.GetTable().GetView().refr_count(count, count + 1, False)
+                    self.grid.GetTable().GetView().ForceRefresh()
+                    self.grid.goto_last_row()
+                else:
+                    row_id = self.grid.GetGridCursorRow()
+                    self.grid.GetTable().set_rec(row_id, row)
+                    self.grid.GetTable().GetView().ForceRefresh()
+                    self.grid.MakeCellVisible(self.grid.GetGridCursorRow(), 0)
+                return True
 
     def GetMinSize(self):
         return SchGridPanel.GetMinSize(self)

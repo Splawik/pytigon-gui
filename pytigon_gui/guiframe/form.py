@@ -993,22 +993,22 @@ class SchForm(ScrolledPanel):
                 okno.body.EDITOR.GotoPos(0)
             elif "/json" in response.ret_content_type:
                 x = response.json()
-                if "action" in x and x["action"] == "update_row_ok":
+                if "action" in x and x["action"] in ("update_row_ok", "new_row_ok"):
                     if "obj" in x:
                         obj = x["obj"]
                     else:
                         obj = None
                     if self.GetParent().parent_page:
-                        ret = self.GetParent().parent_page.signal("update_row_ok", obj)
+                        ret = self.GetParent().parent_page.signal(x["action"], obj)
                     else:
-                        ret = self.GetParent().signal("update_row_ok", obj)
+                        ret = self.GetParent().signal(x["action"], obj)
                     if ret:
                         self.cancel()
                     else:
                         self.ok()
                 return
             else:
-                if not "text/" in response.ret_content_type:
+                if "text/" not in response.ret_content_type:
                     wx.GetApp().GetTopWindow()._open_page(response)
                     return
 

@@ -55,12 +55,17 @@ def make_key(tabsort):
 
 
 class PageData(object):
-    def __init__(self, parent, page_len, count, first_page):
+    def __init__(self, parent, page_len, count, titles, first_page):
         self.count = count
         self.page_len = page_len
         self.pages = {}
         self.pages[0] = first_page
         self.parent = parent
+        self.titles = titles
+        self.inserted = []
+        self.sizes = []
+        if first_page:
+            self.calculate_sizes(titles, first_page)
 
     def get_page(self, nr):
         href = self.parent.GetParent().get_parm_obj().address
@@ -71,11 +76,19 @@ class PageData(object):
         html = self.parent.load_data_from_server(addr).decode("utf-8")
         tab = tdata_from_html(html, wx.GetApp().http)
         if tab:
+            self.calculate_sizes(tab[0], tab[1:], True)
             return tab[1:]
         else:
             return []
 
     def __getitem__(self, id):
+        if (
+            len(self.inserted) > 0
+            and self.count > 0
+            and id >= self.count - len(self.inserted)
+        ):
+            return self.inserted[id - (self.count - len(self.inserted))]
+
         page = id // self.page_len
         id2 = id % self.page_len
         if page in self.pages:
@@ -96,8 +109,6 @@ class PageData(object):
             self.pages[page] = data
             wx.GetApp().Yield = old_y
             wx.EndBusyCursor()
-            # data = self.get_page(page)
-            # self.pages[page] = data
             return self.__getitem__(id)
 
     def sort(self, key):
@@ -112,13 +123,49 @@ class PageData(object):
     def __len__(self):
         return self.count
 
+    def set_rec(self, id, row):
+        page = id // self.page_len
+        id2 = id % self.page_len
+        if page in self.pages:
+            try:
+                self.pages[page][id2] = row
+            except:
+                pass
+
+    def append_row(self, row):
+        self.inserted.append(row)
+        self.count += 1
+
+    def calculate_sizes(self, titles, page, refresh_if_changed=False):
+        l = len(titles)
+        changed = False
+        if not self.sizes:
+            self.sizes = [
+                0,
+            ] * l
+        for row in [
+            titles,
+        ] + page:
+            for i in range(0, l):
+                s = len(row[i].data)
+                if s > self.sizes[i]:
+                    self.sizes[i] = s
+                    changed = True
+
+        if refresh_if_changed and changed:
+            self.parent.grid.set_col_width(self.sizes)
+
+    def get_sizes(self):
+        return self.sizes
+
 
 class SimpleDataTable(SchGridTableBase):
     def __init__(self, parent, tab):
         SchGridTableBase.__init__(self)
         self._parent = parent
         self.init_data(tab)
-        self.last_row_count = len(self.data)
+        # self.last_row_count = len(self.data)
+        self.last_row_count = self.count
 
     def init_data(self, tab):
         self.colLabels = tab[0]
@@ -143,6 +190,7 @@ class SimpleDataTable(SchGridTableBase):
                     self._parent,
                     int(self.per_page),
                     int(self.per_page),
+                    tab[0],
                     tab[1 : self.per_page + 1],
                 )
             else:
@@ -150,6 +198,7 @@ class SimpleDataTable(SchGridTableBase):
                     self._parent,
                     int(self.per_page),
                     self.count,
+                    tab[0],
                     tab[1 : self.per_page + 1],
                 )
         else:
@@ -162,7 +211,7 @@ class SimpleDataTable(SchGridTableBase):
     def replace_tab(self, new_tab):
         SchGridTableBase.replace_tab(self, new_tab)
         self.init_data(new_tab)
-        self.refr_count(len(new_tab) - 1)
+        self.refr_count(self.count)
 
     def refresh_page_data(self, tab):
         old_data = self.data
@@ -170,6 +219,7 @@ class SimpleDataTable(SchGridTableBase):
             old_data.parent,
             int(self.per_page),
             int(len(tab) - 1),
+            tab[0],
             tab[1 : self.per_page + 1],
         )
 
@@ -255,13 +305,21 @@ class SimpleDataTable(SchGridTableBase):
         try:
             tdattr = self.data[row][col].attrs
         except:
-            print("<<<")
-            print("rows:", self.GetNumberRows())
-            print("cols:", self.GetNumberCols())
-            print("len:", len(self.data[row]))
-            print(self.data[row][col])
-            print("Error", row, col)
-            print(">>>")
+            tdattr = None
+            # print("<<<")
+            # print("rows:", self.GetNumberRows())
+            # print("cols:", self.GetNumberCols())
+            # attr = self.attr_normal
+            # attr.IncRef()
+            # return attr
+            # print("len:", len(self.data[row]))
+            # print(self.data[row][col])
+            # print("Error", row, col)
+            # print(">>>")
+        if not tdattr:
+            attr = self.attr_normal
+            attr.IncRef()
+            return attr
         bgcolor = None
         color = None
         strong = None
@@ -319,6 +377,9 @@ class SimpleDataTable(SchGridTableBase):
         attr.IncRef()
         return attr
 
+    def _get_number_rows(self):
+        return self.count
+
     def GetNumberCols(self):
         if len(self.colLabels) > 0:
             if self.no_actions:
@@ -364,6 +425,17 @@ class SimpleDataTable(SchGridTableBase):
 
     def refresh(self, storePos):
         self.GetView().GetParent().get_parent_form().any_parent_command("refresh_html")
+
+    def set_rec(self, id, row):
+        return self.data.set_rec(id, row)
+
+    def append_row(self, row):
+        ret = self.data.append_row(row)
+        self.count += 1
+        return ret
+
+    def get_sizes(self):
+        return self.data.get_sizes()
 
     def copy(self):
         href_base = self._parent.GetParent().get_parm_obj().address

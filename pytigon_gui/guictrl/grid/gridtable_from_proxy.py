@@ -183,7 +183,7 @@ class DataSource(SchGridTableBase):
         return self.rec_count + self.can_append + self.append_count
 
     def get_action_list(self, row, col=None):
-        return rec[rowlen + 1]
+        return self.rec[row]
 
     def get_actions(self, row, col=None):
         rowlen = len(self.GetColNames())
@@ -303,7 +303,7 @@ class DataSource(SchGridTableBase):
         if (
             row < self.rec_count
             and (row not in self.rec_to_update)
-            and (not row in self.rec_to_delete)
+            and (row not in self.rec_to_delete)
             and (not self._is_sel(row))
         ):
             rec = self.get_rec(row)
@@ -366,7 +366,6 @@ class DataSource(SchGridTableBase):
             else:
                 rec = self.get_rec(row)
             if rec != None:
-
                 if rec[col + 1] == None:
                     return ""
                 else:
@@ -390,7 +389,6 @@ class DataSource(SchGridTableBase):
             return
 
         if row >= self.rec_count:
-
             if row not in self.rec_to_instert:
                 (self.rec_to_instert)[row] = copy.copy(self.default_rec)
 

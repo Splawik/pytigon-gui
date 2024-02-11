@@ -41,7 +41,6 @@ _ = wx.GetTranslation
 
 
 class SchTableGrid(wx.grid.Grid):
-
     SORT_COLOR = "ORANGE"
 
     GET_ID = 0
@@ -59,7 +58,6 @@ class SchTableGrid(wx.grid.Grid):
         style=wx.WANTS_CHARS | wx.TAB_TRAVERSAL,
         name=wx.PanelNameStr,
     ):
-
         self.address = address
         wx.grid.Grid.__init__(self, parent, wx.ID_ANY, pos, size, style, name)
 
@@ -109,8 +107,8 @@ class SchTableGrid(wx.grid.Grid):
             if table.auto_size == "short":
                 self.SetTable(table, False)
                 self.SetMargins(0, 0)
-                self.AutoSizeColumns(False)
-                self.AutoSizeRows(True)
+                # self.AutoSizeColumns(False)
+                # self.AutoSizeRows(True)
                 height = 5
                 for row in range(0, table.per_page):
                     h = self.GetRowSize(row)
@@ -129,8 +127,17 @@ class SchTableGrid(wx.grid.Grid):
             else:
                 table.enable(True)
                 self.SetTable(table, True)
-                self.AutoSizeColumns(False)
-                self.AutoSizeRows(True)
+                # self.AutoSizeColumns(False)
+                # self.AutoSizeRows(True)
+
+            sizes = table.get_sizes()
+            if sizes:
+                self.set_col_width(sizes)
+
+                # width = []
+                # for col in range(0, self.GetNumberCols()):
+                #    width.append(self.GetColSize(col))
+                # self.SetDefaultRowSize(height, True)
 
         try:
             self.SetSelectionMode(wx.grid.Grid.SelectRows)
@@ -182,6 +189,17 @@ class SchTableGrid(wx.grid.Grid):
 
     def get_best_size(self):
         return wx.Size(400, 300)
+
+    def set_col_width(self, sizes):
+        ps = wx.NORMAL_FONT.GetPointSize()
+        i = 0
+        for w in sizes[:-1]:
+            if w > 64:
+                w = 64
+            if w < 4:
+                w = 4
+            self.SetColSize(i, int(w * ps))
+            i += 1
 
     def set_panel(self, panel):
         self.panel = panel
@@ -629,21 +647,36 @@ class SchTableGrid(wx.grid.Grid):
     def accepts_focus(self):
         return True
 
-    def refr_count(self, old_count, count, store_pos=0):
+    def refr_count(self, old_count, count, store_pos=0, autosize=True):
         dy = old_count - count
         if dy != 0:
             if dy > 0:
                 msg = GridTableMessage(
                     self.GetTable(), GRIDTABLE_NOTIFY_ROWS_DELETED, count, dy
                 )
-            else:
-                msg = GridTableMessage(
-                    self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, -1 * dy
-                )
-            try:
                 self.ProcessTableMessage(msg)
-            except:
-                pass
+            else:
+                if old_count == 0 and not autosize:
+                    dyy = -1 * dy
+                    if dyy > 128:
+                        dyy = 128
+                    msg = GridTableMessage(
+                        self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy
+                    )
+                    self.ProcessTableMessage(msg)
+                    self.AutoSizeColumns(True)
+                    dyy = -1 * dy
+                    if dyy > 128:
+                        msg = GridTableMessage(
+                            self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy - 128
+                        )
+                        self.ProcessTableMessage(msg)
+                else:
+                    dyy = -1 * dy
+                    msg = GridTableMessage(
+                        self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy
+                    )
+                    self.ProcessTableMessage(msg)
 
             if count > 0:
                 if store_pos == 0:
@@ -659,8 +692,6 @@ class SchTableGrid(wx.grid.Grid):
                     if row >= count:
                         self.SetGridCursor(count - 1 + self.CanAppend, 0)
                         self.MakeCellVisible(count - 1 + self.CanAppend, 0)
-        if count > 0:
-            self.AutoSizeColumns(True)
 
     def on_label_left_click(self, evt):
         if evt.GetCol() >= 0:
