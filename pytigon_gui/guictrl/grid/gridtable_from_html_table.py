@@ -124,6 +124,14 @@ class PageData(object):
         return self.count
 
     def set_rec(self, id, row):
+        if (
+            len(self.inserted) > 0
+            and self.count > 0
+            and id >= self.count - len(self.inserted)
+        ):
+            self.inserted[id - (self.count - len(self.inserted))] = row
+            return
+
         page = id // self.page_len
         id2 = id % self.page_len
         if page in self.pages:
@@ -202,8 +210,15 @@ class SimpleDataTable(SchGridTableBase):
                     tab[1 : self.per_page + 1],
                 )
         else:
-            self.data = tab[1:]
-            self.per_page = len(self.data)
+            self.data = PageData(
+                self._parent,
+                len(tab) - 1,
+                len(tab) - 1,
+                tab[0],
+                tab[1:],
+            )
+            # self.data = tab[1:]
+            # self.per_page = len(self.data)
             self.simple_data = True
         self.attrs = {}
         self.enabled = False
@@ -435,7 +450,10 @@ class SimpleDataTable(SchGridTableBase):
         return ret
 
     def get_sizes(self):
-        return self.data.get_sizes()
+        if self.data:
+            return self.data.get_sizes()
+        else:
+            return None
 
     def copy(self):
         href_base = self._parent.GetParent().get_parm_obj().address
