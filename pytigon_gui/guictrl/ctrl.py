@@ -826,7 +826,7 @@ class TABLE(SchGridPanel, SchBaseCtrl):
                 if insert:
                     count = self.grid.GetNumberRows()
                     self.grid.GetTable().append_row(row)
-                    self.grid.GetTable().GetView().refr_count(count, count + 1, False)
+                    self.grid.GetTable().refr_count(count + 1, False)
                     self.grid.GetTable().GetView().ForceRefresh()
                     self.grid.goto_last_row()
                 else:
@@ -848,8 +848,8 @@ class TABLE(SchGridPanel, SchBaseCtrl):
     def do_refresh(self, tdata):
         oldRow = self.grid.GetGridCursorRow()
         self._table.replace_tab(tdata)
-        self.grid.AutoSizeColumns(False)
-        self.grid.AutoSizeRows(True)
+        # self.grid.AutoSizeColumns(False)
+        # self.grid.AutoSizeRows(True)
         if self.grid.last_action == "insert":
             newRow = self.grid.GetGridCursorRow() + 1
             if newRow < self.grid.GetTable().GetNumberRows():
@@ -861,6 +861,8 @@ class TABLE(SchGridPanel, SchBaseCtrl):
                     oldRow = 0
                 self.grid.SetGridCursor(oldRow, 0)
                 self.grid.MakeCellVisible(oldRow, 0)
+            else:
+                self.grid.goto_last_row()
 
     def refresh_from_source(self, html_src):
         self.refresh_tdata(html_src)

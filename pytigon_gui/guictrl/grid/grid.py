@@ -664,7 +664,7 @@ class SchTableGrid(wx.grid.Grid):
                         self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy
                     )
                     self.ProcessTableMessage(msg)
-                    self.AutoSizeColumns(True)
+                    # self.AutoSizeColumns(True)
                     dyy = -1 * dy
                     if dyy > 128:
                         msg = GridTableMessage(

@@ -74,9 +74,11 @@ class SchGridTableBase(wx.grid.GridTableBase):
         self.last_row_count = 0
 
     def replace_tab(self, new_tab):
-        self.refr_count(0)
+        c = self.last_row_count
+        # self.refr_count(0)
         self.init_data_base()
         self.data = new_tab
+        self.last_row_count = c
 
     def refr_count(self, count, store_pos=0):
         if count == self.last_row_count:

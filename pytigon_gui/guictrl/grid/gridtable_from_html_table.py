@@ -192,23 +192,23 @@ class SimpleDataTable(SchGridTableBase):
 
         if self.per_page > 0:
             self.simple_data = False
-            if self.count > 128:
-                self.auto_size = "short"
-                self.data = PageData(
-                    self._parent,
-                    int(self.per_page),
-                    int(self.per_page),
-                    tab[0],
-                    tab[1 : self.per_page + 1],
-                )
-            else:
-                self.data = PageData(
-                    self._parent,
-                    int(self.per_page),
-                    self.count,
-                    tab[0],
-                    tab[1 : self.per_page + 1],
-                )
+            # if self.count > 128:
+            #    self.auto_size = "short"
+            #    self.data = PageData(
+            #        self._parent,
+            #        int(self.per_page),
+            #        int(self.per_page),
+            #        tab[0],
+            #        tab[1 : self.per_page + 1],
+            #    )
+            # else:
+            self.data = PageData(
+                self._parent,
+                int(self.per_page),
+                self.count,
+                tab[0],
+                tab[1 : self.per_page + 1],
+            )
         else:
             self.data = PageData(
                 self._parent,
