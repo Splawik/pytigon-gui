@@ -65,7 +65,7 @@ class PageData(object):
         self.inserted = []
         self.sizes = []
         if first_page:
-            self.calculate_sizes(titles, first_page)
+            self.calculate_sizes(titles, 0, first_page)
 
     def get_page(self, nr):
         href = self.parent.GetParent().get_parm_obj().address
@@ -76,7 +76,7 @@ class PageData(object):
         html = self.parent.load_data_from_server(addr).decode("utf-8")
         tab = tdata_from_html(html, wx.GetApp().http)
         if tab:
-            self.calculate_sizes(tab[0], tab[1:], True)
+            self.calculate_sizes(tab[0], nr, tab[1:], True)
             return tab[1:]
         else:
             return []
@@ -144,13 +144,15 @@ class PageData(object):
         self.inserted.append(row)
         self.count += 1
 
-    def calculate_sizes(self, titles, page, refresh_if_changed=False):
+    def calculate_sizes(self, titles, start_id, page, refresh_if_changed=False):
         l = len(titles)
+        row_h = {}
         changed = False
         if not self.sizes:
             self.sizes = [
                 0,
             ] * l
+        j = start_id - 1
         for row in [
             titles,
         ] + page:
@@ -159,9 +161,29 @@ class PageData(object):
                 if s > self.sizes[i]:
                     self.sizes[i] = s
                     changed = True
-
+                if j >= start_id:
+                    h = 0
+                    if "\n" in row[i].data:
+                        h = row[i].data.count("\n")
+                    elif len(row[i].data) > 64:
+                        h += 1 + len(row[i].data) // 64
+                    if h > 0:
+                        if j not in row_h or row_h[j] < h:
+                            row_h[j] = h
+            j += 1
         if refresh_if_changed and changed:
             self.parent.grid.set_col_width(self.sizes)
+
+        if row_h:
+
+            def set_h():
+                nonlocal row_h, self
+                for key, value in row_h.items():
+                    self.parent.grid.SetRowSize(
+                        key, value * self.parent.grid.GetDefaultRowSize()
+                    )
+
+            wx.CallAfter(set_h)
 
     def get_sizes(self):
         return self.sizes
@@ -434,6 +456,9 @@ class SimpleDataTable(SchGridTableBase):
             return True
         else:
             return False
+
+    def GetColNames(self):
+        return [item.data for item in self.colLabels]
 
     def CanSetValueAs(self, row, col, type_name):
         return self.CanGetValueAs(row, col, type_name)

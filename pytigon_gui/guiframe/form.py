@@ -993,7 +993,11 @@ class SchForm(ScrolledPanel):
                 okno.body.EDITOR.GotoPos(0)
             elif "/json" in response.ret_content_type:
                 x = response.json()
-                if "action" in x and x["action"] in ("update_row_ok", "new_row_ok"):
+                if "action" in x and x["action"] in (
+                    "update_row_ok",
+                    "new_row_ok",
+                    "delete_row_ok",
+                ):
                     if "obj" in x:
                         obj = x["obj"]
                     else:

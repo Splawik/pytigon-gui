@@ -116,7 +116,7 @@ class IconAndStringRenderer(MultiLineStringRenderer):
     """String renderer extended for rendering icons"""
 
     def __init__(self):
-        MultiLineStringRenderer.__init__(self, 50)
+        MultiLineStringRenderer.__init__(self, 64)
         self.cache = {}
 
     def get_image_from_cache(self, image):

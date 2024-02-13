@@ -790,13 +790,25 @@ class TABLE(SchGridPanel, SchBaseCtrl):
         self.create_toolbar(self.grid)
         self.Bind(wx.EVT_CLOSE, self.on_close)
         self._table = table
-        for signal_name in ("update_row_ok", "new_row_ok"):
+        for signal_name in ("update_row_ok", "new_row_ok", "delete_row_ok"):
             self.get_parent_page().register_signal(self, signal_name)
 
     def on_close(self, event):
-        for signal_name in ("update_row_ok", "new_row_ok"):
+        for signal_name in ("update_row_ok", "new_row_ok", "delete_row_ok"):
             self.get_parent_page().unregister_signal(self, signal_name)
         event.Skip()
+
+    def delete_row_ok(self, data):
+        row_id = self.grid.GetGridCursorRow()
+        self.grid.HideRow(row_id)
+        row_id += 1
+        if row_id >= self.grid.GetNumberRows():
+            self.grid.goto_last_row()
+        else:
+            self.grid.SetGridCursor(row_id, 0)
+            self.grid.MakeCellVisible(row_id, 0)
+
+        return True
 
     def update_row_ok(self, data):
         return self._row_ok(data, insert=False)
