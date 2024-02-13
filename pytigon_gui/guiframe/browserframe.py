@@ -31,6 +31,8 @@ from django.conf import settings
 
 from pytigon.pytigon_request import init, request
 
+_ = wx.GetTranslation
+
 
 class SchBrowserFrame(SchBaseFrame):
     """
@@ -48,7 +50,6 @@ class SchBrowserFrame(SchBaseFrame):
         style=wx.DEFAULT_FRAME_STYLE | wx.CLIP_CHILDREN | wx.WANTS_CHARS,
         name="MainWindow",
     ):
-
         self.gui_style = gui_style
         self.destroy_fun_tab = []
         self.idle_objects = []

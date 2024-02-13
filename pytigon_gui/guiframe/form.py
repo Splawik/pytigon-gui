@@ -449,7 +449,7 @@ class SchForm(ScrolledPanel):
     def refresh_time(self, number_of_sec):
         """When refresh time is set form automatically refresh his content every number_of_sec seconds"""
         self.t1 = wx.Timer(self)
-        self.t1.Start(time * 1000)
+        self.t1.Start(int(number_of_sec * 1000))
         self.Bind(wx.EVT_TIMER, self.on_timer, self.t1)
 
     # def close_with_delay(self):
