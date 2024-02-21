@@ -36,7 +36,6 @@ from pytigon_gui.guiframe.form import SchForm
 from pytigon_gui.guilib.events import *
 
 
-
 class SchPage(wx.Window, Signal):
     """SchPage class"""
 
@@ -470,7 +469,6 @@ class SchPage(wx.Window, Signal):
         return self.item_exist(param)
 
     def get_parm(self, param):
-        print(param)
         if param in self._ctrl_dict:
             ctrl = self._ctrl_dict[param]
         else:

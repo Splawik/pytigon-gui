@@ -1698,7 +1698,6 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         return False
 
     def GetBestSize(self):
-        print("GetBestSize: ", self.h)
         if self.h:
             return (400, self.h + 2)
         else:
@@ -2315,7 +2314,6 @@ class COLLAPSIBLE_PANEL(wx.CollapsiblePane, SchBaseCtrl):
 
 
 def button_from_parm(parent, param):
-    print("BUTTON FROM PARAM: ", param)
     if "children" in param and param["children"]:
         icon = param["children"][0]["attrs"]["class"]
         href = param["attrs"]["href"]
@@ -2398,7 +2396,6 @@ def COMPOSITE(parent, **kwds):
 
 
 def COMPONENT(parent, **kwds):
-    print(kwds)
     http = wx.GetApp().get_http(parent)
     response = http.get(
         parent, wx.GetApp().make_href("/schsys/widget_web?browser_type=1")

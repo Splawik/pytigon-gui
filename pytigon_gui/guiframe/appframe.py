@@ -935,7 +935,6 @@ class SchAppFrame(SchBaseFrame):
             self.Show()
 
     def on_taskbar_show(self, event):
-        print("SHOW")
         self.Show()
 
     def bind_command(self, fun, id=wx.ID_ANY):

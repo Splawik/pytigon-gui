@@ -133,7 +133,6 @@ class Select2Popup(wx.MiniFrame):
         )
         http = wx.GetApp().get_http(self.combo)
         response = http.get(self, url)
-        print(response.str())
         tab = schjson.loads(response.str())
         if not "err" in tab or (
             "err" in tab and (tab["err"] != "nil" or tab["err"] != None)

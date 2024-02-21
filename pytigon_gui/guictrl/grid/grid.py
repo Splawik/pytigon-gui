@@ -191,7 +191,7 @@ class SchTableGrid(wx.grid.Grid):
         return wx.Size(400, 300)
 
     def set_col_width(self, sizes):
-        ps = wx.NORMAL_FONT.GetPointSize()
+        ps = wx.SMALL_FONT.GetPointSize()
         i = 0
         for w in sizes[:-1]:
             if w > 64:
@@ -391,7 +391,6 @@ class SchTableGrid(wx.grid.Grid):
         evt.Skip()
 
     def on_cell_left_click(self, evt):
-        print("+++++++++++++++++++++++++++++++++++++++++++")
         row1 = self.GetGridCursorRow()
         row2 = evt.GetRow()
         if evt.ControlDown():
@@ -418,11 +417,9 @@ class SchTableGrid(wx.grid.Grid):
                 if self.typ == self.GET_ID:
                     self.action("get")
                 else:
-                    print(evt.GetRow())
                     self.SelectRow(evt.GetRow())
                     self.SetGridCursor(evt.GetRow(), evt.GetCol())
                     self.SetFocus()
-                    print("-----------------------")
                 #    evt.Skip()
 
     def on_l_up(self, evt):

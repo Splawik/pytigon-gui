@@ -149,15 +149,17 @@ class PageData(object):
         row_h = {}
         changed = False
         if not self.sizes:
-            self.sizes = [
-                0,
-            ] * l
+            self.sizes = [0] * l
         j = start_id - 1
         for row in [
             titles,
         ] + page:
             for i in range(0, l):
                 s = len(row[i].data)
+                if j == start_id - 1:
+                    s *= 1.25
+                if s > 64:
+                    s = 64
                 if s > self.sizes[i]:
                     self.sizes[i] = s
                     changed = True
