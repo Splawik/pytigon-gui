@@ -1955,7 +1955,7 @@ if platform.system() == "Linux":
                 self.to_masked,
                 mask="####-##-##",
                 formatcodes="F",
-                validRegex="\d{4}-\d{2}-\d{2}",
+                validRegex=r"\d{4}-\d{2}-\d{2}",
             )
             # wx.CallAfter(self.to_masked,autoformat="EUDATEYYYYMMDD.")
 
@@ -2030,7 +2030,7 @@ class DATETIMEPICKER(POPUPHTML):
         self.to_masked(
             mask="####-##-## ##:##",
             formatcodes="F",
-            validRegex="\d{4}-\d{2}-\d{2} \d{2}:\d{2}",
+            validRegex=r"\d{4}-\d{2}-\d{2} \d{2}:\d{2}",
         )
         # self.win.SetValidBackgroundColour("Red")
         # self.win.SetValidBackgroundColour(wx.Colour(1,0,0))
