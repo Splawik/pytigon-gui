@@ -17,9 +17,11 @@
 # license: "LGPL 3.0"
 # version: "0.1a"
 
-import platform
 import os
 import wx
+import importlib
+
+from pytigon_lib.schtools.main_paths import get_main_paths
 
 try:
     from pyshortcuts import make_shortcut
@@ -135,3 +137,43 @@ def find_focus_in_form():
         return None
     else:
         return LAST_FOCUS_CTRL_IN_FORM
+
+
+def import_plugin(plugin_name, prj_name=None):
+    cfg = get_main_paths()
+    pytigon_cfg = [cfg["PYTIGON_PATH"], "appdata", "plugins"]
+    data_path = cfg["DATA_PATH"]
+    data_cfg = [data_path, "plugins"]
+    prj_cfg = [cfg["PRJ_PATH"], prj_name, "applib"]
+    prj_cfg_alt = [cfg["PRJ_PATH_ALT"], prj_name, "applib"]
+
+    if prj_name:
+        folders = [prj_cfg, prj_cfg_alt]
+    else:
+        folders = [pytigon_cfg, data_cfg]
+
+    path = None
+    for folder in folders:
+        plugins_path = os.path.join(folder[0], *folder[1:])
+        if prj_name:
+            plugin_path = os.path.join(plugins_path, *plugin_name.split(".")[:-1])
+        else:
+            plugin_path = os.path.join(plugins_path, *plugin_name.split("."))
+        if os.path.exists(plugin_path):
+            path = plugins_path
+            path2 = plugin_path
+            break
+
+    if not path:
+        return None
+
+    try:
+        m = importlib.import_module(plugin_name, package=None)
+        return m
+    except:
+        try:
+            m = importlib.import_module(plugin_name, package=None)
+            return m
+        except:
+            pass
+    return None

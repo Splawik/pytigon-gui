@@ -18,12 +18,10 @@
 # version: "0.1a"
 
 import os
-import sys
 import wx
 import pytigon_gui.guictrl.ctrl
-import platform
 
-from pytigon_lib.schtools.cc import compile, import_plugin
+from pytigon_gui.guilib.tools import import_plugin
 
 
 class SchBaseFrame(wx.Frame):
