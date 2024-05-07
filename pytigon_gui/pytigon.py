@@ -1455,6 +1455,7 @@ def main():
                 time.sleep(100)
         else:
             _main_run()
+    os._exit(0)
 
 
 if __name__ == "__main__":
