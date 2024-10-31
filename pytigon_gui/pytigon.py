@@ -272,6 +272,7 @@ def process_adv_argv():
             for ff in os.listdir(PATHS["PRJ_PATH"])
             if not ff.startswith("_")
             and os.path.isdir(os.path.join(PATHS["PRJ_PATH"], ff))
+            and os.path.exists(os.path.join(PATHS["PRJ_PATH"], ff, "settings_app.py"))
         ]
         dlg = wx.SingleChoiceDialog(
             None,
