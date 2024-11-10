@@ -383,6 +383,8 @@ wx.RegisterId(10000)
 wx.outputWindowClass = None
 
 if _INSPECTION:
+    os.environ["GTK_THEME"] = "Adwaita"
+
     import wx.lib.mixins.inspection
 
     if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:

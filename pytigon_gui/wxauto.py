@@ -1,12 +1,13 @@
-import pyautogui
 import sys
 import os
 import traceback
 import datetime
 import wx
+from asyncio import sleep
+
+from django.template import Template, Context
 
 from pytigon.pytigon_run import run
-from asyncio import sleep
 
 
 class WxAuto:
@@ -18,6 +19,9 @@ class WxAuto:
         self.start_time = datetime.datetime.now()
         self.time_unit = 0.5
         self.sys_time_unit = 0.5
+        import pyautogui
+
+        self.pyautogui = pyautogui
 
     def get_region(self):
         return (
@@ -37,7 +41,7 @@ class WxAuto:
             print("ERROR! ", window_name)
         pos = win.GetScreenPosition()
         size = win.GetSize()
-        pyautogui.moveTo(
+        self.pyautogui.moveTo(
             pos[0] + int(size.GetWidth() / 2), pos[1] + int(size.GetHeight() / 2)
         )
         # pyautogui.click()
@@ -46,34 +50,34 @@ class WxAuto:
 
     async def auto_click(self, window_name):
         await self.auto_move_and_focus(window_name)
-        pyautogui.click()
+        self.pyautogui.click()
 
     async def auto_focus_on_img(self, image_name):
         await sleep(self.sys_time_unit / 2)
-        location = pyautogui.locateOnScreen(image_name, region=self.get_region())
-        x, y = pyautogui.center(location)
-        pyautogui.moveTo(x, y)
+        location = self.pyautogui.locateOnScreen(image_name, region=self.get_region())
+        x, y = self.pyautogui.center(location)
+        self.pyautogui.moveTo(x, y)
         await sleep(self.sys_time_unit / 2)
 
     async def auto_click_on_img(self, image_name):
         await self.auto_focus_on_img(image_name)
-        pyautogui.click()
+        self.pyautogui.click()
 
     async def dropdown(self, delta):
         delta2 = int(delta)
-        pyautogui.keyDown("alt")
-        pyautogui.press("down")
-        pyautogui.keyUp("alt")
+        self.pyautogui.keyDown("alt")
+        self.pyautogui.press("down")
+        self.pyautogui.keyUp("alt")
         await sleep(1)
         if delta2 > 0:
             for i in range(0, delta2):
-                pyautogui.press("down")
+                self.pyautogui.press("down")
                 await sleep(0.1)
         else:
             for i in range(0, -1 * delta2):
-                pyautogui.press("up")
+                self.pyautogui.press("up")
                 await sleep(0.1)
-        pyautogui.press("enter")
+        self.pyautogui.press("enter")
         await sleep(1)
 
     async def __lshift__(self, txt):
@@ -101,10 +105,15 @@ class WxAuto:
             f.write("\n\n")
         self.subtitle_id += 1
 
-    async def process(self, txt, change_tab=None):
+    async def process(self, txt, argv=None, change_tab=None):
         if txt.startswith("@"):
+            print("SCRIPT:", txt)
             with open(txt[1:], "rt") as f:
                 txt2 = f.read()
+                if argv:
+                    t = Template(txt2)
+                    c = Context(argv)
+                    txt2 = t.render(c)
         else:
             txt2 = txt
         if change_tab:
@@ -135,13 +144,13 @@ class WxAuto:
                 for item in x:
                     item2 = item.strip()
                     if item2.startswith("^"):
-                        pyautogui.keyUp(item2[1:])
+                        self.pyautogui.keyUp(item2[1:])
                     elif item2.startswith("_"):
-                        pyautogui.keyDown(item2[1:])
+                        self.pyautogui.keyDown(item2[1:])
                     elif item2.startswith("-"):
                         await sleep((len(item2) - 1) * self.time_unit / 10)
                     else:
-                        pyautogui.press(item2)
+                        self.pyautogui.press(item2)
             else:
                 if "<<" in l:
                     x = l.split("<<")
@@ -164,7 +173,7 @@ class ControlProxy:
     async def __lshift__(self, txt):
         ctrl = await self.wx_auto.auto_move_and_focus(self.control_name)
         if txt == "click":
-            pyautogui.click()
+            self.wx_auto.pyautogui.click()
         else:
             if txt == "focus":
                 pass
@@ -180,7 +189,7 @@ class ImgProxy:
 
     async def __lshift__(self, txt):
         await self.wx_auto.auto_focus_on_img(self.img_name)
-        pyautogui.click()
+        self.wx_auto.pyautogui.click()
 
 
 SCRIPT = sys.argv[-1]
@@ -199,7 +208,7 @@ def autoit(win):
                 await wx_auto.process("@" + SCRIPT + ".txt")
             else:
                 scr = __import__(SCRIPT, globals(), locals(), [], 0)
-                await scr.wxauto(wx_auto, pyautogui, wx)
+                await scr.wxauto(wx_auto, wx_auto.pyautogui, wx)
         except:
             print(sys.exc_info()[0])
             print(traceback.print_exc())
