@@ -107,7 +107,6 @@ class WxAuto:
 
     async def process(self, txt, argv=None, change_tab=None):
         if txt.startswith("@"):
-            print("SCRIPT:", txt)
             with open(txt[1:], "rt") as f:
                 txt2 = f.read()
                 if argv:
@@ -204,10 +203,12 @@ def autoit(win):
     async def astart():
         try:
             await sleep(1)
-            if os.path.exists(SCRIPT + ".txt"):
-                await wx_auto.process("@" + SCRIPT + ".txt")
+            # if os.path.exists(SCRIPT + ".txt"):
+            if SCRIPT.endswith(".txt"):
+                await wx_auto.process("@" + SCRIPT)
             else:
-                scr = __import__(SCRIPT, globals(), locals(), [], 0)
+                sys.path.insert(0, os.getcwd())
+                scr = __import__(SCRIPT.rsplit(".")[0], globals(), locals(), [], 0)
                 await scr.wxauto(wx_auto, wx_auto.pyautogui, wx)
         except:
             print(sys.exc_info()[0])
