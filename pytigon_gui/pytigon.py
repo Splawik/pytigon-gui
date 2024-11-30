@@ -910,8 +910,8 @@ class SchApp(App, _BASE_APP):
     #        self.thread_manager.timer()
 
     def get_working_dir(self):
-        """return pytigon working director - ~/.pytigon"""
-        return os.path.join(os.path.expanduser("~"), ".pytigon/")
+        """return pytigon working director - ~/pytigon_data"""
+        return os.path.join(os.path.expanduser("~"), "pytigon_data/")
 
     def _get_parm_for_server(self):
         ret = ""

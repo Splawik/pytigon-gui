@@ -117,7 +117,7 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
             - path to image in local library, format: "png://image_name",
               for example: "png://mimetypes/text-x-script.png".
               Local library is located in path: "/appdata/media/size/"
-            - path to image in web, for example: "http://www.pytigon.com/test.png"
+            - path to image in web, for example: "http://www.pytigon.cloud/test.png"
 
         size
     """
