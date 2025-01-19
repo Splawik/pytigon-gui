@@ -17,8 +17,7 @@
 # license: "LGPL 3.0"
 # version: "0.1a"
 
-"""Module contain SchForm class.
-"""
+"""Module contain SchForm class."""
 
 import gc
 import sys
@@ -150,7 +149,9 @@ class SchForm(ScrolledPanel):
 
     def Navigate(self, ctrl, back=False):
         next = False
-        children = [child for child in self.GetChildren() if child.CanAcceptFocus()]
+        children = [
+            child for child in list(self.GetChildren()) if child.CanAcceptFocus()
+        ]
         if back:
             widgets = reversed(children)
         else:
@@ -790,7 +791,7 @@ class SchForm(ScrolledPanel):
     def _check_scroll_bar(self):
         size = self.GetSize()
         max_y = 0
-        children = self.GetChildren()
+        children = list(self.GetChildren())
         for child in children:
             pos = child.GetPosition()
             child_size = child.GetSize()

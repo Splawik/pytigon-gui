@@ -1091,7 +1091,7 @@ class SEARCH(wx.SearchCtrl, SchBaseCtrl):
         wx.SearchCtrl.__init__(self, parent, **kwds)
 
         if wx.Platform in ["__WXGTK__", "__WXMSW__"]:
-            for child in self.GetChildren():
+            for child in list(self.GetChildren()):
                 if isinstance(child, wx.TextCtrl):
                     child.Bind(wx.EVT_KEY_DOWN, self.on_key_down_base)
                     break
