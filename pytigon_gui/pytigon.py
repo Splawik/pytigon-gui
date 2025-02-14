@@ -1,5 +1,4 @@
-#! /usr/bin/python
-# -*- coding: utf-8 -*-
+#!/usr/bin/env python
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU Lesser General Public License as published by the
 # Free Software Foundation; either version 3, or (at your option) any later
@@ -13,9 +12,8 @@
 # Pytigon - wxpython and django application framework
 
 # author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-# copyright: "Copyright (C) ????/2013 Slawomir Cholaj"
 # license: "LGPL 3.0"
-# version: "0.1a"
+
 
 """This is the main Pytigon client moudule. Function :func:`~pytigon_gui.pytigon.main` create SchApp object, witch extends wxPython wx.App.
 Function :func:`~pytigon_gui.pytigon.main` process pytigon command line arguments. Module supports:
@@ -170,9 +168,9 @@ def process_argv(argv):
             ret["loaddb"] = True
         elif opt == "--server_only":
             ret["server_only"] = True
-        elif opt in ("-u" "--username"):
+        elif opt in ("-u--username"):
             ret["username"] = arg
-        elif opt in ("-p" "--password"):
+        elif opt in ("-p--password"):
             ret["password"] = arg
         elif opt in ("--listen",):
             ret["listen"] = arg
@@ -180,7 +178,7 @@ def process_argv(argv):
             ret["extra"] = arg
         elif opt in ("--import",):
             ret["import"] = arg
-        elif opt in ("-b" "--embededbrowser"):
+        elif opt in ("-b--embededbrowser"):
             ret["embeded_browser"] = True
         elif opt in ("-s", "--embededserver"):
             ret["address"] = "embeded"

@@ -1,24 +1,4 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as published by the
-# Free Software Foundation; either version 3, or (at your option) any later
-# version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-
-# Pytigon - wxpython and django application framework
-
-# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-# copyright: "Copyright (C) ????/2012 Slawomir Cholaj"
-# license: "LGPL 3.0"
-# version: "0.1a"
-
-"""This module extends pytigon_lib.html module of additional class designed to implement widgets in the form.
-"""
+"""This module extends pytigon_lib.html module of additional class designed to implement widgets in the form."""
 
 from urllib.parse import unquote
 from base64 import b64decode
@@ -296,7 +276,6 @@ class CtrlTag(TableTag):
         return BaseHtmlElemParser.handle_data(self, data)
 
     def handle_starttag(self, parser, tag, attrs):
-
         if self.tag == "ctrl-checkbox":
             pass
 
@@ -704,7 +683,6 @@ def input_to_ctrltab(parent, attrs):
 
 
 register_tag_preprocess_map("input", input_to_ctrltab)
-
 
 
 def textarea_to_ctrltab(parent, attrs):
