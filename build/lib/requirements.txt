@@ -1,7 +1,0 @@
-pytigon-batteries
-wxpython
-wxasync
-PyDispatcher
-cefpython3
-pyshortcuts
-libsass

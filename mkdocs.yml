@@ -1,0 +1,176 @@
+site_name: Pytigon GUI
+site_description: API documentation for pytigon_gui - wxPython desktop application framework
+site_author: Slawomir Cholaj
+site_url: ""
+repo_name: pytigon
+repo_url: ""
+copyright: "&copy; 2025 Slawomir Cholaj &middot; LGPL 3.0"
+
+theme:
+  name: material
+  language: en
+  palette:
+    - scheme: default
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: teal
+      accent: teal
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.indexes
+    - navigation.top
+    - navigation.tracking
+    - toc.integrate
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - search.share
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - mkdocstrings:
+      default_handler: python
+      handlers:
+        python:
+          paths: [.]
+          import:
+            - https://docs.python.org/3/objects.inv
+          options:
+            docstring_style: google
+            docstring_options:
+              ignore_init_summary: false
+            show_source: true
+            show_root_heading: true
+            show_root_toc_entry: true
+            show_root_full_path: false
+            show_root_members_full_path: false
+            show_object_full_path: false
+            show_category_heading: true
+            show_symbol_type_heading: true
+            show_symbol_type_toc: true
+            heading_level: 2
+            members_order: alphabetical
+            group_by_category: true
+            filters:
+              - "!^_"
+              - "^__init__$"
+            separate_signature: true
+            show_signature_annotations: true
+            signature_crossrefs: true
+            line_length: 88
+            show_bases: true
+            inherited_members: false
+            merge_init_into_class: true
+            unwrap_annotated: true
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - def_list
+  - footnotes
+  - meta
+  - tables
+  - toc:
+      permalink: true
+      toc_depth: 4
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.caret
+  - pymdownx.mark
+  - pymdownx.tilde
+  - pymdownx.keys
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.tasklist:
+      custom_checkbox: true
+  - pymdownx.details
+
+extra:
+  version:
+    provider: mike
+  social:
+    - icon: fontawesome/solid/globe
+      link: ""
+      name: Pytigon
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Overview: getting-started/overview.md
+      - Quick Import: getting-started/quick-import.md
+  - Core:
+      - pytigon_gui: api/pytigon_gui.md
+      - pytigon (app): api/pytigon_main.md
+      - wxauto: api/wxauto.md
+  - GUI Controls (guictrl):
+      - guictrl: api/guictrl.md
+      - guictrl.basectrl: api/guictrl_basectrl.md
+      - guictrl.ctrl: api/guictrl_ctrl.md
+      - guictrl.display: api/guictrl_display.md
+      - guictrl.factory: api/guictrl_factory.md
+      - guictrl.grids: api/guictrl_grids.md
+      - guictrl.panels: api/guictrl_panels.md
+      - guictrl.tag: api/guictrl_tag.md
+      - guictrl.tag_ctrltag: api/guictrl_tag_ctrltag.md
+      - guictrl.tag_parsers: api/guictrl_tag_parsers.md
+      - guictrl.tag_preprocess: api/guictrl_tag_preprocess.md
+      - guictrl.button: api/guictrl_button.md
+      - guictrl.grid: api/guictrl_grid.md
+      - guictrl.input: api/guictrl_input.md
+      - guictrl.popup: api/guictrl_popup.md
+  - GUI Frames (guiframe):
+      - guiframe: api/guiframe.md
+      - guiframe.appframe: api/guiframe_appframe.md
+      - guiframe.baseframe: api/guiframe_baseframe.md
+      - guiframe.browserframe: api/guiframe_browserframe.md
+      - guiframe.form: api/guiframe_form.md
+      - guiframe.manager: api/guiframe_manager.md
+      - guiframe.notebook: api/guiframe_notebook.md
+      - guiframe.notebookpage: api/guiframe_notebookpage.md
+      - guiframe.page: api/guiframe_page.md
+  - GUI Library (guilib):
+      - guilib: api/guilib.md
+      - guilib.events: api/guilib_events.md
+      - guilib.httperror: api/guilib_httperror.md
+      - guilib.image: api/guilib_image.md
+      - guilib.logindialog: api/guilib_logindialog.md
+      - guilib.pytigon_install: api/guilib_pytigon_install.md
+      - guilib.signal: api/guilib_signal.md
+      - guilib.threadwindow: api/guilib_threadwindow.md
+      - guilib.tools: api/guilib_tools.md
+      - guilib.websocket: api/guilib_websocket.md
+  - Toolbar:
+      - toolbar: api/toolbar.md
+      - toolbar.basetoolbar: api/toolbar_basetoolbar.md
+      - toolbar.generictoolbar: api/toolbar_generictoolbar.md
+      - toolbar.menubar: api/toolbar_menubar.md
+      - toolbar.moderntoolbar: api/toolbar_moderntoolbar.md
+      - toolbar.standardtoolbar: api/toolbar_standardtoolbar.md
+      - toolbar.standardtoolbarbuttons: api/toolbar_standardtoolbarbuttons.md
+      - toolbar.treetoolbar: api/toolbar_treetoolbar.md

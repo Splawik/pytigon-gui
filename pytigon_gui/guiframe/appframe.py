@@ -8,10 +8,13 @@ import sys
 import platform
 import subprocess
 import base64
+import logging
 from pydispatch import dispatcher
 from pathlib import Path
 
 import wx
+
+logger = logging.getLogger(__name__)
 
 # import wx.html2
 import datetime
@@ -164,7 +167,6 @@ class SchAppFrame(SchBaseFrame):
         self._video = video_name
         self.gui_style = gui_style
         self.idle_objects = []
-        self.gui_style = gui_style
         self.command = {}
         # self.command_enabled_always = []
         self.last_pane = None
@@ -958,7 +960,7 @@ class SchAppFrame(SchBaseFrame):
 
                     _RECORD_VIDEO_STRUCT = (mss, cv2, numpy)
                     _RECORD_VIDEO = 1
-                except:
+                except ImportError:
                     _RECORD_VIDEO = 2
             if _RECORD_VIDEO == 1:
                 save_video_frame(self)
@@ -971,7 +973,7 @@ class SchAppFrame(SchBaseFrame):
             dispatcher.send("PROCESS_INFO", self, x)
 
     def _append_command(self, typ, command):
-        id = wx.NewId()
+        id = wx.Window.NewControlId()
         self.command[id] = (typ, command)
         return id
 
@@ -995,11 +997,11 @@ class SchAppFrame(SchBaseFrame):
                 if pos == 3:
                     try:
                         bitmap = (wx.GetApp().images)[int(row[4].data)]
-                    except:
+                    except (ValueError, KeyError, TypeError):
                         if row[4].data and row[4].data != "" and row[4].data != "None":
                             try:
                                 bitmap = bitmap_from_href(row[4].data.split("<=")[0])
-                            except:
+                            except Exception:
                                 bitmap = (wx.GetApp().images)[0]
                         else:
                             bitmap = (wx.GetApp().images)[0]
@@ -1103,10 +1105,17 @@ class SchAppFrame(SchBaseFrame):
             return self.new_main_page(l[1], l[0], parm, panel="pscript")
 
     def _on_python(self, command):
-        exec(command)
+        """Execute arbitrary Python code from command dispatch."""
+        try:
+            exec(command)
+        except Exception:
+            import traceback
+
+            logger.error("Error executing python command: %s", command, exc_info=True)
 
     def _on_sys(self, command):
-        (self.sys_command)[command]()
+        """Execute a system command from the sys_command dict."""
+        self.sys_command[command]()
 
     def on_command(self, event):
         id = event.GetId()
@@ -1253,6 +1262,16 @@ class SchAppFrame(SchBaseFrame):
         return
 
     def show_document(self, response, title="", parameters=None):
+        """Open a document (odf, office, video, etc.) with the system handler.
+
+        Saves the response content to a temp file and opens it with the
+        default application for the file type.
+
+        Args:
+            response: HTTP response with binary content.
+            title: Optional title (unused).
+            parameters: Optional parameters (unused).
+        """
         cd = response.response.headers.get("content-disposition")
         if cd:
             name = cd.split("filename=")[1].replace('"', "")
@@ -1264,15 +1283,22 @@ class SchAppFrame(SchBaseFrame):
 
         file_path = os.path.join(path, name)
 
-        with open(file_path, "wb") as f:
-            f.write(p)
+        try:
+            with open(file_path, "wb") as f:
+                f.write(p)
+        except OSError as e:
+            logger.error("Error writing document to %s: %s", file_path, e)
+            return
 
-        if platform.system() == "Windows":
-            os.startfile(file_path)
-        elif platform.system() == "Darwin":
-            subprocess.Popen(["open", file_path])
-        else:
-            subprocess.Popen(["xdg-open", file_path])
+        try:
+            if platform.system() == "Windows":
+                os.startfile(file_path)
+            elif platform.system() == "Darwin":
+                subprocess.Popen(["open", file_path])
+            else:
+                subprocess.Popen(["xdg-open", file_path])
+        except Exception as e:
+            logger.error("Error opening document %s: %s", file_path, e)
 
     def show_image(self, response, title="", parameters=None):
         temp_filename = schfs.get_temp_filename(ext="spdf", for_vfs=False)
@@ -1284,6 +1310,16 @@ class SchAppFrame(SchBaseFrame):
         )
 
     def download_data(self, response, title="", parameters=None):
+        """Download response data to the user's Downloads folder and open it.
+
+        Args:
+            response: HTTP response with binary content.
+            title: Optional title (unused).
+            parameters: Optional parameters (unused).
+
+        Returns:
+            True on success.
+        """
         cd = response.response.headers.get("content-disposition")
         if cd:
             name = cd.split("filename=")[1].replace('"', "")
@@ -1293,16 +1329,24 @@ class SchAppFrame(SchBaseFrame):
         p = response.ptr()
 
         path = str(Path.home() / "Downloads")
+        file_path = os.path.join(path, name)
 
-        with open(os.path.join(path, name), "wb") as f:
-            f.write(p)
+        try:
+            with open(file_path, "wb") as f:
+                f.write(p)
+        except OSError as e:
+            logger.error("Error saving download to %s: %s", file_path, e)
+            return False
 
-        if platform.system() == "Windows":
-            os.startfile(path)
-        elif platform.system() == "Darwin":
-            subprocess.Popen(["open", path])
-        else:
-            subprocess.Popen(["xdg-open", path])
+        try:
+            if platform.system() == "Windows":
+                os.startfile(file_path)
+            elif platform.system() == "Darwin":
+                subprocess.Popen(["open", file_path])
+            else:
+                subprocess.Popen(["xdg-open", file_path])
+        except Exception as e:
+            logger.error("Error opening download %s: %s", file_path, e)
 
         return True
 

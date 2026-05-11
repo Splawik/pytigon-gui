@@ -1,3 +1,10 @@
+"""Grid panel with toolbar for the SchForm framework.
+
+Provides SchGridPanel: a wx.Panel wrapper that hosts a SchTableGrid
+alongside a configurable toolbar with action buttons (edit, delete,
+view row) and dynamic per-row action buttons.
+"""
+
 import collections
 import wx
 

@@ -1,3 +1,11 @@
+"""Base grid table class for the SchForm framework.
+
+Provides SchGridTableBase, the abstract base for all grid table
+data sources used by SchTableGrid. Implements common functionality:
+row selection, sorting, filtering, read-only state, dirty tracking,
+and cell attribute management.
+"""
+
 import wx
 from wx.grid import (
     GridCellAttr,

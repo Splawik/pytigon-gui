@@ -122,7 +122,7 @@ class SchTableGrid(wx.grid.Grid):
 
         try:
             self.SetSelectionMode(wx.grid.Grid.SelectRows)
-        except:
+        except AttributeError:
             self.SetSelectionMode(wx.grid.Grid.GridSelectRows)
 
         self.typ = typ

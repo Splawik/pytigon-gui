@@ -1,16 +1,19 @@
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as published by the
-# Free Software Foundation; either version 3, or (at your option) any later
-# version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY  ; without even the implied warranty of MERCHANTIBILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
+"""Pytigon GUI - wxPython and Django application framework.
 
-# Pytigon - wxpython and django application framework
+This package provides the graphical user interface for the Pytigon framework,
+including the main application class, GUI automation tools, and widget
+libraries for building cross-platform desktop applications with embedded
+Django web server capabilities.
 
-# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-# license: "LGPL 3.0"
+Subpackages:
+    guictrl:  GUI control widgets (tables, grids, lists, etc.)
+    guiframe: Application frame and browser frame windows.
+    guilib:   Utility libraries (images, install, login, tools, etc.)
+    locale:   Internationalization and localization files.
+    toolbar:  Toolbar components.
 
-__version__ = "0.250214"
+author: Sławomir Chołaj (slawomir.cholaj@gmail.com)
+license: LGPL 3.0
+"""
+
+__version__ = "0.260511"

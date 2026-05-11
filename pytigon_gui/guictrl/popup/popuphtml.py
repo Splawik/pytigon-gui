@@ -1,17 +1,16 @@
-"""
-Module contains helper classes for popup widgets.
+"""Popup control classes for server-backed data selection.
 
-Popup widgets interact with server.
+Provides a ComboCtrl-based popup control (DataPopupControl) that interacts
+with server endpoints for data lookup, selection, and dialog display.
 
-Server api:
+Server API:
+    test(value):
+        Return element matching value, or empty string if no match.
+        Response format: (element id, string representation of element).
 
-  test(value)
-      return element based on value criteria or empty string if no element meets criteria
-      returned element is in format: (element id, string representation of element)
-
-  dialog(value)
-      return html form to choose element
-      returned element is in format: (element id, string representation of element)
+    dialog(value):
+        Return an HTML form to choose an element.
+        Response format: (element id, string representation of element).
 """
 
 import wx
@@ -23,7 +22,20 @@ from pytigon_lib.schtools.tools import bencode, bdecode
 
 
 class DataPopup(wx.ComboPopup):
+    """Popup window that embeds an HTML page for data selection.
+
+    Used by DataPopupControl to display a SchPage inside a combo
+    dropdown. Handles ESC dismissal and size negotiation.
+    """
+
     def __init__(self, size, combo, href):
+        """Initialize the popup.
+
+        Args:
+            size: Preferred size (width, height).
+            combo: The parent DataPopupControl.
+            href: Server URL for the popup content.
+        """
         self.href = href
         self.combo = combo
         self.html = None
@@ -31,6 +43,14 @@ class DataPopup(wx.ComboPopup):
         wx.ComboPopup.__init__(self)
 
     def Create(self, parent):
+        """Create the popup content (SchPage) and layout.
+
+        Args:
+            parent: The popup parent window.
+
+        Returns:
+            True on success.
+        """
         self.html = self.combo.on_create(parent)
         parent.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
         box = wx.BoxSizer(wx.VERTICAL)
@@ -41,35 +61,75 @@ class DataPopup(wx.ComboPopup):
         return True
 
     def GetControl(self):
+        """Return the embedded HTML control."""
         return self.html
 
     def GetStringValue(self):
+        """Return the combo's start value as the string representation."""
         return self.combo.start_value
 
     def on_key_down(self, event):
+        """Handle ESC key to dismiss the popup.
+
+        Args:
+            event: wx.KeyEvent.
+        """
         if event.KeyCode == wx.WXK_ESCAPE:
             self.Dismiss()
         else:
             event.Skip()
 
     def set_new_href(self, href):
+        """Update the popup's server URL and propagate to the HTML page.
+
+        Args:
+            href: New server URL.
+        """
         self.href = href
         if self.html:
             self.html.set_new_href(href)
 
     def OnPopup(self):
+        """Called when the popup is shown."""
         self.combo.on_popoup()
         return wx.ComboPopup.OnPopup(self)
 
     def GetAdjustedSize(self, minWidth, prefHeight, maxHeight):
+        """Return the popup's adjusted size.
+
+        Args:
+            minWidth: Minimum width.
+            prefHeight: Preferred height.
+            maxHeight: Maximum height.
+
+        Returns:
+            Adjusted (width, height) tuple.
+        """
         width = self.size[0]
         height = self.size[1]
         return wx.ComboPopup.GetAdjustedSize(self, width, height, maxHeight)
 
 
 class DataPopupControl(ComboCtrl):
+    """Server-backed combo control with popup data selection.
+
+    Provides a ComboCtrl that uses server endpoints for:
+    - /size/  : fetching popup dimensions
+    - /test/  : validating/looking up typed values
+    - /dialog/: opening an extended selection dialog
+
+    Supports an optional secondary href (separated by ';') for
+    the extended dialog endpoint.
+    """
+
     def __init__(self, *args, **kwds):
-        """Constructor"""
+        """Initialize the popup control.
+
+        Args:
+            *args: Positional arguments passed to ComboCtrl.
+            **kwds: Keyword arguments. Accepts 'dialog_with_value'
+                (bool, default True) and 'style'.
+        """
         if "style" in kwds:
             kwds["style"] |= wx.TE_PROCESS_ENTER
         else:
@@ -95,12 +155,11 @@ class DataPopupControl(ComboCtrl):
         else:
             self.clear_str = ""
 
-        href = self.href.split(";")
-        if len(href) > 1:
-            self.href = href[0]
-            self.href2 = href[1]
-        else:
-            self.href2 = None
+        # Support dual-href: primary href for list/size/test,
+        # secondary (after ';') for extended dialog
+        href_parts = self.href.split(";")
+        self.href = href_parts[0]
+        self.href2 = href_parts[1] if len(href_parts) > 1 else None
 
         self.http = wx.GetApp().get_http(self)
         response = self.http.get(self, str(self.href) + "size/")
@@ -112,65 +171,81 @@ class DataPopupControl(ComboCtrl):
 
         self.UseAltPopupWindow(enable=True)
 
-        popoup = self._create_popoup()
-        self.SetPopupControl(popoup)
+        popup_ctrl = self._create_popoup()
+        self.SetPopupControl(popup_ctrl)
 
     def _create_popoup(self):
+        """Create or return the cached DataPopup instance.
+
+        Returns:
+            DataPopup instance.
+        """
         if not self.popup:
             self.popup = DataPopup(size=self.size, combo=self, href=self.href)
         return self.popup
 
     def to_masked(self, **kwds):
+        """Convert the internal text control to a masked.TextCtrl.
+
+        Args:
+            **kwds: Parameters forwarded to SetCtrlParameters.
+        """
         self.win = ComboCtrl.GetTextCtrl(self)
         self.win.__class__ = masked.TextCtrl
         self.win._PostInit(setupEventHandling=True, name="maskedTextCtrl", value="")
         self.win.SetCtrlParameters(**kwds)
 
     def GetTextCtrl(self):
+        """Return the text control, preferring the masked override if set.
+
+        Returns:
+            wx.TextCtrl or masked.TextCtrl instance.
+        """
         if self.win:
             return self.win
         return ComboCtrl.GetTextCtrl(self)
 
     def KillFocus(self):
+        """Handle focus loss: trigger focus_out validation if readonly."""
         value = ComboCtrl.GetValue(self)
         if self.readonly:
             self.focus_out(value)
 
     def any_parent_command(self, command, *args, **kwds):
+        """Walk up the widget tree to find and call a named command.
+
+        Args:
+            command: Method name to search for.
+            *args: Positional arguments.
+            **kwds: Keyword arguments.
+
+        Returns:
+            Result of the command, or None if not found.
+        """
         parent = self
-        while parent != None:
+        while parent is not None:
             if hasattr(parent, command):
                 return getattr(parent, command)(*args, **kwds)
             parent = parent.GetParent()
         return None
 
-    # def on_setfocus(self, event):
-    #    value = ComboCtrl.GetValue(self)
-    #    self.focus_in(value)
-    #    event.Skip()
-
     def alternate_button_click(self):
-        if self.event_object:
-            if hasattr(self.event_object, "on_before_button_click"):
-                self.event_object.on_before_button_click()
+        """Handle alternative button (e.g. F2) to open extended dialog."""
+        if self.event_object and hasattr(self.event_object, "on_before_button_click"):
+            self.event_object.on_before_button_click()
 
         self.run_ext_dialog()
 
-        if self.event_object:
-            if hasattr(self.event_object, "OnButtonClick"):
-                self.event_object.OnButtonClick()
+        if self.event_object and hasattr(self.event_object, "OnButtonClick"):
+            self.event_object.OnButtonClick()
 
     def run_ext_dialog(self):
-        """Run extended version of form to choose element"""
+        """Open the extended selection dialog as a child page."""
         self.GetTextCtrl().SetFocus()
 
-        parm = dict()
-        parm["value"] = self.get_parm("value")
+        parm = {"value": self.get_parm("value")}
 
-        if self.href2:
-            href = self.href2
-        else:
-            href = self.href
+        href = self.href2 if self.href2 else self.href
 
         _href = href + "dialog/|value" if self.dialog_with_value else href + "dialog/"
         self.page = self.GetParent().new_child_page(str(_href), "Select", parm)
@@ -179,51 +254,74 @@ class DataPopupControl(ComboCtrl):
         self.page.body.parent_combo = self
 
     def get_last_control_with_focus(self):
+        """Return self as the last focused control."""
         return self
 
     def focus_in(self, value):
-        pass
+        """Handle focus-in event (no-op by default).
+
+        Args:
+            value: Current field value.
+        """
 
     def focus_out(self, value):
-        if str(value) != self.start_value:
-            if not str(value) == "":
-                self.http = wx.GetApp().get_http(self)
-                x = bencode(value)
-                response = self.http.post(self, str(self.href) + "test/", {"value": x})
-                tab = schjson.loads(self.response.str())
-                ret = tab[0]
+        """Validate typed value against the server when focus leaves.
 
-                if ret != 1:
-                    if ret == 2:
-                        self.OnButtonClick()
-                    else:
-                        self.clear_rec()
+        Compares current value with start_value. If changed and non-empty,
+        posts the value to the server's /test/ endpoint.
+
+        Args:
+            value: The current field value.
+        """
+        if str(value) != self.start_value and str(value) != "":
+            self.http = wx.GetApp().get_http(self)
+            x = bencode(value)
+            response = self.http.post(self, str(self.href) + "test/", {"value": x})
+            tab = schjson.loads(response.str())
+            ret = tab[0]
+
+            if ret != 1:
+                if ret == 2:
+                    self.OnButtonClick()
                 else:
-                    self.set_rec(tab[1], tab[2], False)
+                    self.clear_rec()
+            else:
+                self.set_rec(tab[1], tab[2], False)
 
     def has_parm(self, parm):
-        return True if parm == "value" else False
+        """Check if a parameter is supported.
+
+        Args:
+            parm: Parameter name.
+
+        Returns:
+            True if parm is 'value', False otherwise.
+        """
+        return parm == "value"
 
     def get_parm(self, parm):
-        """For param = 'value' return field value bencoded"""
+        """Get a parameter value for URL encoding.
+
+        Args:
+            parm: Parameter name ('value' supported).
+
+        Returns:
+            Bencoded field value, or None.
+        """
         return bencode(ComboCtrl.GetValue(self)) if parm == "value" else None
 
     def set_rec(self, value, value_rec, dismiss=False):
-        """Set field value
+        """Set the field value from a server response record.
 
         Args:
-            value: element id
-            value_rec: element
+            value: Element id.
+            value_rec: Element data (Td object or similar).
+            dismiss: If True, dismisses the popup after setting.
         """
-        # if 'value' in value_rec.attrs:
-        #    value2 = value_rec.data
-        # else:
-        #    value2 = value
         value2 = value_rec.data
 
-        if self.event_object:
-            if hasattr(self.event_object, "set_rec"):
-                value2 = self.event_object.set_rec(value, value_rec, dismiss)
+        if self.event_object and hasattr(self.event_object, "set_rec"):
+            value2 = self.event_object.set_rec(value, value_rec, dismiss)
 
         self.start_value = value2
         self.SetValue(value2)
@@ -237,16 +335,24 @@ class DataPopupControl(ComboCtrl):
             parent.on_popup_control_change_value(self)
 
     def get_rec(self):
-        """Get element selected in field"""
+        """Return the currently selected record."""
         return self.rec_value
 
     def clear_rec(self):
-        """Clear field"""
+        """Clear the current selection and reset to the default string."""
         self.start_value = ""
         self.SetValue(self.clear_str)
         self.rec_value = []
 
     def on_create(self, parent):
+        """Create the embedded SchPage for popup content.
+
+        Args:
+            parent: Parent window for the SchPage.
+
+        Returns:
+            The created SchPage instance.
+        """
         from pytigon_gui.guiframe.page import SchPage
 
         href = (
@@ -259,6 +365,10 @@ class DataPopupControl(ComboCtrl):
         return self.html
 
     def on_popoup(self):
+        """Called when the dropdown popup is shown.
+
+        Refreshes the embedded HTML page and positions it.
+        """
         if self.html:
             wx.BeginBusyCursor()
             self.html.body.Hide()
@@ -279,6 +389,7 @@ class DataPopupControl(ComboCtrl):
             wx.CallAfter(_after)
 
     def Dismiss(self):
+        """Dismiss the popup or extended dialog page."""
         if self.page:
             self.page.body.old_any_parent_command("on_cancel", None)
             self.page = None
@@ -287,24 +398,22 @@ class DataPopupControl(ComboCtrl):
         self.SetFocus()
 
     def set_new_href(self, href):
-        """Set new base address to server service
+        """Update the server endpoint URL.
 
         Args:
-            href - new address
+            href: New base URL. May contain ';' to separate primary
+                and secondary (dialog) endpoints.
         """
         self.href = href
 
-        href3 = self.href.split(";")
-        if len(href3) > 1:
-            self.href = href3[0]
-            self.href2 = href3[1]
+        href_parts = self.href.split(";")
+        if len(href_parts) > 1:
+            self.href = href_parts[0]
+            self.href2 = href_parts[1]
         else:
             self.href2 = None
 
-        if self.href2:
-            href3 = self.href2
-        else:
-            href3 = self.href
+        href3 = self.href2 if self.href2 else self.href
 
         if self.dialog_with_value:
             href3 += "dialog/|value"

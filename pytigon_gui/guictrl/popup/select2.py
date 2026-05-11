@@ -1,5 +1,10 @@
-"""
-Module contain helper classes for SELEC2 widget.
+"""Select2-style autocomplete widget classes.
+
+Provides server-backed autocomplete with popup selection list,
+inspired by the Select2 JavaScript library (https://select2.github.io/).
+
+Classes:
+    ListBoxNoFocus, Select2Popup, Select2Base
 """
 
 import string
@@ -12,11 +17,20 @@ _ = wx.GetTranslation
 
 
 class ListBoxNoFocus(wx.ListBox):
+    """ListBox that never accepts keyboard focus."""
+
     def CanAcceptFocus(self):
+        """Return False always -- this listbox cannot receive focus."""
         return False
 
 
 class Select2Popup(wx.MiniFrame):
+    """Popup window for Select2-style autocomplete search.
+
+    Displays a text entry field above a list of matching results.
+    Supports keyboard navigation (arrows, Enter, Escape, Tab).
+    """
+
     def __init__(
         self,
         parent,
@@ -30,16 +44,27 @@ class Select2Popup(wx.MiniFrame):
         url=None,
         minimum_input_length=2,
     ):
+        """Initialize the Select2 popup.
+
+        Args:
+            parent: Parent window.
+            id: Window ID.
+            title: Window title.
+            pos: Screen position.
+            size: Window size.
+            style: Window style flags.
+            combo: The parent Select2Base control.
+            field_id: Django field identifier for the AJAX endpoint.
+            url: Optional override URL for the autocomplete endpoint.
+            minimum_input_length: Minimum characters before search triggers.
+        """
         from pytigon_gui.guiframe.page import SchPage
 
         self.combo = combo
         self.point = pos
         self.field_id = field_id
         self.url = url
-        if minimum_input_length:
-            self.minimum_input_length = minimum_input_length
-        else:
-            minimum_input_length = 0
+        self.minimum_input_length = minimum_input_length if minimum_input_length else 0
 
         wx.MiniFrame.__init__(self, parent, id, title, pos, size, wx.RESIZE_BORDER)
 
@@ -64,60 +89,80 @@ class Select2Popup(wx.MiniFrame):
         self.Fit()
 
     def on_enter(self, event):
-        id = self.list_ctrl.GetSelection()
-        if id != wx.NOT_FOUND:
+        """Handle Enter/DoubleClick on a list item: dismiss and set value.
+
+        Args:
+            event: The wx event.
+        """
+        sel = self.list_ctrl.GetSelection()
+        if sel != wx.NOT_FOUND:
             self.Dismiss()
-            item_id = self.list_ctrl.GetClientData(id)
-            item_str = self.list_ctrl.GetString(id)
+            item_id = self.list_ctrl.GetClientData(sel)
+            item_str = self.list_ctrl.GetString(sel)
             self.combo.set_value(item_id, item_str)
 
     def on_activate(self, event):
+        """Hide popup and return focus when deactivated.
+
+        Args:
+            event: The wx.ActivateEvent.
+        """
         if not event.GetActive():
             self.Hide()
             self.combo.SetFocus()
         event.Skip()
 
     def on_key_down(self, event):
+        """Handle keyboard navigation within the popup.
+
+        Args:
+            event: wx.KeyEvent.
+        """
         if event.KeyCode == wx.WXK_ESCAPE:
             self.Dismiss()
         elif event.KeyCode == wx.WXK_DOWN or (
             event.AltDown() and event.KeyCode == ord("J")
         ):
-            id = self.list_ctrl.GetSelection()
-            if id != wx.NOT_FOUND:
-                if id < self.list_ctrl.GetCount() - 1:
-                    self.list_ctrl.SetSelection(id + 1)
+            sel = self.list_ctrl.GetSelection()
+            if sel != wx.NOT_FOUND and sel < self.list_ctrl.GetCount() - 1:
+                self.list_ctrl.SetSelection(sel + 1)
         elif event.KeyCode == wx.WXK_UP or (
             event.AltDown() and event.KeyCode == ord("K")
         ):
-            id = self.list_ctrl.GetSelection()
-            if id != wx.NOT_FOUND:
-                if id > 0:
-                    self.list_ctrl.SetSelection(id - 1)
+            sel = self.list_ctrl.GetSelection()
+            if sel != wx.NOT_FOUND and sel > 0:
+                self.list_ctrl.SetSelection(sel - 1)
         elif event.KeyCode == wx.WXK_TAB:
             return self.on_enter(event)
         else:
             event.Skip()
 
     def on_text(self, event):
+        """Handle text input: query the server for autocomplete results.
+
+        Args:
+            event: wx.CommandEvent with the text string.
+        """
         event.Skip()
         s = event.GetString()
         if len(s) < self.minimum_input_length:
             return
-        if self.url:
-            base_url = self.url
-        else:
-            base_url = "/select2/fields/auto.json"
+
+        base_url = self.url if self.url else "/select2/fields/auto.json"
         url = base_url + "?term=%s&page=1&context=&field_id=%s" % (
             s,
             self.field_id,
         )
-        http = wx.GetApp().get_http(self.combo)
-        response = http.get(self, url)
-        tab = schjson.loads(response.str())
-        if not "err" in tab or (
-            "err" in tab and (tab["err"] != "nil" or tab["err"] != None)
-        ):
+
+        try:
+            http = wx.GetApp().get_http(self.combo)
+            response = http.get(self, url)
+            tab = schjson.loads(response.str())
+        except Exception:
+            return
+
+        err = tab.get("err")
+        if err is None or err == "nil":
             self.list_ctrl.Clear()
             if len(tab["results"]) > 0:
                 for pos in tab["results"]:
@@ -126,29 +171,52 @@ class Select2Popup(wx.MiniFrame):
                     self.list_ctrl.SetSelection(0)
 
     def set_position(self, point):
+        """Store the target screen position for the popup.
+
+        Args:
+            point: (x, y) tuple in screen coordinates.
+        """
         self.point = point
 
     def clear(self):
+        """Clear the search field and results list."""
         self.edit_ctrl.ChangeValue("")
         self.list_ctrl.Clear()
 
     def Popup(self):
+        """Show the popup at the stored position."""
         self.Show()
         self.Move(self.point)
 
     def Dismiss(self):
+        """Hide the popup and return focus to the combo control."""
         self.Hide()
         self.combo.SetFocus()
 
     def Hide(self):
+        """Notify the parent combo and hide the window."""
         self.combo.on_popup_hidden()
         super().Hide()
 
 
 class Select2Base(wx.ComboCtrl, SchBaseCtrl):
-    """Base class for SELECT2 widget, server interface based on select2 javascript library: https://select2.github.io/"""
+    """Server-backed autocomplete combo using Select2 protocol.
+
+    Provides a wx.ComboCtrl that communicates with a Select2-compatible
+    server endpoint for autocomplete search and selection.
+
+    Supports multiple selection mode and action buttons (F2/Insert keys).
+    """
 
     def __init__(self, parent, **kwds):
+        """Initialize the Select2 control.
+
+        Args:
+            parent: Parent window.
+            **kwds: Keyword arguments forwarded to wx.ComboCtrl and
+                SchBaseCtrl. Expects 'param' containing 'data' with
+                Select2 configuration attrs.
+        """
         self.popup = None
         self.button1 = None
         self.button2 = None
@@ -157,10 +225,7 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
 
         data = self.param["data"][0]["attrs"]
-        if "multiple" in data:
-            self.multiple = True
-        else:
-            self.multiple = False
+        self.multiple = "multiple" in data
 
         if "style" in kwds:
             kwds["style"] |= wx.TE_PROCESS_ENTER
@@ -168,19 +233,11 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
             kwds["style"] = wx.TE_PROCESS_ENTER
 
         if "item_id" in self.param and self.param["item_id"] != "None":
-            self.item_id = [
-                int(self.param["item_id"]),
-            ]
-            self.item_str = [
-                self.param["item_str"],
-            ]
+            self.item_id = [int(self.param["item_id"])]
+            self.item_str = [self.param["item_str"]]
         else:
-            self.item_id = [
-                -1,
-            ]
-            self.item_str = [
-                "",
-            ]
+            self.item_id = [-1]
+            self.item_str = [""]
 
         kwds["size"] = (438, -1)
 
@@ -192,10 +249,7 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
         self.Bind(wx.EVT_CHAR, self.on_char)
 
         if self.item_str:
-            if self.multiple:
-                self.SetValue(self.item_str[0])
-            else:
-                self.SetValue(self.item_str[0])
+            self.SetValue(self.item_str[0])
 
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down_base)
 
@@ -203,16 +257,29 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
         self.GetParent().get_parent_page().register_signal(self, "return_updated_row")
 
     def return_updated_row(self, **argv):
+        """Handle return_updated_row signal by updating the value."""
         self.set_value(argv["id"], argv["title"])
 
     def return_new_row(self, **argv):
+        """Handle return_new_row signal by updating the value."""
         self.set_value(argv["id"], argv["title"])
 
     def init(self, button1, button2):
+        """Register optional action buttons (F2 and Insert shortcuts).
+
+        Args:
+            button1: Button triggered by F2.
+            button2: Button triggered by Insert.
+        """
         self.button1 = button1
         self.button2 = button2
 
     def on_key_down_base(self, event):
+        """Handle global keyboard shortcuts.
+
+        Args:
+            event: wx.KeyEvent.
+        """
         if event.GetKeyCode() == wx.WXK_TAB:
             if event.ShiftDown():
                 self.GetParent().GetParent().Navigate(self.GetParent(), True)
@@ -226,51 +293,49 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
             event.Skip()
 
     def set_value(self, item_id, item_str):
-        """Set value of field
+        """Set the selected value.
 
         Args:
-            item_id - table row id
-            item_str - string representation of table row
+            item_id: Table row ID (database key).
+            item_str: String representation of the row.
         """
         if self.multiple:
-            if not item_id in self.item_id:
+            if item_id not in self.item_id:
                 self.item_id.append(item_id)
                 self.item_str.append(item_str)
             self.SetValue("; ".join(self.item_str)[2:])
         else:
-            self.item_id = [
-                item_id,
-            ]
-            self.item_str = [
-                item_str,
-            ]
+            self.item_id = [item_id]
+            self.item_str = [item_str]
             self.SetValue(item_str)
 
-        def _fun():
+        def _finish():
             self.SelectNone()
             self.SetInsertionPointEnd()
 
-        wx.CallAfter(_fun)
+        wx.CallAfter(_finish)
 
     def on_char(self, event):
+        """Handle character input: forward to the popup search field.
+
+        Args:
+            event: wx.KeyEvent.
+        """
         try:
             c = chr(event.GetUnicodeKey())
             if c in string.printable:
                 if not self._popup_shown:
                     self._on_button_click()
                 self.popup.edit_ctrl.AppendText(c)
-        except:
+        except (ValueError, OverflowError):
             pass
         if event.KeyCode in (wx.WXK_DELETE, wx.WXK_BACK):
-            self.item_id = [
-                -1,
-            ]
-            self.item_str = [
-                "",
-            ]
+            self.item_id = [-1]
+            self.item_str = [""]
             self.Clear()
 
     def _on_button_click(self):
+        """Show the Select2 popup, creating it if needed."""
         if not self.popup:
             pos = self.GetScreenPosition()
             pos = (pos[0], pos[1] + self.GetSize()[1])
@@ -285,32 +350,19 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
             if "data-ajax--url" in data:
                 url = data["data-ajax--url"]
 
-            if self.GetTextCtrl():
-                self.popup = Select2Popup(
-                    self.GetTextCtrl(),
-                    -1,
-                    _("Select item"),
-                    pos=pos,
-                    size=(450, 400),
-                    style=wx.DEFAULT_DIALOG_STYLE,
-                    combo=self,
-                    url=url,
-                    field_id=field_id,
-                    minimum_input_length=minimum_input_length,
-                )
-            else:
-                self.popup = Select2Popup(
-                    self,
-                    -1,
-                    _("Select item"),
-                    pos=pos,
-                    size=(450, 400),
-                    style=wx.DEFAULT_DIALOG_STYLE,
-                    combo=self,
-                    url=url,
-                    field_id=field_id,
-                    minimum_input_length=minimum_input_length,
-                )
+            parent = self.GetTextCtrl() if self.GetTextCtrl() else self
+            self.popup = Select2Popup(
+                parent,
+                -1,
+                _("Select item"),
+                pos=pos,
+                size=(450, 400),
+                style=wx.DEFAULT_DIALOG_STYLE,
+                combo=self,
+                url=url,
+                field_id=field_id,
+                minimum_input_length=minimum_input_length,
+            )
         self.popup.clear()
 
         pos = self.GetScreenPosition()
@@ -332,27 +384,33 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
         self._popup_shown = True
 
     def on_popup_hidden(self):
+        """Called when the popup is hidden."""
         self._popup_shown = False
         self.SetFocus()
 
     def GetValue(self):
-        """Return field value - table row id"""
+        """Return the selected value (item_id or list of item_ids).
+
+        Returns:
+            int or list of int item IDs.
+        """
         if self.multiple:
             return self.item_id
-        else:
-            return self.item_id[0]
+        return self.item_id[0]
 
     def OnButtonClick(self):
-        # self.SetValue("")
+        """Handle the dropdown button click: open popup and clear search."""
         ret = self._on_button_click()
         self.popup.edit_ctrl.SetValue("")
         wx.CallAfter(self.popup.edit_ctrl.SetFocus)
         return ret
 
     def DoSetPopupControl(self, popup):
+        """Placeholder for popup control setup (not used)."""
         pass
 
     def Dismiss(self):
+        """Close the popup and return focus."""
         if self.popup:
             self.popup.Close()
             self.popup = None

@@ -1,9 +1,20 @@
+"""Grid table data source from a server data proxy.
+
+Provides DataSource: a SchGridTableBase implementation that fetches
+paginated data via a DataProxy (tabproxy.py) from a Django backend.
+Supports lazy page loading, dirty tracking, sorting, filtering,
+and commit/sync of CRUD operations.
+"""
+
 import copy
+import logging
 
 import wx
 import pytigon_lib.schtools.createparm as createparm
 
 from .gridtable_base import SchGridTableBase
+
+logger = logging.getLogger(__name__)
 
 
 class DataSource(SchGridTableBase):
@@ -418,8 +429,8 @@ class DataSource(SchGridTableBase):
     def GetTypeName(self, row, col):
         try:
             return self.GetColTypes()[col + 1]
-        except:
-            print("GetTypeName:", col, self.GetColTypes())
+        except (IndexError, AttributeError):
+            logger.debug("GetTypeName: col=%s types=%s", col, self.GetColTypes())
 
     def DeleteRows(self, row, il):
         if self.read_only:

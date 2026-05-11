@@ -1,10 +1,21 @@
+"""Grid table data source from server-rendered HTML tables.
+
+Provides SimpleDataTable and PageData: a SchGridTableBase
+implementation that loads paginated table data from the server
+as HTML and parses it into grid rows. Supports sorting,
+column sizing, cell-level attributes, and copy/paste.
+"""
+
 import urllib
 import wx
 import time
+import logging
 
 from .gridtable_base import SchGridTableBase
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
 from pytigon_gui.guilib.tools import colour_to_html
+
+logger = logging.getLogger(__name__)
 
 
 class KeyForRec:
@@ -75,7 +86,7 @@ class PageData(object):
         if page in self.pages:
             try:
                 ret = self.pages[page][id2]
-            except:
+            except (KeyError, IndexError):
                 ret = None
             return ret
         else:
@@ -118,7 +129,7 @@ class PageData(object):
         if page in self.pages:
             try:
                 self.pages[page][id2] = row
-            except:
+            except (KeyError, IndexError):
                 pass
 
     def append_row(self, row):
@@ -271,7 +282,7 @@ class SimpleDataTable(SchGridTableBase):
                 for pos in attrs2:
                     attrs.append(pos)
             return attrs
-        except:
+        except (IndexError, AttributeError):
             return []
 
     def sort(self, column, append):
@@ -296,8 +307,8 @@ class SimpleDataTable(SchGridTableBase):
                         tdattr[tag] += (child.attrs,)
                     else:
                         tdattr[tag] = (child.attrs,)
-        except:
-            print("GetExtAttr:", row, col)
+        except (IndexError, AttributeError):
+            logger.debug("GetExtAttr: row=%s col=%s", row, col)
             tdattr = None
         return tdattr
 
@@ -305,7 +316,7 @@ class SimpleDataTable(SchGridTableBase):
         try:
             td = self.data[row][col]
             return td.children
-        except:
+        except (IndexError, AttributeError):
             return None
 
     def filter_cmp(self, pos, key):
@@ -324,7 +335,7 @@ class SimpleDataTable(SchGridTableBase):
             return attr
         try:
             tdattr = self.data[row][col].attrs
-        except:
+        except (IndexError, KeyError, AttributeError):
             tdattr = None
             # print("<<<")
             # print("rows:", self.GetNumberRows())
@@ -475,7 +486,7 @@ class SimpleDataTable(SchGridTableBase):
         response = http.post(self._parent, href, parm=data, json_data=True)
         try:
             s = response.json()
-        except:
+        except (ValueError, AttributeError):
             s = None
         return s
 
@@ -488,6 +499,6 @@ class SimpleDataTable(SchGridTableBase):
         response = http.post(self._parent, href, parm=data2, json_data=True)
         try:
             s = response.json()
-        except:
+        except (ValueError, AttributeError):
             s = None
         return s

@@ -1,3 +1,10 @@
+"""Standard toolbar button creation and event handling.
+
+Defines the StandardButtons class that creates File, Edit, Operations,
+Browse, and Address panels with their associated event handlers.
+Also includes the SchAutoComplete widget for the address bar.
+"""
+
 import wx
 from pytigon_gui.guilib.events import *
 from autocomplete import TextCtrlAutoComplete
@@ -7,12 +14,11 @@ from wx.lib.agw import flatmenu as FM
 
 _ = wx.GetTranslation
 
-if wx.Platform == "__WXMSW__":
-    MswStyle = True
-else:
-    MswStyle = True
+# Platform style flag (currently always True)
+MSW_STYLE = True
 
-tab = [
+# Default address bar history entries
+ADDRESS_HISTORY = [
     "www.allegro.pl",
     "www.onet.pl",
     "www.google.pl",
@@ -30,51 +36,108 @@ TYPE_PANELBAR = 2
 
 
 class WebHistory(object):
+    """A simple list-like object providing address bar history.
+
+    Wraps the ADDRESS_HISTORY list and exposes a limited subset.
+    """
+
     def __iter__(self):
-        for x in tab:
+        """Iterate over all history entries."""
+        for x in ADDRESS_HISTORY:
             yield x
 
-    def __getitem__(self, id):
-        if id < 4:
-            return tab[id]
+    def __getitem__(self, idx):
+        """Return a history entry by index.
+
+        Args:
+            idx: Index into the history.
+
+        Returns:
+            str: The history entry at the given index.
+
+        Raises:
+            IndexError: If idx is out of range (>= 4).
+        """
+        if idx < 4:
+            return ADDRESS_HISTORY[idx]
         else:
-            x = id / 0
-            return None
+            raise IndexError("WebHistory index out of range")
 
     def __len__(self):
+        """Return the number of history entries available."""
         return 4
 
     def __contains__(self, x):
-        if x in tab:
-            return True
-        else:
-            return False
+        """Check if an address is in the history.
+
+        Args:
+            x: Address string to check.
+
+        Returns:
+            bool: True if the address is in the history.
+        """
+        return x in ADDRESS_HISTORY
 
 
 class SchAutoComplete(TextCtrlAutoComplete):
+    """Address bar auto-complete control with dynamic web history.
+
+    Extends TextCtrlAutoComplete to provide URL auto-completion
+    from a WebHistory instance.
+    """
+
     def __init__(self, *argi, **argv):
+        """Initialize the auto-complete control.
+
+        Args:
+            *argi: Positional arguments for TextCtrlAutoComplete.
+            **argv: Keyword arguments; 'choices' will be overridden
+                with a WebHistory instance if provided.
+        """
         self.dynamic_choices = WebHistory()
         argv["choices"] = self.dynamic_choices
         TextCtrlAutoComplete.__init__(self, *argi, **argv)
-        self.SetEntryCallback(self.setDynamicChoices)
+        self.SetEntryCallback(self.set_dynamic_choices)
         self.SetMatchFunction(self.match)
         self.Bind(wx.EVT_KEY_DOWN, self.on_return_key_down, self)
 
     def on_return_key_down(self, event):
+        """Handle Return key: trigger callback if dropdown is hidden.
+
+        Args:
+            event: wx.KeyEvent.
+        """
         if not self.dropdown.IsShown() and event.GetKeyCode() == wx.WXK_RETURN:
             self.fun(self.GetValue())
         else:
             event.Skip()
 
     def set_callback_fun(self, fun):
+        """Set the callback invoked when a URL is selected or entered.
+
+        Args:
+            fun: Callable that accepts a URL string.
+        """
         self.fun = fun
 
     def match(self, text, choice):
+        """Determine if a choice matches the entered text.
+
+        Matches against the raw choice, the choice without 'http://',
+        and the choice without 'www.'.
+
+        Args:
+            text: User-entered text (lowercase).
+            choice: A history entry to match against.
+
+        Returns:
+            bool: True if the choice matches.
+        """
         t = text.lower()
         c = choice.lower()
         if c.startswith(t):
             return True
-        if c.startswith(r"http://"):
+        if c.startswith("http://"):
             c = c[7:]
         if c.startswith(t):
             return True
@@ -83,6 +146,7 @@ class SchAutoComplete(TextCtrlAutoComplete):
         return c.startswith(t)
 
     def set_dynamic_choices(self):
+        """Filter choices based on the current text input."""
         ctrl = self
         text = ctrl.GetValue().lower()
         current_choices = ctrl.GetChoices()
@@ -93,44 +157,83 @@ class SchAutoComplete(TextCtrlAutoComplete):
             ctrl.SetChoices(choices)
 
     def _set_value_from_selected(self):
+        """Override to trigger the callback after a dropdown selection.
+
+        Returns:
+            The value from the parent implementation.
+        """
         x = TextCtrlAutoComplete._setValueFromSelected(self)
         self.fun(self.GetValue())
         return x
 
 
-class EmpytControl(object):
+class EmptyControl(object):
+    """A stub control used when no real address bar is available.
+
+    Provides SetValue/GetValue with no-op behavior.
+    """
+
     def __init__(self):
         self.value = None
 
     def SetValue(self, value):
+        """Store a value (no-op visually).
+
+        Args:
+            value: Value to store.
+        """
         self.value = value
 
     def GetValue(self):
+        """Return the stored value.
+
+        Returns:
+            The stored value or None.
+        """
         return self.value
 
 
 class EmptyBar(object):
+    """A stub toolbar bar used when a browser panel is not enabled.
+
+    Provides a no-op refr method for compatibility.
+    """
+
     def __init__(self):
         pass
 
     def refr(self):
+        """No-op refresh method."""
         pass
 
 
 class StandardButtons(object):
+    """Creates and manages standard toolbar buttons and their event handlers.
+
+    Reads the gui_style string to determine which panels (File, Clipboard,
+    Operations, Browser, Address) should be created and configures
+    event bindings for each.
+    """
+
     def __init__(self, toolbar_interface, gui_style):
+        """Initialize standard buttons.
+
+        Args:
+            toolbar_interface: The toolbar bar instance (ToolbarBar subclass).
+            gui_style: String describing which features to enable.
+        """
         self.toolbar_interface = toolbar_interface
         self.gui_style = gui_style
         self.ti = self.toolbar_interface
         self.tbs = self.ti.toolbars
         self._object_list = {}
         self.webobject = None
-        self.file = True if "file" in self.gui_style else False
-        self.clipboard = True if "clipboard" in self.gui_style else False
-        self.operations = True if "operations" in self.gui_style else False
-        self.browse = True if "browse" in self.gui_style else False
-        self.nav = True if "nav" in self.gui_style else False
-        self.address_bar = True if "address_bar" in self.gui_style else False
+        self.file = "file" in self.gui_style
+        self.clipboard = "clipboard" in self.gui_style
+        self.operations = "operations" in self.gui_style
+        self.browse = "browse" in self.gui_style
+        self.nav = "nav" in self.gui_style
+        self.address_bar = "address_bar" in self.gui_style
         self.bg = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
         self.bg_info = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK))
         self.bg_h = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
@@ -138,16 +241,26 @@ class StandardButtons(object):
         self.info = ""
         self.address_txt = ""
 
-    def make_ui_handler(self, fun_name, event_id, propagete=False):
+    def make_ui_handler(self, fun_name, event_id, propagate=False):
+        """Create a UI update handler that enables/disables based on focus.
+
+        Walks up the focus chain calling the named method; enables
+        the event if any focused control returns True.
+
+        Args:
+            fun_name: Name of the method to call (e.g. 'CanCopy').
+            event_id: wx event ID to bind to.
+            propagate: If True, walk up the parent chain.
+        """
+
         def on_update_ui(event):
-            # win = wx.Window.FindFocus()
             win = find_focus_in_form()
             while win:
                 if hasattr(win, fun_name):
                     if getattr(win, fun_name)():
                         event.Enable(True)
                         return
-                if propagete:
+                if propagate:
                     win = win.GetParent()
                 else:
                     break
@@ -156,8 +269,18 @@ class StandardButtons(object):
         self.toolbar_interface.parent.Bind(wx.EVT_UPDATE_UI, on_update_ui, id=event_id)
 
     def make_handler(self, fun_name, event_id, propagate=False):
+        """Create a command handler that delegates to the focused control.
+
+        Walks up the focus chain calling the named method on the first
+        control that has it.
+
+        Args:
+            fun_name: Name of the method to call (e.g. 'Copy').
+            event_id: wx event ID to bind to.
+            propagate: If True, walk up the parent chain.
+        """
+
         def on_command(event):
-            # win = wx.Window.FindFocus()
             win = find_focus_in_form()
             while win:
                 if hasattr(win, fun_name):
@@ -170,6 +293,15 @@ class StandardButtons(object):
         self.toolbar_interface.bind(on_command, id=event_id)
 
     def make_handlers(self, event_id, fun_name, fun_name2=None, propagate=False):
+        """Create both command and UI update handlers for a button.
+
+        Args:
+            event_id: wx event ID to bind to.
+            fun_name: Name of the command method (e.g. 'Copy').
+            fun_name2: Name of the UI update method (e.g. 'CanCopy').
+                If None, the button is always enabled.
+            propagate: If True, walk up the parent chain.
+        """
         self.make_handler(fun_name, event_id, propagate)
         if fun_name2:
             self.make_ui_handler(fun_name2, event_id, propagate)
@@ -183,6 +315,12 @@ class StandardButtons(object):
             )
 
     def create_file_panel(self, toolbar_page):
+        """Create the File panel with Open, Save, Print, and Exit buttons.
+
+        Args:
+            toolbar_page: The toolbar page to add panels to (unused; buttons
+                are added to the main page).
+        """
         if self.file:
             bar = self.ti.create_panel_in_main_page(_("File"), TYPE_TOOLBAR)
             self.tbs["file"] = {}
@@ -224,14 +362,14 @@ class StandardButtons(object):
             if "print" in self.gui_style:
                 if test:
                     bar.add_separator()
-                    self.tbs["file"]["print"] = bar.AddHybridTool(
+                    self.tbs["file"]["print"] = bar.add_hybrid_tool(
                         ID_PRINT,
                         _("Print"),
                         bitmaps_from_art_id(wx.ART_PRINT, wx.Size(32, 32)),
                     )
                     bar.add_separator()
                 else:
-                    self.tbs["file"]["print"] = bar.AddHybridTool(
+                    self.tbs["file"]["print"] = bar.add_hybrid_tool(
                         ID_PRINT,
                         _("Print"),
                         bitmaps_from_art_id(wx.ART_PRINT, wx.Size(32, 32)),
@@ -240,6 +378,11 @@ class StandardButtons(object):
                 self.ti.bind_dropdown(self.on_print, ID_PRINT)
 
     def create_edit_panel(self, toolbar_page):
+        """Create the Clipboard panel with Copy, Cut, and Paste buttons.
+
+        Args:
+            toolbar_page: The toolbar page (unused).
+        """
         if self.clipboard:
             self.tbs["clipboard"] = {}
             bar = self.ti.create_panel_in_main_page(_("Clipboard"), TYPE_BUTTONBAR)
@@ -262,9 +405,14 @@ class StandardButtons(object):
             self.make_handlers(wx.ID_PASTE, "Paste", "CanPaste")
 
     def create_operations_panel(self, toolbar_page):
+        """Create the Operations panel with Undo, Redo, Find, etc.
+
+        Args:
+            toolbar_page: The toolbar page (unused).
+        """
         if self.operations:
             self.tbs["operations"] = {}
-            bar = self.ti.CreatePanelInMainPage(_("Operations"), TYPE_TOOLBAR)
+            bar = self.ti.create_panel_in_main_page(_("Operations"), TYPE_TOOLBAR)
             self.tbs["operations"]["bar"] = bar
             self.tbs["operations"]["undo"] = bar.add_simple_tool(
                 wx.ID_UNDO, _("Undo"), bitmaps_from_art_id(wx.ART_UNDO, wx.Size(32, 32))
@@ -275,7 +423,7 @@ class StandardButtons(object):
             self.tbs["operations"]["find"] = bar.add_hybrid_tool(
                 ID_FIND, _("Find"), bitmaps_from_art_id(wx.ART_FIND, wx.Size(32, 32))
             )
-            bar.AddSeparator()
+            bar.add_separator()
             self.tbs["operations"]["filemanager"] = bar.add_simple_tool(
                 wx.ID_ANY,
                 _("File manager"),
@@ -293,6 +441,11 @@ class StandardButtons(object):
             self.make_handlers(ID_FIND, "Find", "CanFind")
 
     def create_browse_panel(self, toolbar_page):
+        """Create the Browser panel with navigation buttons.
+
+        Args:
+            toolbar_page: The toolbar page (unused).
+        """
         if self.browse or self.nav:
             self.tbs["browser"] = {}
             bar = self.ti.create_panel_in_main_page(_("Browser"), TYPE_BUTTONBAR)
@@ -346,51 +499,73 @@ class StandardButtons(object):
                     "CanWebAddBookmark",
                     propagate=True,
                 )
-                self.make_handlers(ID_WEB_NEW_WINDOW, "WebNewWindow", propagate=None)
+                self.make_handlers(ID_WEB_NEW_WINDOW, "WebNewWindow", propagate=False)
         else:
             self.tbs["browser"] = {}
             self.tbs["browser"]["bar"] = EmptyBar()
 
     def create_address_panel(self, toolbar_page):
+        """Create the Address bar panel with auto-complete and web menu.
+
+        Args:
+            toolbar_page: The toolbar page (unused).
+        """
         if self.address_bar:
             bar = self.ti.create_panel_in_main_page(_("Address"), TYPE_PANELBAR)
             if hasattr(bar, "panel"):
                 width = 350
                 panel = bar.panel
                 self.address = SchAutoComplete(panel, size=wx.Size(width, -1))
-                self.address.SetCallbackFun(self.OpenPage)
+                self.address.set_callback_fun(self.open_page)
                 self.tbs["browser"]["address"] = self.address
                 self.webmenu = FM.FlatMenuBar(panel, spacer=5)
                 self.webmenu.GetRendererManager().SetTheme(FM.Style2007)
                 self.tbs["browser"]["webmenu"] = self.webmenu
-                webmenu_source = self.WebMenu()
+                webmenu_source = self.web_menu()
                 self.web_info = wx.html.HtmlWindow(
                     panel, style=wx.html.HW_SCROLLBAR_NEVER, size=(width, 25)
                 )
                 self.web_info.SetBorders(0)
                 self._info_clear()
-                self.MemkeMenu(self.webmenu, webmenu_source)
-                controls = (self.address, self.web_info, self.webmenu)
+                self.make_menu(self.webmenu, webmenu_source)
                 controls = (self.webmenu, self.web_info, self.address)
                 bar.AddPanel(controls)
             else:
-                self.tbs["browser"]["address"] = EmpytControl()
+                self.tbs["browser"]["address"] = EmptyControl()
                 self.web_info = None
         else:
-            self.tbs["browser"]["address"] = EmpytControl()
+            self.tbs["browser"]["address"] = EmptyControl()
             self.web_info = None
 
     def load_page(self, address):
+        """Load a URL in the browser panel if one is active.
+
+        Args:
+            address: URL to load.
+        """
         if "browser" in self._object_list and self._object_list["browser"]:
             self._object_list["browser"].Go(address)
 
     def _title_from_address(self, address):
-        x = address.replace(r"http://", "")
+        """Extract a short display title from a URL.
+
+        Args:
+            address: Full URL string.
+
+        Returns:
+            str: Truncated title suitable for display.
+        """
+        x = address.replace("http://", "")
         if len(x) > 20:
             x = x[:16] + " ..."
         return x
 
     def _status(self, tab):
+        """Update enabled/disabled state for a set of toolbar buttons.
+
+        Args:
+            tab: List of (enabled, panel_key, button_key) tuples.
+        """
         start_status = []
         dis = self.ti.status_tool_disabled()
         for pos in tab:
@@ -407,6 +582,11 @@ class StandardButtons(object):
             i += 1
 
     def clipboard_refr(self, editctrl):
+        """Refresh clipboard buttons based on the focused control's capabilities.
+
+        Args:
+            editctrl: The currently focused edit control, or None.
+        """
         if self.clipboard:
             tab_status = []
             if editctrl:
@@ -426,7 +606,7 @@ class StandardButtons(object):
                 )
                 tab_status.append(
                     (
-                        hasattr(editctrl, "CanPaste") and editctrl.CanCut(),
+                        hasattr(editctrl, "CanPaste") and editctrl.CanPaste(),
                         "clipboard",
                         "paste",
                     )
@@ -437,20 +617,25 @@ class StandardButtons(object):
                 tab_status.append((False, "clipboard", "paste"))
             return self._status(tab_status)
 
-    def opeartions_refr(self, editctrl):
+    def operations_refr(self, editctrl):
+        """Refresh operations buttons based on the focused control's capabilities.
+
+        Args:
+            editctrl: The currently focused edit control, or None.
+        """
         if self.operations:
             tab_status = []
             if editctrl:
                 tab_status.append(
                     (
-                        hasattr(editctrl, "CanRedo") and editctrl.CanCopy(),
+                        hasattr(editctrl, "CanRedo") and editctrl.CanRedo(),
                         "operations",
                         "redo",
                     )
                 )
                 tab_status.append(
                     (
-                        hasattr(editctrl, "CanUndo") and editctrl.CanCut(),
+                        hasattr(editctrl, "CanUndo") and editctrl.CanUndo(),
                         "operations",
                         "undo",
                     )
@@ -461,6 +646,11 @@ class StandardButtons(object):
             return self._status(tab_status)
 
     def web_refr(self, webobject):
+        """Refresh browser navigation buttons based on web view state.
+
+        Args:
+            webobject: The web view control, or None.
+        """
         if self.browse or self.nav:
             tab_status = []
             if webobject:
@@ -482,6 +672,11 @@ class StandardButtons(object):
             return self._status(tab_status)
 
     def address_refr(self, panel):
+        """Refresh the address bar based on the active panel's web status.
+
+        Args:
+            panel: The active panel, or None.
+        """
         if self.address_bar:
             if panel is not None and hasattr(panel.body, "WEB"):
                 ctrl = panel.body.WEB
@@ -514,45 +709,75 @@ class StandardButtons(object):
                 self._info_clear()
 
     def _info_proc(self, txt, proc):
+        """Display a progress bar in the web info area.
+
+        Args:
+            txt: Status text.
+            proc: Progress percentage (0-100).
+        """
         if self.web_info and (txt != self.info or proc != self.progress):
-            if txt and txt != "":
+            if txt:
                 self.web_info.SetPage(
-                    "<body bgcolor='%s'><table width='100%%'><tr><td bgcolor='%s' width='%s%%'></td><td ></td></tr><tr><td colspan='2' td bgcolor='%s'><small>%s</small></td></tr></table></body>"
-                    % (self.bg, self.bg_h, proc, self.bg_info, txt)
+                    "<body bgcolor='%s'><table width='100%%'>"
+                    "<tr><td bgcolor='%s' width='%s%%'></td><td></td></tr>"
+                    "<tr><td colspan='2' bgcolor='%s'><small>%s</small></td></tr>"
+                    "</table></body>" % (self.bg, self.bg_h, proc, self.bg_info, txt)
                 )
             else:
                 self.web_info.SetPage(
-                    "<body bgcolor='%s'><table width='100%%'><tr><td bgcolor='%s' width='%s%%'></td><td ></td></tr></table></body>"
-                    % (self.bg, self.bg_h, proc)
+                    "<body bgcolor='%s'><table width='100%%'>"
+                    "<tr><td bgcolor='%s' width='%s%%'></td><td></td></tr>"
+                    "</table></body>" % (self.bg, self.bg_h, proc)
                 )
             self.info = txt
             self.progress = proc
 
     def _info_txt(self, txt):
+        """Display informational text in the web info area.
+
+        Args:
+            txt: Informational message.
+        """
         if self.web_info and txt != self.info:
             self.web_info.SetPage(
-                "<body bgcolor='%s'><table width='100%%'><tr><td bgcolor='%s'><strong><small>%s</small></strong></tr></td></table></body>"
-                % (self.bg, self.bg_info, txt)
+                "<body bgcolor='%s'><table width='100%%'>"
+                "<tr><td bgcolor='%s'><strong><small>%s</small></strong></td></tr>"
+                "</table></body>" % (self.bg, self.bg_info, txt)
             )
             self.info = txt
             self.progress = -1
 
     def _info_alarm(self, txt):
+        """Display an error/alarm message in the web info area.
+
+        Args:
+            txt: Error message.
+        """
         if self.web_info and txt != self.info:
             self.web_info.SetPage(
-                "<body bgcolor='%s'><table width='100%%'><tr><td bgcolor='%s'><strong><small>%s</small></strong></tr></td></table></body>"
-                % (self.bg, self.bg_info, txt)
+                "<body bgcolor='%s'><table width='100%%'>"
+                "<tr><td bgcolor='%s'><strong><small>%s</small></strong></td></tr>"
+                "</table></body>" % (self.bg, self.bg_info, txt)
             )
             self.info = txt
             self.progress = -1
 
     def _info_clear(self):
+        """Clear the web info area."""
         if self.web_info and (self.info != "" or self.progress != -1):
             self.web_info.SetPage("<body bgcolor='%s'></body>" % self.bg)
             self.info = ""
             self.progress = -1
 
     def open_page(self, page):
+        """Open a URL in a new web view page.
+
+        Args:
+            page: URL to open.
+
+        Returns:
+            bool: True on success.
+        """
         name = self._title_from_address(page)
         okno = (
             wx.GetApp()
@@ -563,6 +788,11 @@ class StandardButtons(object):
         return True
 
     def on_print(self, event):
+        """Show the print dropdown menu.
+
+        Args:
+            event: The dropdown event.
+        """
         menu = FM.FlatMenu()
         menu.Append(wx.ID_ANY, _("Print"), _("Print"), wx.ITEM_NORMAL)
         menu.Append(wx.ID_ANY, _("Print preview"), _("Print preview"), wx.ITEM_NORMAL)
@@ -572,12 +802,23 @@ class StandardButtons(object):
         self.ti.popup_menu(event, menu)
 
     def on_find(self, event):
+        """Show the find/replace dropdown menu.
+
+        Args:
+            event: The dropdown event.
+        """
         menu = FM.FlatMenu()
         menu.Append(wx.ID_ANY, _("Find"), _("Find"), wx.ITEM_NORMAL)
         menu.Append(wx.ID_ANY, _("Replace"), _("Replace"), wx.ITEM_NORMAL)
         event.PopupMenu(menu)
 
-    def memke_menu(self, menubar, menulist):
+    def make_menu(self, menubar, menulist):
+        """Build a flat menu bar from a nested menu definition.
+
+        Args:
+            menubar: The FlatMenuBar to populate.
+            menulist: List of (title, ((label, id), ...)) tuples.
+        """
         for item in menulist:
             menu = FM.FlatMenu()
             for pos in item[1]:
@@ -585,8 +826,22 @@ class StandardButtons(object):
                 menu.AppendItem(menuitem)
             menubar.Append(menu, item[0])
 
+    def memke_menu(self, menubar, menulist):
+        """Backward compatibility alias for make_menu.
+
+        Args:
+            menubar: The FlatMenuBar to populate.
+            menulist: List of (title, ((label, id), ...)) tuples.
+        """
+        self.make_menu(menubar, menulist)
+
     def web_menu(self):
-        menu = (  # ('Page source', ID_PAGE_SOURCE),
+        """Return the web menu structure definition.
+
+        Returns:
+            tuple: Nested menu definition for the web toolbar menu.
+        """
+        menu = (
             (
                 _("View"),
                 (
@@ -622,7 +877,7 @@ class StandardButtons(object):
                 _("Tools"),
                 (
                     (_("Show download panel"), ID_SHOW_DOWNLOAD),
-                    x(_("Options"), ID_DOWNLOAD_OPTIONS),
+                    (_("Options"), ID_DOWNLOAD_OPTIONS),
                 ),
             ),
             (
@@ -636,4 +891,9 @@ class StandardButtons(object):
         return menu
 
     def realize(self):
+        """No-op realization method for compatibility."""
         pass
+
+
+# Backward compatibility alias for renamed class
+EmpytControl = EmptyControl

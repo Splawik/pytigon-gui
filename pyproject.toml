@@ -1,0 +1,6 @@
+[tool.pytest.ini_options]
+filterwarnings = [
+    "ignore::DeprecationWarning:pkg_resources.*",
+    "ignore::DeprecationWarning:fs.*",
+    "ignore:.*ast\\.Ellipsis.*:DeprecationWarning:pscript.*",
+]

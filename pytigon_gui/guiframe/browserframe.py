@@ -1,8 +1,15 @@
+"""
+Browser-based main frame for Pytigon.
+
+SchBrowserFrame embeds an HTML2 webview control as the main content
+area instead of the standard AUI-managed desktop. It is used when the
+application runs in a webview-embedded mode.
+"""
+
 import os
 import sys
-import wx
 
-from pytigon_lib.schhttptools.httpclient import COOKIES
+import wx
 
 import pytigon_gui.guictrl.ctrl
 
@@ -16,8 +23,10 @@ _ = wx.GetTranslation
 
 
 class SchBrowserFrame(SchBaseFrame):
-    """
-    This is main window of pytigon application
+    """Main window for browser-embedded Pytigon applications.
+
+    Uses an HTML2 webview control as the primary content area,
+    loading the initial page directly from the embedded HTTP client.
     """
 
     def __init__(
@@ -31,6 +40,18 @@ class SchBrowserFrame(SchBaseFrame):
         style=wx.DEFAULT_FRAME_STYLE | wx.CLIP_CHILDREN | wx.WANTS_CHARS,
         name="MainWindow",
     ):
+        """Construct the browser frame.
+
+        Args:
+            parent: Parent window (usually None).
+            gui_style: UI layout style string.
+            id: Window identifier.
+            title: Window title.
+            pos: Initial position.
+            size: Initial size.
+            style: wx.Frame style flags.
+            name: Widget name.
+        """
         self.gui_style = gui_style
         self.destroy_fun_tab = []
         self.idle_objects = []
@@ -59,6 +80,8 @@ class SchBrowserFrame(SchBaseFrame):
         self.ctrl.load_str(start_request.str(), "http://127.0.0.5/")
 
         if sys.platform != "win32":
+            # On non-Windows platforms, yield until the page is loaded
+            # so that the initial paint is correct.
             while not self.ctrl.page_loaded:
                 wx.Yield()
 
@@ -67,20 +90,36 @@ class SchBrowserFrame(SchBaseFrame):
         wx.CallAfter(self.Show)
 
     def on_size(self, event):
-        if event:
-            if self.ctrl:
+        """Resize the embedded webview to match the frame.
+
+        Args:
+            event: wx.SizeEvent or None.
+        """
+        if self.ctrl:
+            if event:
                 self.ctrl.SetSize(event.GetSize())
-            event.Skip()
-        else:
-            if self.ctrl:
+                event.Skip()
+            else:
                 self.ctrl.SetSize(self.GetSize())
 
     def get_menu_bar(self):
+        """Return None; browser frames have no menu bar."""
         return None
 
     def on_idle(self, event):
+        """Idle handler: process idle objects and load start pages.
+
+        On the first idle event, any configured ``start_pages`` are
+        opened via ``_on_html``.
+
+        Args:
+            event: wx.IdleEvent.
+        """
         for obj in self.idle_objects:
-            obj.on_idle()
+            try:
+                obj.on_idle()
+            except Exception:
+                pass
 
         if not self.after_init:
             self.after_init = True
@@ -100,4 +139,10 @@ class SchBrowserFrame(SchBaseFrame):
         event.Skip()
 
     def set_acc_key_tab(self, win, tab):
+        """No-op: keyboard accelerators not supported in browser mode.
+
+        Args:
+            win: Target window.
+            tab: Accelerator table entries.
+        """
         pass

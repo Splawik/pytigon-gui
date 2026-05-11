@@ -1,20 +1,3 @@
-#!/usr/bin/env python
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU Lesser General Public License as published by the
-# Free Software Foundation; either version 3, or (at your option) any later
-# version.
-#
-# This program is distributed in the hope that it will be useful, but
-# WITHOUT ANY WARRANTY  ; without even the implied warranty of MERCHANTIBILITY
-# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# for more details.
-
-# Pytigon - wxpython and django application framework
-
-# author: "Slawomir Cholaj (slawomir.cholaj@gmail.com)"
-# license: "LGPL 3.0"
-
-
 """This is the main Pytigon client moudule. Function :func:`~pytigon_gui.pytigon.main` create SchApp object, witch extends wxPython wx.App.
 Function :func:`~pytigon_gui.pytigon.main` process pytigon command line arguments. Module supports:
 
@@ -26,8 +9,6 @@ Function :func:`~pytigon_gui.pytigon.main` process pytigon command line argument
 """
 
 import os
-
-# os.environ["G_DEBUG"] = "fatal-criticals"
 import sys
 import time
 import platform
@@ -35,12 +16,11 @@ import zipfile
 import getopt
 from multiprocessing import Process
 import configparser
+import logging
 from urllib.parse import urljoin
 import pytigon
 
-# import debugpy
-# debugpy.listen(("localhost", 5678))
-# debugpy.wait_for_client()
+logger = logging.getLogger(__name__)
 
 if platform.system() == "Windows":
     # grouping pytigon applicactions in the windows taskbar
@@ -81,7 +61,9 @@ _WEBSOCKET = None
 
 
 def usage():
-    print(process_argv.__doc__)
+    import sys
+
+    sys.stdout.write(str(process_argv.__doc__) + "\n")
 
 
 def process_argv(argv):
@@ -168,9 +150,9 @@ def process_argv(argv):
             ret["loaddb"] = True
         elif opt == "--server_only":
             ret["server_only"] = True
-        elif opt in ("-u--username"):
+        elif opt in ("-u", "--username"):
             ret["username"] = arg
-        elif opt in ("-p--password"):
+        elif opt in ("-p", "--password"):
             ret["password"] = arg
         elif opt in ("--listen",):
             ret["listen"] = arg
@@ -178,7 +160,7 @@ def process_argv(argv):
             ret["extra"] = arg
         elif opt in ("--import",):
             ret["import"] = arg
-        elif opt in ("-b--embededbrowser"):
+        elif opt in ("-b", "--embededbrowser"):
             ret["embeded_browser"] = True
         elif opt in ("-s", "--embededserver"):
             ret["address"] = "embeded"
@@ -295,7 +277,7 @@ def process_adv_argv():
     if not (arg == "embeded" or "." in arg or "/" in arg):
         CWD_PATH = os.path.join(PATHS["PRJ_PATH"], arg)
         if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
-            print(_("Application pack: '%s' does not exists") % arg)
+            logger.error(_("Application pack: '%s' does not exists"), arg)
             sys.exit(0)
         else:
             sys.path.insert(0, CWD_PATH)
@@ -315,7 +297,7 @@ process_adv_argv()
 if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
     try:
         from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
-    except:
+    except ImportError:
         asyncio.futures.CancelledError = asyncio.CancelledError
         from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
 
@@ -370,12 +352,8 @@ if "rpc" in _PARAM or "websocket" in _PARAM:
 
         _WEBSOCKET = _PARAM["websocket"]
 
-if not "channels" in _PARAM:
+if "channels" not in _PARAM:
     os.environ["PYTIGON_WITHOUT_CHANNELS"] = "1"
-
-# import gc
-# gc.set_debug(gc.DEBUG_STATS | gc.DEBUG_LEAK)
-# gc.disable()
 
 wx.RegisterId(10000)
 wx.outputWindowClass = None
@@ -409,12 +387,6 @@ if _INSPECTION:
             for pos in ("process_window_event", "idle", "timer", "update_ui"):
                 if pos in func_name:
                     return
-            if (
-                "process_window_event" in func_name
-                or "idle" in func_name
-                or "idle" in func_name
-            ):
-                return
             func_line_no = frame.f_lineno
             func_filename = co.co_filename
             if not "wx/core" in func_filename:
@@ -422,15 +394,13 @@ if _INSPECTION:
             caller = frame.f_back
             caller_line_no = caller.f_lineno
             caller_filename = caller.f_code.co_filename
-            print(
-                "Call to %s on line %s of %s from line %s of %s"
-                % (
-                    func_name,
-                    func_line_no,
-                    func_filename,
-                    caller_line_no,
-                    caller_filename,
-                )
+            logger.debug(
+                "Call to %s on line %s of %s from line %s of %s",
+                func_name,
+                func_line_no,
+                func_filename,
+                caller_line_no,
+                caller_filename,
             )
             return
 
@@ -560,7 +530,7 @@ class SchApp(App, _BASE_APP):
         class callback:
             def on_websocket_message(msg):
                 # pass
-                print("CALLBACK:", msg)
+                logger.debug("CALLBACK: %s", msg)
 
         self.add_websoket_callback("/schbuilder/clock/channel/", callback)
 
@@ -588,16 +558,23 @@ class SchApp(App, _BASE_APP):
     # some XML-RPC function calls for twisted server
     def xmlrpc_stop(self):
         """Closes the wx application."""
-        self.frame.Close()  # Sending closing event
+        top_window = self.GetTopWindow()
+        if top_window:
+            top_window.Close()
         return "Shutdown initiated"
 
     def xmlrpc_title(self, title):
-        """Set the main window title
+        """Set the main window title.
 
         Args:
-            title - new title of application top window
+            title: new title of application top window
+
+        Returns:
+            The title that was set, or None if no top window exists.
         """
-        self.GetTopWindow().SetTitle(title)
+        top_window = self.GetTopWindow()
+        if top_window:
+            top_window.SetTitle(title)
         return title
 
     def get_locale_object(self):
@@ -622,15 +599,17 @@ class SchApp(App, _BASE_APP):
 
         self.http = httpclient.AppHttp(address + "/", self)
         response = self.http.get(self, href)
+        if response is None:
+            return 0
         if response.ret_code != 200:
             if not login(href, auth_type="basic"):
                 return 0
             else:
                 self.authorized = True
-            response = self.http.get(href, "/")
+            response = self.http.get(self, href)
 
-        if response.ret_code != 200:
-            return response
+        if response is None or response.ret_code != 200:
+            return response if response else 0
 
         if app and app != "":
             self.images = image.SchImage("/" + app + "/site_media/app.png")
@@ -648,6 +627,12 @@ class SchApp(App, _BASE_APP):
         return response.ret_code
 
     def _re_init(self, address, app):
+        """Re-initialize the application connection after login.
+
+        Args:
+            address: base URL address of the server.
+            app: application name.
+        """
         self.base_address = address
         self.base_app = app
         if self.base_app:
@@ -659,16 +644,18 @@ class SchApp(App, _BASE_APP):
             response = self.http.get(self, "/" + app + "/")
         else:
             response = self.http.get(self, "/")
+        if response is None:
+            return
         ret = response.str()
         self.mp = SimpleTabParser()
         self.mp.feed(ret)
         self.mp.close()
 
     async def test_websockets(self):
-        print("-----------------------------------------------------------------")
-        print(self.websockets)
+        logger.debug("-" * 65)
+        logger.debug("%s", self.websockets)
         await self.websocket_send("/schtasks/show_task_events/channel/", {"id": "test"})
-        print("=================================================================")
+        logger.debug("=" * 65)
 
         count = 999
         while True:
@@ -727,20 +714,13 @@ class SchApp(App, _BASE_APP):
                         )
                     )
             if tasks:
-                # try:
                 done, pending = await asyncio.wait(tasks)
-                # done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
                 assert not pending
                 (future,) = done  # unpack a set of length one
-                print(future.result())  # raise an exception or use future.exception()
-            # except Error:
-            # except:
-            #    print('got exception', flush=True)
-            # else:
-            #    print('no exception', flush=True)
+                logger.debug("Websocket init result: %s", future.result())
 
     def create_websocket(self, websocket_id, callback):
-        local = True if app.base_address.startswith("http://127.0.0.2") else False
+        local = True if self.base_address.startswith("http://127.0.0.2") else False
         create_websocket_client(self, websocket_id, local, callback)
         if local:
             tasks = []
@@ -763,9 +743,7 @@ class SchApp(App, _BASE_APP):
                         # done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
                         assert not pending
                         (future,) = done  # unpack a set of length one
-                        print(
-                            future.result()
-                        )  # raise an exception or use future.exception(
+                        logger.debug("Websocket reinit result: %s", future.result())
 
                     self.StartCoroutine(reinit_websockets, self.GetTopWindow())
 
@@ -804,7 +782,7 @@ class SchApp(App, _BASE_APP):
                     return self.ext_app_http[app[0]]
                 else:
                     http = httpclient.AppHttp(app[1], app[0])
-                    self.exft_app_http[app[0]] = http
+                    self.ext_app_http[app[0]] = http
                     return http
         return self.http
 
@@ -853,8 +831,8 @@ class SchApp(App, _BASE_APP):
                 else:
                     adr = address_or_parser
                 response = http.get(win, adr)
-            if response.ret_code == 404:
-                raise Exception("http", "404")
+            if response is None or response.ret_code == 404:
+                raise ValueError("HTTP request failed with 404 for address: %s" % adr)
             ptr = response.str()
             mp = ShtmlParser()
             mp.process(ptr, address_or_parser)
@@ -867,10 +845,8 @@ class SchApp(App, _BASE_APP):
             mp.address = adr
         else:
             adr = None
-            if address_or_parser:
-                mp = address_or_parser
-            else:
-                mp = ShtmlParser()
+            mp = address_or_parser if address_or_parser else ShtmlParser()
+            if not address_or_parser:
                 mp.process("<html><body></body></html>")
                 mp.address = None
         return (mp, adr)
@@ -893,110 +869,142 @@ class SchApp(App, _BASE_APP):
         else:
             return None
 
-    # def get_active_window(self):
-    #    return self.GetTopWindow()
-
-    # def get_main_windows(self):
-    #    return [self.GetTopWindow()]
-
-    # def append_thread(self, thread_address):
-    #    if self.thread_manager:
-    #        self.thread_manager.append(thread_address)
-
-    # def timer(self):
-    #    if self.thread_manager:
-    #        self.thread_manager.timer()
-
     def get_working_dir(self):
-        """return pytigon working director - ~/pytigon_data"""
+        """Return pytigon working directory - ~/pytigon_data/."""
         return os.path.join(os.path.expanduser("~"), "pytigon_data/")
 
     def _get_parm_for_server(self):
+        """Build a parameter string containing colour settings for the server.
+
+        Returns:
+            A comma-separated string of colour name:value pairs without '#' prefixes.
+        """
         ret = ""
         for pos in standard_tab_colour():
             ret = ret + pos[0] + ":" + pos[1] + ","
         return ret[:-1].replace("#", "")
 
     def _install_plugins(self):
+        """Install plugins from the server if they are not already cached locally.
+
+        Downloads plugin zip files from the server and extracts them into the
+        local plugin cache directory.
+        """
         home_dir = self.get_working_dir()
         p = self.plugins
-        if p:
-            sys.path.append(home_dir)
-            for plugin in p:
-                if not "/" in plugin:
-                    continue
-                if plugin == "" or plugin.startswith("standard/"):
-                    continue
-                print(plugin)
+        if not p:
+            return
+        sys.path.append(home_dir)
+        for plugin in p:
+            if not plugin or "/" not in plugin:
+                continue
+            if plugin.startswith("standard/"):
+                continue
+            try:
+                logger.info("Installing plugin: %s", plugin)
                 app_name = plugin.split("/")[0]
                 plugin_name = plugin.split("/")[1]
-                if plugin_name == "install":
-                    plugins_cache = ""
-                else:
-                    plugins_cache = "plugins_cache/"
-                if not os.path.exists(home_dir + plugins_cache + str(app_name)):
-                    os.mkdir(home_dir + plugins_cache + str(app_name))
-                    ini = open(
-                        home_dir + plugins_cache + str(app_name) + "/__init__.py", "w"
-                    )
-                    ini.write(" ")
-                    ini.close()
-                if not os.path.exists(home_dir + plugins_cache + str(plugin) + ".zip"):
+                plugins_cache = "" if plugin_name == "install" else "plugins_cache/"
+                plugin_dir = home_dir + plugins_cache + str(app_name)
+                if not os.path.exists(plugin_dir):
+                    os.makedirs(plugin_dir, exist_ok=True)
+                    init_path = os.path.join(plugin_dir, "__init__.py")
+                    with open(init_path, "w") as ini:
+                        ini.write(" ")
+                zip_path = home_dir + plugins_cache + str(plugin) + ".zip"
+                if not os.path.exists(zip_path):
                     http = wx.GetApp().http
                     response = http.get(self, "/schsys/plugins/" + str(plugin) + "/")
-                    z_data = response.ptr()
-                    x = open(home_dir + plugins_cache + str(plugin) + ".zip", "wb")
-                    x.write(z_data)
-                    x.close()
-                    zip_name = home_dir + plugins_cache + str(plugin) + ".zip"
-                    extract_to = home_dir + plugins_cache + str(app_name)
-                    zip_handle = zipfile.ZipFile(zip_name)
-                    extractall(zip_handle, extract_to)
-                    zip_handle.close()
+                    if response and response.ret_code == 200:
+                        z_data = response.ptr()
+                        if z_data:
+                            with open(zip_path, "wb") as x:
+                                x.write(z_data)
+                            try:
+                                zip_handle = zipfile.ZipFile(zip_path)
+                                extractall(zip_handle, plugin_dir)
+                                zip_handle.close()
+                            except (zipfile.BadZipFile, OSError) as e:
+                                logger.error(
+                                    "Error extracting plugin %s: %s", plugin, e
+                                )
+            except Exception as e:
+                logger.error("Error installing plugin %s: %s", plugin, e)
 
     def on_exit(self):
+        """Clean up resources when the application exits.
+
+        Terminates the task manager if it is running.
+        """
         if self.task_manager:
-            self.task_manager.terminate()
-            # if len(self.task_manager.list_threads(all=False)) > 0:
-            #    dlg = wx.MessageDialog(
-            #        None,
-            #        _("There are background tasks - kill?"),
-            #        _("Warning"),
-            #        wx.YES_NO | wx.ICON_QUESTION,
-            #    )
-            #    result = dlg.ShowModal()
-            #    if result == wx.ID_YES:
-            #        self.task_manager.kill_all()
+            try:
+                self.task_manager.terminate()
+            except Exception:
+                pass
 
     def run_script(self, app_name, script_path):
-        with open(script_path, "rb") as s:
-            wx.CallAfter(
-                self.GetTopWindow().new_main_page,
-                "/" + app_name + "/run_script/",
-                "Run script",
-                {"script": s.read()},
-            )
+        """Run a script file and send its content to the server.
+
+        Args:
+            app_name: name of the application.
+            script_path: path to the script file to execute.
+        """
+        try:
+            with open(script_path, "rb") as s:
+                top_window = self.GetTopWindow()
+                if top_window and hasattr(top_window, "new_main_page"):
+                    wx.CallAfter(
+                        top_window.new_main_page,
+                        "/" + app_name + "/run_script/",
+                        "Run script",
+                        {"script": s.read()},
+                    )
+        except (IOError, OSError) as e:
+            logger.error("Error reading script %s: %s", script_path, e)
 
     def add_websoket_callback(self, websocket_id, callback):
+        """Register a callback for websocket events on a given websocket ID.
+
+        Args:
+            websocket_id: the websocket endpoint identifier.
+            callback: object with websocket event handler methods.
+        """
         if websocket_id in self.websockets_callbacks:
             self.websockets_callbacks[websocket_id].append(callback)
         else:
             self.websockets_callbacks[websocket_id] = [callback]
 
     def remove_websocket_callback(self, websocket_id, callback):
+        """Unregister a previously registered websocket callback.
+
+        Args:
+            websocket_id: the websocket endpoint identifier.
+            callback: the callback object to remove.
+        """
         if websocket_id in self.websockets_callbacks:
             if callback in self.websockets_callbacks[websocket_id]:
                 self.websockets_callbacks[websocket_id].remove(callback)
 
     async def websocket_send(self, websocket_id, msg):
+        """Send a message through a websocket connection.
+
+        Args:
+            websocket_id: the websocket endpoint identifier.
+            msg: message to send (will be JSON-serialized by the transport).
+        """
         if websocket_id in self.websockets:
-            if not "clock" in websocket_id:
-                print(websocket_id)
             obj = self.websockets[websocket_id].send_message(msg)
             if obj:
                 await obj
 
     def on_websocket_callback(self, client, event_name, argv):
+        """Dispatch a websocket event to all registered callbacks.
+
+        Args:
+            client: the websocket client instance.
+            event_name: name of the event (e.g. 'on_websocket_message').
+            argv: event arguments dictionary.
+        """
         if client.websocket_id in self.websockets_callbacks:
             for callback in self.websockets_callbacks[client.websocket_id]:
                 if hasattr(callback, event_name):
@@ -1004,69 +1012,99 @@ class SchApp(App, _BASE_APP):
                         if hasattr(callback, "accept_channel"):
                             if not getattr(callback, "accept_channel")(argv["channel"]):
                                 continue
-                    getattr(callback, event_name)(**argv)
+                    try:
+                        getattr(callback, event_name)(**argv)
+                    except Exception as e:
+                        logger.error(
+                            "Websocket callback error for %s: %s", event_name, e
+                        )
 
     def on_websocket_connect(self, client, websocket_id, response):
+        """Handle websocket connect event."""
         return self.on_websocket_callback(
             client, "on_websocket_connect", {"response": response}
         )
 
     def on_websocket_open(self, client, websocket_id):
+        """Handle websocket open event."""
         return self.on_websocket_callback(client, "on_websocket_open", {})
 
     def on_websocket_message(self, client, websocket_id, msg):
+        """Handle websocket message event."""
         return self.on_websocket_callback(client, "on_websocket_message", msg)
 
 
 def login(base_href, auth_type=None, username=None):
-    """Show login form"""
+    """Show the login dialog and attempt authentication against the server.
+
+    Args:
+        base_href: base URL for authentication requests.
+        auth_type: authentication type ('basic' for HTTP basic auth, None for form-based).
+        username: pre-filled username (optional).
+
+    Returns:
+        True if login succeeded, False otherwise.
+    """
     dlg = LoginDialog(None, 101, _("Pytigon - login"), username=username)
 
     while dlg.ShowModal() == wx.ID_OK:
-        username = dlg.text1.GetValue()
-        password = dlg.text2.GetValue()
+        try:
+            username = dlg.text1.GetValue()
+            password = dlg.text2.GetValue()
 
-        parm = {
-            "username": username,
-            "password": password,
-            "next": "/schsys/ok/",
-            "client_param": wx.GetApp()._get_parm_for_server(),
-        }
-        if auth_type == None:
-            ret = wx.GetApp().http.post(
-                wx.GetApp(),
-                "/schsys/do_login/?from_pytigon=1",
-                parm,
-                credentials=(username, password),
-            )
-
-            ret_str = ret.str()
-
-            if "$$RETURN_OK" in ret_str:
-                dlg.Destroy()
-                return True
-            else:
-                if not "id_password" in ret_str:
-                    dlg.Destroy()
-                    return False
-                else:
-                    dlg.message.SetLabel(_("Failed login attempt!"))
-        else:
-            result = wx.GetApp().http.get(
-                wx.GetApp(), base_href, credentials=(username, password)
-            )
-            if result.ret_code == 200:
-                dlg.Destroy()
-                return True
-            else:
-                dlg.message.SetLabel(
-                    _("Failed login attempt! http error: %s") % result.ret_code
+            parm = {
+                "username": username,
+                "password": password,
+                "next": "/schsys/ok/",
+                "client_param": wx.GetApp()._get_parm_for_server(),
+            }
+            if auth_type is None:
+                ret = wx.GetApp().http.post(
+                    wx.GetApp(),
+                    "/schsys/do_login/?from_pytigon=1",
+                    parm,
+                    credentials=(username, password),
                 )
+
+                if ret is None:
+                    dlg.message.SetLabel(_("Connection error!"))
+                    continue
+
+                ret_str = ret.str()
+
+                if "$$RETURN_OK" in ret_str:
+                    dlg.Destroy()
+                    return True
+                else:
+                    if "id_password" not in ret_str:
+                        dlg.Destroy()
+                        return False
+                    else:
+                        dlg.message.SetLabel(_("Failed login attempt!"))
+            else:
+                result = wx.GetApp().http.get(
+                    wx.GetApp(), base_href, credentials=(username, password)
+                )
+                if result is not None and result.ret_code == 200:
+                    dlg.Destroy()
+                    return True
+                else:
+                    ret_code = result.ret_code if result else "N/A"
+                    dlg.message.SetLabel(
+                        _("Failed login attempt! http error: %s") % ret_code
+                    )
+        except Exception as e:
+            dlg.message.SetLabel(_("Login error: %s") % str(e))
     dlg.Destroy()
     return False
 
 
 def _main_init():
+    """Initialize the Pytigon application: parse args, set up Django, connect to server.
+
+    Returns:
+        Tuple of (ready_to_run: bool, nogui: bool), or (None, None) on failure.
+    """
     global CWD_PATH, _PARAM, app
 
     args = _PARAM["args"]
@@ -1105,8 +1143,8 @@ def _main_init():
                 if not pytigon_install.install(args[0]):
                     return (None, None)
                 # sys.path.remove(path)
-                return (None, None)
                 CWD_PATH = os.path.join(PATHS["PRJ_PATH"], prg_name2)
+                return (None, None)
             else:
                 if len(x) > 3:
                     prg_name2 = x[0]
@@ -1114,11 +1152,13 @@ def _main_init():
                     prj = x[-3]
                     CWD_PATH = os.path.join(PATHS["PRJ_PATH"], prj.strip())
                     if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
-                        print(_("Application pack: '%s' does not exists") % prj.strip())
+                        logger.error(
+                            _("Application pack: '%s' does not exists"), prj.strip()
+                        )
                         return (None, None)
                     wx.CallAfter(app.run_script, app_name2, args[0])
                 else:
-                    print(_("Name of script: '%s' is not valid") % prg_name)
+                    logger.error(_("Name of script: '%s' is not valid"), prg_name)
                     return (None, None)
         else:
             arg = args[0].strip()
@@ -1141,7 +1181,7 @@ def _main_init():
             else:
                 CWD_PATH = os.path.join(PATHS["PRJ_PATH"], arg)
                 if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
-                    print(_("Application pack: '%s' does not exists") % arg)
+                    logger.error(_("Application pack: '%s' does not exists"), arg)
                     return (None, None)
     sys.path.insert(0, CWD_PATH)
 
@@ -1187,7 +1227,7 @@ def _main_init():
         load = load_command()
         try:
             load.run_from_argv(["manage.py", "loaddata"])
-        except:
+        except SystemExit:
             pass
 
     cwd = CWD_PATH
@@ -1236,7 +1276,7 @@ def _main_init():
                 s.close()
                 s = None
                 test = False
-            except:
+            except OSError:
                 port += 1
 
         if "extra" in _PARAM:
@@ -1250,21 +1290,14 @@ def _main_init():
         server = None
 
     if "embeded_taskqueue" in _PARAM:
-        app.task_manager = ""
         from django_q.management.commands.qcluster import Command as qcluster_command
 
         qcluster = qcluster_command()
-        # try:
-        if True:
-            # qcluster.run_from_argv(["manage.py", "qcluster"])
-            app.task_manager = Process(
-                target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],)
-            )
-            app.task_manager.start()
-            print("Task manager started")
-            # p.join()
-        # except SystemExit:
-        #    pass
+        app.task_manager = Process(
+            target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],)
+        )
+        app.task_manager.start()
+        logger.info("Task manager started")
 
     settings.BASE_URL = "http://" + address
     settings.URL_ROOT_FOLDER = ""
@@ -1347,7 +1380,7 @@ def _main_init():
             app.authorized = True
             ready_to_run = True
         else:
-            print("Error: %s" % ret_str)
+            logger.error("Login error: %s", ret_str)
     if not app.authorized and "username" in _PARAM:
         ready_to_run = False
         href = "/" + app_name + "/" if app_name else "/"
@@ -1360,6 +1393,7 @@ def _main_init():
 
 
 def _main_run():
+    """Create the main application frame and start the wx event loop."""
     app = wx.GetApp()
     app.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
     app.locale.AddCatalogLookupPathPrefix(SRC_PATH + "/pytigon_gui/locale")

@@ -1,7 +1,11 @@
+"""Modern (Ribbon) toolbar implementation.
+
+Provides a ribbon-style toolbar based on wx.lib.agw.ribbon.
+"""
+
 import wx
 from functools import cmp_to_key
 
-# import wx.lib.agw.ribbon as RB
 import wx.lib.agw.ribbon as RB
 from wx.lib.agw.ribbon import art
 from wx.lib.agw.ribbon.art import *
@@ -23,7 +27,22 @@ ORG_LIKE_PRIMARY = None
 
 
 def like_primary(primary_hsl, h, s, l, x=None):
-    if x != None:
+    """Custom colour blending function for MSW ribbon style.
+
+    Blends a primary colour with the system 3D face colour to produce
+    a muted, system-integrated look.
+
+    Args:
+        primary_hsl: Original LikePrimary function reference.
+        h: Hue component.
+        s: Saturation component.
+        l: Lightness component.
+        x: Optional extra parameter passed to the original function.
+
+    Returns:
+        wx.Colour: The blended colour.
+    """
+    if x is not None:
         c1 = ORG_LIKE_PRIMARY(primary_hsl, h, 0, l * 1.5, x)
     else:
         c1 = ORG_LIKE_PRIMARY(primary_hsl, h, 0, l * 1.5)
@@ -38,33 +57,37 @@ def like_primary(primary_hsl, h, s, l, x=None):
     if b2 == 0:
         b2 = 1
     m = ((1.0 * c1.Red()) / r2 + (1.0 * c1.Green()) / g2 + (1.0 * c1.Blue()) / b2) / 3
-    x1 = int(c2.Red() * m)
-    x2 = int(c2.Green() * m)
-    x3 = int(c2.Blue() * m)
-    if x1 > 255:
-        x1 = 255
-    if x2 > 255:
-        x2 = 255
-    if x3 > 255:
-        x3 = 255
-    c3 = wx.Colour(x1, x2, x3)
-    return c3
+    x1 = min(int(c2.Red() * m), 255)
+    x2 = min(int(c2.Green() * m), 255)
+    x3 = min(int(c2.Blue() * m), 255)
+    return wx.Colour(x1, x2, x3)
 
 
 class ModernHtmlPanel(BaseHtmlPanel):
+    """HTML panel wrapper for the modern ribbon toolbar."""
+
     def get_width(self):
+        """Return panel width from the parent ribbon bar."""
         return self.page.parent_bar.get_bar_width()
 
     def get_height(self):
+        """Return panel height from the parent ribbon bar."""
         return self.page.parent_bar.get_bar_height()
 
     def set_page(self, html_page):
+        """Set the HTML page and update the ribbon bar layout.
+
+        Args:
+            html_page: The SchPage to display.
+        """
         super().set_page(html_page)
         self.page.parent_bar.update()
         self.page.parent_bar.SetActivePage(self.page)
 
 
 class ModernToolbarButton(ToolbarButton):
+    """Ribbon-specific toolbar button (thin wrapper around ToolbarButton)."""
+
     def __init__(
         self,
         parent_panel,
@@ -80,7 +103,17 @@ class ModernToolbarButton(ToolbarButton):
 
 
 class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
+    """A ribbon panel that holds a RibbonToolBar or RibbonButtonBar."""
+
     def __init__(self, parent_page, title, kind=ToolbarPanel.TYPE_PANEL_TOOLBAR):
+        """Initialize the ribbon panel.
+
+        Args:
+            parent_page: Parent ModernToolbarPage (a RibbonPage).
+            title: Panel title.
+            kind: Panel type; determines whether to use a toolbar
+                or button bar layout.
+        """
         RB.RibbonPanel.__init__(
             self,
             parent_page,
@@ -95,13 +128,16 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
 
         if self.kind == ToolbarPanel.TYPE_PANEL_TOOLBAR:
             self.toolbar = RB.RibbonToolBar(self)
-            # self.toolbar = SchRibbonToolBar(self)
         elif self.kind == ToolbarPanel.TYPE_PANEL_BUTTONBAR:
             self.toolbar = RB.RibbonButtonBar(self)
 
         self.lock = False
 
     def OnInternalIdle(self):
+        """Handle idle event to update the toolbar UI state.
+
+        Uses a lock to prevent re-entrant calls.
+        """
         if not self.lock:
             self.lock = True
             if self.toolbar:
@@ -109,6 +145,11 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
             self.lock = False
 
     def Append(self, b):
+        """Add a button to the underlying ribbon toolbar/button bar.
+
+        Args:
+            b: A ModernToolbarButton to add.
+        """
         if self.kind == ToolbarPanel.TYPE_PANEL_TOOLBAR:
             if b.kind == ToolbarButton.TYPE_SIMPLE:
                 self.toolbar.AddSimpleTool(b.id, b.bitmap, b.title)
@@ -133,10 +174,6 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
                 self.toolbar.AddToggleButton(b.id, b.title, b.bitmap, "")
             elif b.kind == ToolbarButton.TYPE_PANEL:
                 pass
-            # elif b.kind == ToolbarButton.TYPE_SEPARATOR:
-            #    self.toolbar.AddSeparator()
-        else:
-            pass
 
     def create_button(
         self,
@@ -146,11 +183,21 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
         bitmap_disabled=None,
         kind=ToolbarButton.TYPE_SIMPLE,
     ):
+        """Create and append a button to this ribbon panel.
+
+        Returns:
+            ModernToolbarButton: The newly created button.
+        """
         b = ModernToolbarButton(self, id, title, bitmap, bitmap_disabled, kind)
         self.Append(b)
         return b
 
     def add_separator(self):
+        """Append a visual separator to this ribbon panel.
+
+        Returns:
+            ModernToolbarButton: The separator button object.
+        """
         b = ModernToolbarButton(
             self, 0, "", None, None, kind=ToolbarButton.TYPE_SEPARATOR
         )
@@ -159,27 +206,60 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
 
 
 class ModernToolbarPage(ToolbarPage, RB.RibbonPage):
+    """A ribbon page (tab) within the ribbon bar."""
+
     def __init__(self, parent_bar, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
+        """Initialize the ribbon page.
+
+        Args:
+            parent_bar: Parent ModernToolbarBar (a RibbonBar).
+            title: Page title.
+            kind: Page type.
+        """
         ToolbarPage.__init__(self, parent_bar, title, kind)
         RB.RibbonPage.__init__(self, parent_bar, wx.ID_ANY, self.title)
 
     def create_panel(self, title, kind=ToolbarPanel.TYPE_PANEL_TOOLBAR):
+        """Create a ribbon panel within this page.
+
+        Returns:
+            ModernToolbarPanel: The newly created panel.
+        """
         return ModernToolbarPanel(self, title, kind)
 
     def create_html_panel(self, title):
+        """Create an HTML-capable panel within this page.
+
+        Returns:
+            ModernHtmlPanel: The HTML panel wrapper.
+        """
         p = self.create_panel(title)
         return ModernHtmlPanel(self, p)
 
 
 class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
+    """The top-level ribbon toolbar bar."""
+
     def __init__(self, parent, gui_style):
+        """Initialize the ribbon bar.
+
+        Args:
+            parent: Parent wx.Frame.
+            gui_style: GUI style string.
+        """
         RB.RibbonBar.__init__(self, parent, wx.ID_ANY)
         ToolbarBar.__init__(self, parent, gui_style)
 
     def create_page(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
+        """Create a new ribbon page.
+
+        Returns:
+            ModernToolbarPage: The newly created page.
+        """
         return ModernToolbarPage(self, title, kind)
 
     def create(self):
+        """Realize the ribbon bar and its children."""
         self.Realize()
 
         def _realize():
@@ -189,17 +269,34 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
         wx.CallAfter(_realize)
 
     def close(self):
+        """Close/destroy the ribbon bar."""
         self.Close()
 
     def update(self):
+        """Force a layout refresh by briefly resizing the bar."""
         size = self.GetSize()
         self.SetSize(wx.Size(size.GetWidth() - 1, size.GetHeight()))
         self.SetSize(wx.Size(size.GetWidth(), size.GetHeight()))
 
     def bind_ui(self, fun, id=wx.ID_ANY):
+        """Bind a UI update event handler to the ribbon bar.
+
+        Args:
+            fun: Handler function.
+            id: Event identifier.
+        """
         self.Bind(wx.EVT_UPDATE_UI, fun, id=id)
 
     def bind(self, fun, id=wx.ID_ANY, e=None):
+        """Bind a click event handler to the ribbon bar.
+
+        Binds to both ribbon button bar and ribbon toolbar click events.
+
+        Args:
+            fun: Handler function.
+            id: Event identifier.
+            e: Optional specific event type.
+        """
         if e:
             self.Bind(e, fun, id=id)
         else:
@@ -207,15 +304,32 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
             self.Bind(RB.EVT_RIBBONTOOLBAR_CLICKED, fun, id=id)
 
     def bind_dropdown(self, fun, id):
-        self.bar.Bind(RB.EVT_RIBBONTOOLBAR_DROPDOWN_CLICKED, fun, id=id)
+        """Bind a dropdown click event handler to the ribbon bar.
+
+        Args:
+            fun: Handler function.
+            id: Event identifier.
+        """
+        self.Bind(RB.EVT_RIBBONTOOLBAR_DROPDOWN_CLICKED, fun, id=id)
 
     def un_bind(self, id, e=None):
+        """Unbind an event handler from the ribbon bar.
+
+        Args:
+            id: Event identifier.
+            e: Optional specific event type.
+        """
         if e:
             self.Unbind(e, id=id)
         else:
             self.Unbind(RB.EVT_RIBBONBUTTONBAR_CLICKED, id=id)
 
     def get_bar_height(self):
+        """Return the preferred height of the ribbon bar.
+
+        Returns:
+            int: Height in pixels.
+        """
         s = (48, 48)
         ret = self.GetArtProvider().GetButtonBarButtonSize(
             self,
@@ -230,9 +344,21 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
         return size_ret.GetHeight()
 
     def get_bar_width(self):
+        """Return the preferred width of the ribbon bar.
+
+        Returns:
+            int: Width in pixels (always 2000 for full width).
+        """
         return 2000
 
     def remove_page(self, title):
+        """Remove a page from the ribbon bar.
+
+        Switches to the first page before removal, then updates layout.
+
+        Args:
+            title: Title of the page to remove.
+        """
         self.SetActivePage(0)
         for page_info in self._pages:
             if page_info.page.title == title:

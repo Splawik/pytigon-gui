@@ -1,5 +1,9 @@
 """
-SchNotebook object used as a top window in panels: 'desktop', 'panel', 'header' and 'footer'
+SchNotebook object used as a top-level container in panels:
+'desktop', 'panel', 'header' and 'footer'.
+
+Extends aui.AuiNotebook with custom page activation, closing,
+splitting, and wiki-based help lookup.
 """
 
 import wx
@@ -11,7 +15,12 @@ from wx.lib.agw.aui.aui_constants import *
 
 
 class SchNotebook(aui.AuiNotebook):
-    """SchNotebook class"""
+    """Custom AUI notebook for Pytigon applications.
+
+    Manages tab pages within desktop, panel, header, and footer
+    containers.  Supports page splitting, custom close behaviour,
+    and wiki-based help on double-click of a tab.
+    """
 
     def __init__(
         self,
@@ -20,13 +29,13 @@ class SchNotebook(aui.AuiNotebook):
         size=wx.DefaultSize,
         style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS,
     ):
-        """Constructor
+        """Construct a SchNotebook.
 
         Args:
-            parent: parent window
-            pos: position of window
-            size: size of window
-            style: see wx.Window style
+            parent: Parent window.
+            pos: Window position (default: wx.DefaultPosition).
+            size: Window size (default: wx.DefaultSize).
+            style: Window style flags.
         """
         self._curpage = -1
         self._tab_id_counter = AuiBaseTabCtrlId
@@ -44,6 +53,8 @@ class SchNotebook(aui.AuiNotebook):
         self.closing = False
         self.last_active = None
 
+        # Deliberately call wx.Panel.__init__ instead of AuiNotebook's
+        # to keep control over the initialization sequence.
         wx.Panel.__init__(self, parent, wx.ID_ANY, pos, size, style, name="SchNotebook")
         self._mgr = SChAuiBaseManager()
 
@@ -54,12 +65,17 @@ class SchNotebook(aui.AuiNotebook):
         self.Bind(aui.EVT_AUINOTEBOOK_TAB_DCLICK, self.on_dclick)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGED, self.on_changed)
         self.Bind(aui.EVT_AUINOTEBOOK_PAGE_CHANGING, self.on_changing)
-        self.Bind(wx.EVT_NAVIGATION_KEY, self.on_navigete)
+        self.Bind(wx.EVT_NAVIGATION_KEY, self.on_navigate)
 
         self.SetWindowStyleFlag(wx.WANTS_CHARS)
         self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
 
     def on_closing(self, event):
+        """Handle page close request.
+
+        Vetoes the close if the page's ``close_no_del`` method
+        indicates there are still child pages to close first.
+        """
         idn = event.GetSelection()
         if idn >= 0:
             page = self.GetPage(idn)
@@ -69,6 +85,11 @@ class SchNotebook(aui.AuiNotebook):
                 event.Veto()
 
     def on_changed(self, event):
+        """Handle page selection change.
+
+        Refreshes the previously selected and newly selected pages,
+        then activates the new page.
+        """
         sel = event.GetSelection()
         old_sel = event.GetOldSelection()
         if old_sel >= 0:
@@ -79,6 +100,11 @@ class SchNotebook(aui.AuiNotebook):
         event.Skip()
 
     def on_changing(self, event):
+        """Handle page selection about to change.
+
+        When closing a tab, ensures the selection moves to a sensible
+        neighbouring page.
+        """
         if self.closing:
             self.closing = False
             sel = event.GetSelection()
@@ -97,16 +123,23 @@ class SchNotebook(aui.AuiNotebook):
         event.Skip()
 
     def DeletePage(self, sel):
+        """Delete the page at index *sel*.
+
+        When the last page is removed, hides the parent panel and
+        restores focus to a visible pane.
+        """
         page = self.GetPage(sel)
         if page == self.last_active:
             self.last_active = None
 
         def _close():
             self.panel.Hide()
-            wx.GetApp().GetTopWindow()._mgr.Update()
-            for pane_name in ["desktop", "panel", "menu", "header", "footer"]:
-                pane_info = wx.GetApp().GetTopWindow()._mgr.GetPane(pane_name)
-                if pane_info.IsOk() and pane_info.IsShown():
+            top = wx.GetApp().GetTopWindow()
+            if top:
+                top._mgr.Update()
+            for pane_name in ("desktop", "panel", "menu", "header", "footer"):
+                pane_info = top._mgr.GetPane(pane_name) if top else None
+                if pane_info and pane_info.IsOk() and pane_info.IsShown():
                     pane_info.window.SetFocus()
 
         if len(self._tabs._pages) == 1:
@@ -115,6 +148,10 @@ class SchNotebook(aui.AuiNotebook):
         return aui.AuiNotebook.DeletePage(self, sel)
 
     def on_dclick(self, event):
+        """Handle tab double-click.
+
+        Opens the associated wiki help page in a new split pane.
+        """
         try:
             txt = self.GetPageText(event.GetSelection())
             mp, adr = wx.GetApp().read_html(
@@ -125,16 +162,27 @@ class SchNotebook(aui.AuiNotebook):
                 wx.GetApp().GetTopWindow().new_main_page(
                     mp, "?: " + wiki, panel="desktop2"
                 )
-        except:
+        except Exception:
             pass
 
     def SetPanel(self, panel):
+        """Store a reference to the owning panel.
+
+        Args:
+            panel: The parent panel object.
+        """
         self.panel = panel
 
     def GetPanel(self):
+        """Return the owning panel reference."""
         return self.panel
 
     def set_active(self, active):
+        """Set the active state and refresh the current page.
+
+        Args:
+            active: True to activate, False to deactivate.
+        """
         self.active = active
         if active:
             w = self.GetCurrentPage()
@@ -142,6 +190,11 @@ class SchNotebook(aui.AuiNotebook):
             self.GetParent().GetParent().SetActive(self, w)
 
     def activate_page(self, page):
+        """Activate *page* and deactivate the previously active one.
+
+        Args:
+            page: The SchNotebookPage to activate, or None.
+        """
         if self.last_active:
             self.last_active.deactivate_page()
         self.last_active = page
@@ -149,16 +202,17 @@ class SchNotebook(aui.AuiNotebook):
             page.activate_page()
 
     def add_and_split(self, page, title, direction):
-        """Add page to the notebook and split notebook window
+        """Add a page and split the notebook window.
 
         Args:
-            page - page to be added
-            title - title of new tab
-            direction - split direction: wx.LEFT, wx.TOP, wx.RIGHT, wx.Bottom
+            page: SchNotebookPage to add.
+            title: Caption for the new tab.
+            direction: wx.LEFT, wx.TOP, wx.RIGHT, or wx.BOTTOM.
         """
         self.closing = False
         if self.GetPageCount() < 1:
             return
+
         cli_size = self.GetClientSize()
         if self.GetPageCount() > 2:
             split_size = self.CalculateNewSplitSize()
@@ -166,6 +220,7 @@ class SchNotebook(aui.AuiNotebook):
             split_size = self.GetClientSize()
             split_size.x = int(split_size.x / 2)
             split_size.y = int(split_size.y / 2)
+
         new_tabs = aui.TabFrame(self)
         new_tabs.SetTabCtrlHeight(self._tab_ctrl_height)
         self._tab_id_counter += 1
@@ -173,11 +228,13 @@ class SchNotebook(aui.AuiNotebook):
         new_tabs._tabs.SetArtProvider(self._tabs.GetArtProvider().Clone())
         new_tabs._tabs.SetAGWFlags(self._agwFlags)
         dest_tabs = new_tabs._tabs
+
         pane_info = (
             framemanager.AuiPaneInfo()
             .CaptionVisible(False)
             .BestSize(split_size.GetWidth(), split_size.GetHeight())
         )
+
         if direction == wx.LEFT:
             pane_info.Left()
             mouse_pt = wx.Point(0, int(cli_size.y / 2))
@@ -190,13 +247,16 @@ class SchNotebook(aui.AuiNotebook):
         elif direction == wx.BOTTOM:
             pane_info.Bottom()
             mouse_pt = wx.Point(int(cli_size.x / 2), cli_size.y)
-        # self._mgr.AddPane(new_tabs, pane_info, mouse_pt)
-        # self._mgr.Update()
+        else:
+            pane_info.Right()
+            mouse_pt = wx.Point(cli_size.x, int(cli_size.y / 2))
+
         page_info = aui.AuiNotebookPage()
         page_info.window = page
         page_info.caption = title
         page_info.active = False
         page_info.control = None
+
         idn = self.GetPageCount()
         self._tabs.InsertPage(page, page_info, idn)
         dest_tabs.AddPage(page, page_info)
@@ -204,19 +264,24 @@ class SchNotebook(aui.AuiNotebook):
         page.Reparent(self)
         self.DoSizing()
         dest_tabs.Refresh()
-        # self.SetSelectionToPage(page_info)
         self.UpdateHintWindowSize()
 
         self._mgr.AddPane(new_tabs, pane_info, mouse_pt)
         self._mgr.Update()
 
-    def on_navigete(self, evt):
+    def on_navigate(self, evt):
+        """Handle navigation key events.
+
+        Activates the current page and passes the event on.
+        """
         forward = evt.GetDirection()
         self.activate_page(self.GetCurrentPage())
         evt.Skip()
 
     def Freeze(self):
+        """Prevent visual updates (no-op for this control)."""
         pass
 
     def Thaw(self):
+        """Allow visual updates (no-op for this control)."""
         pass

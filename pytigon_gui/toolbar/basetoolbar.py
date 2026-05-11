@@ -1,25 +1,27 @@
 """
-Module contains base classes for toolbars and menu:
-Class hierary:
-ToolbarBar
-    ToolbarPage
-        ToolbarPanel
-            ToolbarButton
-            ToolbarButton
+Base classes for toolbars and menu bar.
+
+Class hierarchy:
+    ToolbarBar
+        ToolbarPage
+            ToolbarPanel
+                ToolbarButton
+                ToolbarButton
+                ...
+            ToolbarPanel
             ...
-        ToolbarPanel
-        ....
-        BaseHtmlPanel
-    ....
+            BaseHtmlPanel
+        ...
 
-One ToolbarBar can contains many ToolbarPage objects, one ToolbarPage can contains many ToolbarPanel objects etc.
+One ToolbarBar can contain many ToolbarPage objects, one ToolbarPage can
+contain many ToolbarPanel objects, etc.
 
-There are real toolbars and menus, which are base on those abstract classes:
-- MenuToolbarBar
-- GenericToolbarBar
-- StandardToolbarBar
-- ModernToolbarBar
-- TreeToolbarBar
+Concrete toolbars and menus based on these abstract classes:
+    - MenuToolbarBar
+    - GenericToolbarBar
+    - StandardToolbarBar
+    - ModernToolbarBar
+    - TreeToolbarBar
 """
 
 import wx
@@ -32,7 +34,19 @@ _ = wx.GetTranslation
 
 
 class BaseHtmlPanel:
+    """Base panel that can host an HTML-rendered page within a toolbar.
+
+    This is used by toolbar types that support embedding web content
+    (e.g. ModernToolbarBar, TreeToolbarBar).
+    """
+
     def __init__(self, page, real_panel):
+        """Initialize the HTML panel wrapper.
+
+        Args:
+            page: Parent ToolbarPage object.
+            real_panel: The actual wx.Panel that will contain the HTML page.
+        """
         self.page = page
         self.real_panel = real_panel
         self.html_page = None
@@ -40,15 +54,42 @@ class BaseHtmlPanel:
         self.real_panel.SetSizer(self.sizer)
 
     def get_width(self):
+        """Return the preferred width of the panel.
+
+        Override in subclasses to provide actual dimensions.
+
+        Returns:
+            int: Width in pixels (0 by default).
+        """
         return 0
 
     def get_height(self):
+        """Return the preferred height of the panel.
+
+        Override in subclasses to provide actual dimensions.
+
+        Returns:
+            int: Height in pixels (0 by default).
+        """
         return 0
 
     def get_window(self):
+        """Return the underlying wx.Window for this panel.
+
+        Returns:
+            wx.Window: The real panel window.
+        """
         return self.real_panel
 
     def set_page(self, html_page):
+        """Replace the current HTML page with a new one.
+
+        If a page already exists, it is replaced in the sizer and destroyed.
+        Otherwise the new page is added to the sizer.
+
+        Args:
+            html_page: The new SchPage (or wx.Window) to display.
+        """
         if self.html_page:
             self.sizer.Replace(self.html_page, html_page)
             self.html_page.Destroy()
@@ -61,7 +102,19 @@ class BaseHtmlPanel:
 
 
 class ToolbarButton:
-    """Toolbar button"""
+    """Represents a single button (or separator) on a toolbar panel.
+
+    This is an abstract data model; the actual wx widget is created by
+    the concrete toolbar implementation.
+
+    Button type constants:
+        TYPE_SIMPLE = 0     - Simple push button.
+        TYPE_DROPDOWN = 1   - Button with a dropdown menu.
+        TYPE_HYBRID = 2     - Hybrid button (part button, part dropdown).
+        TYPE_TOOGLE = 3     - Toggle button.
+        TYPE_PANEL = 4      - Embedded panel.
+        TYPE_SEPARATOR = 5  - Visual separator.
+    """
 
     TYPE_SIMPLE = 0
     TYPE_DROPDOWN = 1
@@ -79,21 +132,16 @@ class ToolbarButton:
         bitmap_disabled=None,
         kind=TYPE_SIMPLE,
     ):
-        """Constructor, creating a new toolbar button
+        """Create a new toolbar button.
 
         Args:
-            parent_panel - parent ToolbarPanel object
-            id - An integer by which the tool may be identified
-            title - button title
-            bitmap - button bitmap
-            bitmap_disabled - button bitmap used when button is disabled
-            kind - type of button, may be:
-                TYPE_SIMPLE = 0
-                TYPE_DROPDOWN = 1
-                TYPE_HYBRID = 2
-                TYPE_TOOGLE = 3
-                TYPE_PANEL = 4
-                TYPE_SEPARATOR = 5
+            parent_panel: Parent ToolbarPanel object.
+            id: An integer by which the tool may be identified.
+            title: Button title (display text).
+            bitmap: Button bitmap for the normal state.
+            bitmap_disabled: Button bitmap for the disabled state.
+                Defaults to wx.NullBitmap when bitmap is provided.
+            kind: Type of button; one of the TYPE_* class constants.
         """
         self.parent_panel = parent_panel
         self.id = id
@@ -107,22 +155,25 @@ class ToolbarButton:
 
 
 class ToolbarPanel(object):
-    """Toolbar panel"""
+    """A panel within a toolbar page that holds a group of buttons.
+
+    Panel type constants:
+        TYPE_PANEL_BUTTONBAR = 0  - Button bar layout.
+        TYPE_PANEL_TOOLBAR = 1    - Toolbar layout.
+        TYPE_PANEL_PANELBAR = 2   - Custom panel layout.
+    """
 
     TYPE_PANEL_BUTTONBAR = 0
     TYPE_PANEL_TOOLBAR = 1
     TYPE_PANEL_PANELBAR = 2
 
     def __init__(self, parent_page, title, kind=TYPE_PANEL_BUTTONBAR):
-        """Constructor, creating a new toolbar panel
+        """Create a new toolbar panel.
 
         Args:
-            parent_page - parent ToolbarPage object
-            title - panel title
-            kind - type of panel, may be:
-                TYPE_PANEL_BUTTONBAR = 0
-                TYPE_PANEL_TOOLBAR = 1
-                TYPE_PANEL_PANELBAR = 2
+            parent_page: Parent ToolbarPage object.
+            title: Panel title.
+            kind: Type of panel; one of the TYPE_PANEL_* class constants.
         """
         self.parent_page = parent_page
         self.title = title
@@ -130,6 +181,14 @@ class ToolbarPanel(object):
         self.buttons = []
 
     def _transform_bitmaps_parm(self, bitmaps):
+        """Convert a variadic bitmap list into a (normal, disabled) pair.
+
+        Args:
+            bitmaps: List of 0, 1, or 2 wx.Bitmap objects.
+
+        Returns:
+            list: [normal_bitmap_or_None, disabled_bitmap_or_None]
+        """
         b = [None, None]
         if len(bitmaps) > 0:
             b[0] = bitmaps[0]
@@ -145,10 +204,19 @@ class ToolbarPanel(object):
         bitmap_disabled=None,
         kind=ToolbarButton.TYPE_SIMPLE,
     ):
-        """Function return new ToolbarButton, shoud be derived. In derived class shoud return ToolbarButton
-        derived object.
+        """Create and return a new ToolbarButton.
 
-        Args: see ToolbarButton contructor
+        Override in derived classes to return a subclass of ToolbarButton.
+
+        Args:
+            id: An integer by which the tool may be identified.
+            title: Button title.
+            bitmap: Button bitmap for the normal state.
+            bitmap_disabled: Button bitmap for the disabled state.
+            kind: Type of button; one of ToolbarButton.TYPE_* constants.
+
+        Returns:
+            ToolbarButton: The newly created button.
         """
         return ToolbarButton(self, id, title, bitmap, bitmap_disabled, kind)
 
@@ -160,80 +228,106 @@ class ToolbarPanel(object):
         bitmap_disabled=None,
         kind=ToolbarButton.TYPE_SIMPLE,
     ):
-        """Append button to panel.
+        """Create a button and append it to this panel.
 
-        Args: see ToolbarButton contructor
+        Args:
+            id: An integer by which the tool may be identified.
+            title: Button title.
+            bitmap: Button bitmap for the normal state.
+            bitmap_disabled: Button bitmap for the disabled state.
+            kind: Type of button; one of ToolbarButton.TYPE_* constants.
+
+        Returns:
+            ToolbarButton: The newly created and appended button.
         """
         button = self.create_button(id, title, bitmap, bitmap_disabled, kind)
         self.buttons.append(button)
         return button
 
     def add_simple_tool(self, id, title, bitmaps):
-        """Append simple tool to toolbar.
+        """Append a simple push button to the panel.
 
         Args:
-            id - an integer by which the tool may be identified
-            title - button title
-            bitmaps - list of bitmaps, can contains 0, 1 or 2 bitmaps
-                first bitmap is used for tool in normal state, second for disabled tool.
+            id: An integer by which the tool may be identified.
+            title: Button title.
+            bitmaps: List of bitmaps; can contain 0, 1, or 2 bitmaps.
+                First bitmap is for the normal state, second for disabled.
+
+        Returns:
+            ToolbarButton: The newly created button.
         """
         b = self._transform_bitmaps_parm(bitmaps)
         return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_SIMPLE)
 
     def add_dropdown_tool(self, id, title, bitmaps):
-        """Append simple tool to toolbar.
+        """Append a dropdown button to the panel.
 
         Args:
-            id - an integer by which the tool may be identified
-            title - button title
-            bitmaps - list of bitmaps, can contains 0, 1 or 2 bitmaps
-                first bitmap is used for tool in normal state, second for disabled tool.
+            id: An integer by which the tool may be identified.
+            title: Button title.
+            bitmaps: List of bitmaps; can contain 0, 1, or 2 bitmaps.
+                First bitmap is for the normal state, second for disabled.
+
+        Returns:
+            ToolbarButton: The newly created button.
         """
         b = self._transform_bitmaps_parm(bitmaps)
         return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_DROPDOWN)
 
     def add_hybrid_tool(self, id, title, bitmaps):
-        """Append hybrid tool to toolbar.
+        """Append a hybrid button (button + dropdown) to the panel.
 
         Args:
-            id - an integer by which the tool may be identified
-            title - button title
-            bitmaps - list of bitmaps, can contains 0, 1 or 2 bitmaps
-                first bitmap is used for tool in normal state, second for disabled tool.
+            id: An integer by which the tool may be identified.
+            title: Button title.
+            bitmaps: List of bitmaps; can contain 0, 1, or 2 bitmaps.
+                First bitmap is for the normal state, second for disabled.
+
+        Returns:
+            ToolbarButton: The newly created button.
         """
         b = self._transform_bitmaps_parm(bitmaps)
         return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_HYBRID)
 
     def add_toogle_tool(self, id, title, bitmaps):
-        """Append toogle tool to toolbar.
+        """Append a toggle button to the panel.
 
         Args:
-            id - an integer by which the tool may be identified
-            title - button title
-            bitmaps - list of bitmaps, can contains 0, 1 or 2 bitmaps
-                first bitmap is used for tool in normal state, second for disabled tool.
+            id: An integer by which the tool may be identified.
+            title: Button title.
+            bitmaps: List of bitmaps; can contain 0, 1, or 2 bitmaps.
+                First bitmap is for the normal state, second for disabled.
+
+        Returns:
+            ToolbarButton: The newly created button.
         """
         b = self._transform_bitmaps_parm(bitmaps)
         return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_TOOGLE)
 
     def add_separator(self):
-        """Append separator to toolbar."""
+        """Append a visual separator to the panel.
+
+        The default implementation does nothing; override in subclasses.
+        """
         pass
 
 
 class ToolbarPage(object):
-    """Toolbar page"""
+    """A page (tab) within a toolbar bar, containing one or more panels.
+
+    Page type constants:
+        TYPE_PAGE_NORMAL = 0  - Standard page.
+    """
 
     TYPE_PAGE_NORMAL = 0
 
     def __init__(self, parent_bar, title, kind=TYPE_PAGE_NORMAL):
-        """Constructor, creating a new ToolbarPage page.
+        """Create a new toolbar page.
 
         Args:
-            parent_bar - parent ToolbarBar object
-            title - page title
-            kind - type of page, may be:
-                TYPE_PAGE_NORMAL = 0
+            parent_bar: Parent ToolbarBar object.
+            title: Page title (will be translated via wx.GetTranslation).
+            kind: Type of page; one of the TYPE_PAGE_* class constants.
         """
         self.parent_bar = parent_bar
         self.name = title
@@ -242,28 +336,41 @@ class ToolbarPage(object):
         self.panels = []
 
     def create_panel(self, title, kind):
-        """Function return new ToolbarPanel, shoud be derived. In derived class shoud return ToolbarPanel
-        derived object.
+        """Create and return a new ToolbarPanel for this page.
 
-        Args: see ToolbarPanel contructor
+        Override in derived classes to return a subclass of ToolbarPanel.
+
+        Args:
+            title: Panel title.
+            kind: Type of panel; one of ToolbarPanel.TYPE_PANEL_* constants.
+
+        Returns:
+            ToolbarPanel: The newly created panel.
         """
-        return self.ToolbarPanel(self, title, kind=ToolbarPanel.TYPE_PANEL_BUTTONBAR)
+        return ToolbarPanel(self, title, kind=ToolbarPanel.TYPE_PANEL_BUTTONBAR)
 
     def create_html_panel(self, title):
-        """Function shoud be overwriten in derived class.
-        In derived class shoud return BaseHtmlPanel derived object.
+        """Create an HTML-capable panel within this page.
 
-        Args: see BaseHtmlPanel contructor
+        Override in derived classes to return a BaseHtmlPanel subclass.
+
+        Args:
+            title: Panel title.
+
+        Returns:
+            BaseHtmlPanel or None: The panel, or None if not supported.
         """
         return None
 
     def append(self, title, kind=ToolbarPanel.TYPE_PANEL_BUTTONBAR):
-        """Append new ToolbarPanel to page.
+        """Create a new panel and append it to this page.
 
         Args:
-            title - panel title
-            kind - see ToolbarPanel constructor
+            title: Panel title.
+            kind: Type of panel; one of ToolbarPanel.TYPE_PANEL_* constants.
 
+        Returns:
+            ToolbarPanel: The newly created panel.
         """
         p = self.create_panel(title, kind)
         self.panels.append(p)
@@ -271,14 +378,19 @@ class ToolbarPage(object):
 
 
 class ToolbarBar(object):
-    """Toolbar bar"""
+    """Base class for all menus and toolbars connected to the top frame window.
+
+    Manages a collection of ToolbarPage objects and provides common
+    operations like binding events and creating standard buttons.
+    """
 
     def __init__(self, parent, gui_style):
-        """Constructor, ToolbarBar is base class for all menus and toolbars connected to top frame window.
+        """Initialize the toolbar bar.
 
         Args:
-            parent - parent window - top wx.Frame derived object
-            gui_style - string description of gui interface. Base on this string standard toolbar elements are created.
+            parent: Parent window - the top wx.Frame derived object.
+            gui_style: String description of the GUI interface. Based on
+                this string, standard toolbar elements are created.
         """
         self.parent = parent
         self.main_page = None
@@ -295,33 +407,70 @@ class ToolbarBar(object):
         self.standard_buttons.create_browse_panel(self.main_page)
         self.standard_buttons.create_address_panel(self.main_page)
 
-    def create_page(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
-        """Function return new ToolbarPage, shoud be derived. In derived class shoud return ToolbarPage
-        derived object.
-
-        Args: see ToolbarPage contructor
-        """
-        return self.ToolbarPage(self, title, kind)
-
-    def remove_page(self, title):
-        """Remove page witch specified title from toolbar
+    def _find_page_by_title(self, title):
+        """Find a page by its translated title.
 
         Args:
-            title: title of removed page
+            title: The translated title to search for.
+
+        Returns:
+            ToolbarPage or None if not found.
         """
+        for page in self.pages:
+            if page.title == title:
+                return page
+        return None
+
+    def create_page(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
+        """Create and return a new ToolbarPage.
+
+        Override in derived classes to return a subclass of ToolbarPage.
+
+        Args:
+            title: Page title.
+            kind: Type of page; one of ToolbarPage.TYPE_PAGE_* constants.
+
+        Returns:
+            ToolbarPage: The newly created page.
+        """
+        return ToolbarPage(self, title, kind)
+
+    def remove_page(self, title):
+        """Remove the page with the specified title from the toolbar.
+
+        Args:
+            title: Title of the page to remove.
+        """
+        # Remove from pages list
         for page in self.pages:
             if page.title == title:
                 self.pages.remove(page)
                 break
-        for key, panel in self.user_panels.items():
+
+        # If the main page was removed, pick a new one
+        if self.main_page and self.main_page.title == title:
+            self.main_page = self.pages[0] if self.pages else None
+
+        # Remove associated user panels (iterate over a static list of keys
+        # to avoid "dictionary changed size during iteration" errors)
+        for key in list(self.user_panels.keys()):
+            panel = self.user_panels[key]
             if panel.page.title == title:
                 del self.user_panels[key]
                 return
 
     def append(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
-        """Append page to toolbar.
+        """Append a page to the toolbar, or return an existing one.
 
-        Args: see ToolbarPage constructor
+        If a page with the same name and kind already exists, it is
+        returned instead of creating a duplicate.
+
+        Args:
+            title: Page title.
+            kind: Type of page; one of ToolbarPage.TYPE_PAGE_* constants.
+
+        Returns:
+            ToolbarPage: The existing or newly created page.
         """
         for page in self.pages:
             if page.name == title and page.kind == kind:
@@ -333,31 +482,42 @@ class ToolbarBar(object):
         return p
 
     def create(self):
-        """Create toolbar"""
+        """Create/realize the toolbar.
+
+        Override in subclasses to perform actual widget creation.
+        """
         pass
 
     def close(self):
-        """Close toolbar"""
+        """Close/destroy the toolbar.
+
+        Override in subclasses to perform cleanup.
+        """
         pass
 
     def create_panel_in_main_page(self, title, kind):
-        """Create panel in a main page
+        """Create a panel in the main page.
+
+        If no main page exists yet, one is created automatically.
 
         Args:
-            title - new panels title
-            kind - type of new panel - see ToolbarPanel constructor.
+            title: New panel's title.
+            kind: Type of panel; one of ToolbarPanel.TYPE_PANEL_* constants.
+
+        Returns:
+            ToolbarPanel: The newly created panel.
         """
         if not self.main_page:
             self.append("main tools")
         return self.main_page.create_panel(title, kind)
 
     def bind(self, fun, id=wx.ID_ANY, e=None):
-        """Bind event handler to toolbar
+        """Bind an event handler to the toolbar's parent window.
 
         Args:
-            fun - handler function
-            id - identifier of event
-            e - type of event
+            fun: Handler function.
+            id: Identifier of the event.
+            e: Event type; defaults to wx.EVT_MENU if not specified.
         """
         if e:
             self.parent.Bind(e, fun, id=id)
@@ -365,7 +525,12 @@ class ToolbarBar(object):
             self.parent.Bind(wx.EVT_MENU, fun, id=id)
 
     def un_bind(self, id=wx.ID_ANY, e=None):
-        """Unbind event handler from toolbar."""
+        """Unbind an event handler from the toolbar's parent window.
+
+        Args:
+            id: Identifier of the event.
+            e: Event type; defaults to wx.EVT_MENU if not specified.
+        """
         if e:
             self.parent.Unbind(e, id=id)
         else:
@@ -374,12 +539,20 @@ class ToolbarBar(object):
     def create_html_win(
         self, toolbar_page, address_or_parser, parameters, callback=None
     ):
-        """Create html page in toolbar. Not all toolbars may be used
+        """Create an HTML page embedded in the toolbar.
+
+        Not all toolbar types support this feature.
 
         Args:
-            toolbar_page - name of toolbar page
-            address_or_parser - addres of http page
-            parameters - parameters for http request
+            toolbar_page: Name of the toolbar page to host the HTML.
+                Use '__' to separate page and panel names,
+                e.g. 'PageName__PanelName'.
+            address_or_parser: Address of the HTTP page or a parser.
+            parameters: Parameters for the HTTP request.
+            callback: Optional callback invoked after initialization.
+
+        Returns:
+            SchPage or None: The created page, or None on failure.
         """
         page = None
         if not toolbar_page:
@@ -399,9 +572,8 @@ class ToolbarBar(object):
         if u_name in self.user_panels:
             panel = self.user_panels[u_name]
         else:
-            if page_name in self.pages:
-                page = self.pages[page]
-            else:
+            page = self._find_page_by_title(page_name)
+            if page is None:
                 page = self.append(page_name)
             panel = page.create_html_panel(panel_name)
 
@@ -426,7 +598,6 @@ class ToolbarBar(object):
             def init_page(callback):
                 page2.init_frame()
                 page2.activate_page()
-                # wx.GetApp().GetTopWindow()._mgr.GetPane("desktop").Show()
                 page2.Update()
 
             wx.CallAfter(init_page, callback)
@@ -436,5 +607,17 @@ class ToolbarBar(object):
         return None
 
     def new_child_page(self, address_or_parser, title="", param=None, callback=None):
-        """Crate new chid page, for toolbar child page is transfered to desktop window"""
+        """Create a new child page.
+
+        For toolbar, the child page is transferred to the desktop window.
+
+        Args:
+            address_or_parser: Address of the HTTP page or a parser.
+            title: Page title.
+            param: Optional parameters.
+            callback: Optional callback.
+
+        Returns:
+            The result of new_main_page on the top window.
+        """
         return wx.GetApp().GetTopWindow().new_main_page(address_or_parser, title, param)

@@ -1,3 +1,10 @@
+"""Server data proxy for grid tables.
+
+Provides DataProxy: a communication layer that fetches paginated
+data from a Django backend via HTTP, supporting CRUD operations,
+sorting, autocomplete, and column metadata retrieval.
+"""
+
 import sys
 
 import wx
@@ -134,7 +141,7 @@ class DataProxy:
         try:
             page = schjson.loads(response.str())
             retpage = page["page"]
-        except:
+        except (KeyError, ValueError, TypeError):
             retpage = None
             # from pytigon_lib.schhttptools.httperror import http_error
             # http_error(wx.GetApp().GetTopWindow(), self.http.str())

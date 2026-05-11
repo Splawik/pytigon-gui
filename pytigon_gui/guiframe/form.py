@@ -1,11 +1,20 @@
-"""Module contain SchForm class."""
+"""Form rendering panel for Pytigon applications.
+
+SchForm is a scrollable panel that parses HTML, renders it via a
+custom wxDC backend, and manages interactive widgets defined by
+the HTML markup.
+"""
 
 import gc
 import sys
+import traceback
 import types
 import math
+import logging
 
 import wx
+
+logger = logging.getLogger(__name__)
 from wx.lib.scrolledpanel import ScrolledPanel
 import wx.lib.agw.ribbon as RB
 
@@ -22,13 +31,26 @@ _PRE_PRECESS_LIB = []
 
 
 def install_pre_process_lib(fun):
+    """Register a page pre-processing function.
+
+    Pre-processors are called on HTML pages before rendering.
+    Each receives ``(form, page_string)`` and returns a string.
+
+    Args:
+        fun: Callable with signature fun(form, page_str) -> str.
+    """
     global _PRE_PRECESS_LIB
     _PRE_PRECESS_LIB.append(fun)
 
 
 def _get_css():
+    """Load and cache the combined CSS for SchForm rendering.
+
+    Returns:
+        String containing concatenated _core.icss and wx.icss.
+    """
     global _INIT_CSS_STR
-    if _INIT_CSS_STR == None:
+    if _INIT_CSS_STR is None:
         with open(wx.GetApp().src_path + "/appdata/icss/_core.icss", "r") as f:
             _INIT_CSS_STR = f.read()
         with open(wx.GetApp().src_path + "/appdata/icss/wx.icss", "r") as f:
@@ -77,7 +99,6 @@ class SchForm(ScrolledPanel):
         self.script = None
         self.parameters = None
         self.page_source = "<html></html>"
-        self.script = None
         self.bestsize = None
         self.hover_obj = None
         self.cursor_type = 0
@@ -105,7 +126,7 @@ class SchForm(ScrolledPanel):
         ScrolledPanel.__init__(self, parent, -1, style=wx.WANTS_CHARS)
         try:
             self.SetBackgroundStyle(wx.BG_STYLE_ERASE)
-        except:
+        except Exception:
             self.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
 
         self.SetupScrolling(hscroll, vscroll, rate_y=1)
@@ -209,7 +230,7 @@ class SchForm(ScrolledPanel):
         else:
             try:
                 (dx, dy) = self.GetSize()
-            except:
+            except Exception:
                 return (0, 0)
             # dx -= wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X) + 1
             # dy -= wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y) + 1
@@ -352,7 +373,7 @@ class SchForm(ScrolledPanel):
     def append_ctrl(self, ctrl):
         try:
             setattr(self, ctrl.unique_name, ctrl)
-        except:
+        except Exception:
             pass
         self.GetParent().append_ctrl(ctrl)
 
@@ -513,8 +534,7 @@ class SchForm(ScrolledPanel):
                         rect = wx.Rect(r[0], r[1], r[2], r[3])
                         if rect.Contains(pos):
                             return obj
-        for id in self.obj_id_dict:
-            obj = self.obj_id_dict[id]
+        for obj_id, obj in self.obj_id_dict.items():
             for r in obj.rendered_rects:
                 if obj.can_hover():
                     rect = wx.Rect(r[0], r[1], r[2], r[3])
@@ -591,18 +611,21 @@ class SchForm(ScrolledPanel):
         gc.collect()
 
     def any_parent_command(self, command, *args, **kwds):
-        """find first in hierarchy window which contains function with specyfied name and run this function
+        """Walk up the parent hierarchy to find and call *command*.
 
         Args:
-            command: name of function to find
-            args, kwds: parameters forwarded to function
+            command: Method name to search for.
+            args, kwds: Forwarded to the found method.
+
+        Returns:
+            Return value of the method, or None if not found.
         """
         parent = self.GetParent()
-        while parent != None:
+        while parent is not None:
             if hasattr(parent, command):
                 return getattr(parent, command)(*args, **kwds)
             parent = parent.GetParent()
-        print("METHOD NOT FOUND!: ", command)
+        logger.warning("METHOD NOT FOUND: %s", command)
         return None
 
     def set_address_parm(self, address):
@@ -620,7 +643,7 @@ class SchForm(ScrolledPanel):
     def get_parm_obj(self):
         """Get parent object width method get_par"""
         parent = self
-        while parent != None:
+        while parent is not None:
             if hasattr(parent, "get_parm"):
                 return parent
             parent = parent.GetParent()
@@ -682,22 +705,15 @@ class SchForm(ScrolledPanel):
 
     def exec_code(self, script, parm=None):
         """run code attached to html page"""
-        if not parm:
+        if parm is None:
             d = {"wx": wx, "self": self}
         else:
             d = parm
             d["self"] = self
         try:
             exec(script, d)
-        except:
-            print("### ERROR IN SCRIPT ###################################")
-            print(script)
-            print("#######################################################")
-            import traceback
-
-            print(sys.exc_info()[0])
-            print(traceback.print_exc())
-            print("#######################################################")
+        except Exception:
+            logger.error("ERROR IN SCRIPT:\n%s", script, exc_info=True)
 
     def show_form(self, page_and_script, parameters=None):
         """Show form
@@ -737,7 +753,7 @@ class SchForm(ScrolledPanel):
                             fun = d[key]
                             try:
                                 method = types.MethodType(d[key], self, self.__class__)
-                            except:
+                            except TypeError:
                                 method = types.MethodType(d[key], self)
                             if hasattr(self, key):
                                 setattr(self, "base_" + key, getattr(self, key))
