@@ -911,7 +911,7 @@ class SchForm(ScrolledPanel):
                 #    if ret:
                 #        return ret
 
-            if href == None:
+            else:
                 if target == "_parent":
                     self.any_parent_command("on_child_form_cancel")
                     return
