@@ -4,3 +4,6 @@ filterwarnings = [
     "ignore::DeprecationWarning:fs.*",
     "ignore:.*ast\\.Ellipsis.*:DeprecationWarning:pscript.*",
 ]
+
+[tool.setuptools.packages.find]
+exclude = ["pytigon_gui*", "pytigon_lib*", "**/__pycache__", "__pycache__"]
