@@ -27,11 +27,13 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
-dynamic = ["dependencies", "optional-dependencies", "entry-points"]
+dynamic = ["dependencies", "optional-dependencies"]
+
+[project.entry-points."gui_scripts"]
+ptigw = "pytigon.pytigon_run:run"
 
 [tool.setuptools.dynamic]
 dependencies = {file = "requirements.txt"}
-entry-points.gui_scripts = {ptigw = "pytigon.pytigon_run:run"}
 
 [tool.pytest.ini_options]
 filterwarnings = [
