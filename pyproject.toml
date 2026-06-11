@@ -1,3 +1,38 @@
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytigon-gui"
+version = "0.260611"
+description = "Pytigon GUI"
+authors = [{name = "Sławomir Chołaj", email = "slawomir.cholaj@gmail.com"}]
+license = {text = "LGPLv3"}
+readme = "README.md"
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Environment :: Web Environment",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
+    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+dynamic = ["dependencies", "optional-dependencies", "entry-points"]
+
+[tool.setuptools.dynamic]
+dependencies = {file = "requirements.txt"}
+entry-points.gui_scripts = {ptigw = "pytigon.pytigon_run:run"}
+
 [tool.pytest.ini_options]
 filterwarnings = [
     "ignore::DeprecationWarning:pkg_resources.*",
