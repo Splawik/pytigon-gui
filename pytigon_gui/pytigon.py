@@ -210,8 +210,6 @@ from asyncio import get_event_loop, set_event_loop_policy
 if sys.platform == "win32":
     set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
-LOOP = get_event_loop()
-
 from pytigon_lib.schtools.main_paths import get_main_paths
 
 if "PRJ_NAME" in os.environ:
@@ -1471,7 +1469,7 @@ def _main_run():
         wx.CallAfter(s)
 
     if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
-        LOOP.run_until_complete(app.MainLoop())
+        asyncio.run(app.MainLoop())
     else:
         app.MainLoop()
 
