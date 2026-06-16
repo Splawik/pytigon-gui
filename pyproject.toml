@@ -35,9 +35,6 @@ dynamic = ["dependencies"]
 [project.gui-scripts]
 ptigw = "pytigon.pytigon_run:run"
 
-[project.scripts]
-ptig = "pytigon.pytigon_run:run"
-
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
 
