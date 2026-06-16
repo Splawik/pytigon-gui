@@ -46,4 +46,5 @@ filterwarnings = [
 ]
 
 [tool.setuptools.packages.find]
+include = ["pytigon*"]
 exclude = ["pytigon_lib*", "**/__pycache__", "__pycache__", "*.pyc"]
