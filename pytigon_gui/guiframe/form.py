@@ -5,7 +5,7 @@ custom wxDC backend, and manages interactive widgets defined by
 the HTML markup.
 """
 
-import gc
+#import gc
 import sys
 import traceback
 import types
@@ -608,7 +608,7 @@ class SchForm(ScrolledPanel):
             self.on_close()
         for x in self.websockets:
             app.remove_websocket_callback(x[0], x[1])
-        gc.collect()
+        #gc.collect()
 
     def any_parent_command(self, command, *args, **kwds):
         """Walk up the parent hierarchy to find and call *command*.
