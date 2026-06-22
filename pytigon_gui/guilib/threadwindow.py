@@ -188,8 +188,8 @@ class SchThreadManager(object):
             win.SetPosition((int(rect.x + offset + 2), int(rect.y + 2)))
             win.SetSize(
                 (
-                    int(rect.width / count - 4),
-                    int(rect.height - 3),
+                    max(0, int(rect.width / count - 4)),
+                    max(0, int(rect.height - 3)),
                 )
             )
             offset += rect.width / count

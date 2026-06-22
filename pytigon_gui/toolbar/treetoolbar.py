@@ -438,8 +438,10 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
     def update(self):
         """Force a layout refresh by briefly resizing the bar."""
         size = self.GetSize()
-        self.SetSize(wx.Size(size.GetWidth() - 1, size.GetHeight()))
-        self.SetSize(wx.Size(size.GetWidth(), size.GetHeight()))
+        width = size.GetWidth()
+        if width > 0:
+            self.SetSize(wx.Size(width - 1, size.GetHeight()))
+        self.SetSize(wx.Size(width, size.GetHeight()))
 
     def bind_ui(self, fun, id=wx.ID_ANY):
         """Bind a UI update event handler to the parent window.

@@ -135,7 +135,7 @@ class CtrlTag(TableTag):
             if self.parser.dc.width > 0 and self.parser.dc.width < width:
                 width = self.parser.dc.width
             m = self._get_parent_pseudo_margins()
-            width = (width - m[0]) - m[1]
+            width = max(0, (width - m[0]) - m[1])
             self.width = self._norm_sizes([self.attrs["width"]], width)[0]
 
         if "height" in self.attrs:
@@ -145,7 +145,7 @@ class CtrlTag(TableTag):
                     self.get_parent_window().GetParent().GetParent().GetSize()
                 )
             m = self._get_parent_pseudo_margins()
-            height = (height - m[2]) - m[3] - 3
+            height = max(0, (height - m[2]) - m[3] - 3)
             self.height = self._norm_sizes([self.attrs["height"]], height)[0]
 
     def get_context(self):
@@ -432,8 +432,8 @@ class CtrlTag(TableTag):
 
         # Set size from calculated dimensions
         self.kwargs["size"] = wx.Size(
-            int((self.width - self.extra_space[0]) - self.extra_space[1]),
-            int((self.height - self.extra_space[2]) - self.extra_space[3]),
+            max(0, int((self.width - self.extra_space[0]) - self.extra_space[1])),
+            max(0, int((self.height - self.extra_space[2]) - self.extra_space[3])),
         )
 
         # Look up widget class by tag name

@@ -257,9 +257,12 @@ class StandardButtons(object):
             win = find_focus_in_form()
             while win:
                 if hasattr(win, fun_name):
-                    if getattr(win, fun_name)():
-                        event.Enable(True)
-                        return
+                    try:
+                        if getattr(win, fun_name)():
+                            event.Enable(True)
+                            return
+                    except wx._core.wxAssertionError:
+                        pass
                 if propagate:
                     win = win.GetParent()
                 else:

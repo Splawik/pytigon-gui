@@ -274,7 +274,7 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
             size = event.GetSize()
             old = self.GetSize()
             if old[1] != size[1] - 8:
-                self.SetSize((size[0], size[1] - 8))
+                self.SetSize((size[0], max(0, size[1] - 8)))
                 self.GetParent().RefrPage()
             event.Skip()
 
