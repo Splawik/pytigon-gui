@@ -13,6 +13,7 @@ Function :func:`~pytigon_gui.pytigon.main` process pytigon command line argument
 
 import os
 import sys
+from pathlib import Path
 import time
 import platform
 import zipfile
@@ -21,6 +22,7 @@ from multiprocessing import Process
 import configparser
 import logging
 from urllib.parse import urljoin
+import contextlib
 import pytigon
 
 logger = logging.getLogger(__name__)
@@ -32,13 +34,13 @@ if platform.system() == "Windows":
     myappid = "slawomir_cholaj.pytigon.main.01"
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
-CWD_PATH = os.path.join(os.getcwd(), "..")
-SRC_PATH = os.path.dirname(pytigon.__file__)
+CWD_PATH = Path.cwd().parent
+SRC_PATH = Path(pytigon.__file__).parent
 
-ROOT_PATH = SRC_PATH
+ROOT_PATH = str(SRC_PATH)
 
 if ROOT_PATH.startswith("."):
-    ROOT_PATH = CWD_PATH + "/" + ROOT_PATH
+    ROOT_PATH = str(CWD_PATH) + "/" + ROOT_PATH
 sys.path.append(ROOT_PATH)
 sys.path.append(ROOT_PATH + "/appdata")
 
@@ -49,9 +51,9 @@ from pytigon_lib import init_paths
 init_paths()
 
 if platform.system() == "Windows":
-    sys.path.insert(0, ROOT_PATH + "/ext_lib_cli_win")
+    sys.path.insert(0, str(SRC_PATH / "ext_lib_cli_win"))
 else:
-    sys.path.insert(0, ROOT_PATH + "/ext_lib_cli_lin")
+    sys.path.insert(0, str(SRC_PATH / "ext_lib_cli_lin"))
 
 _INSPECTION = False
 _DEBUG = False
@@ -204,7 +206,7 @@ def process_argv(argv):
 
 
 _PARAM = process_argv(sys.argv[1:])
-if _PARAM == None:
+if _PARAM is None:
     sys.exit(0)
 
 import asyncio
@@ -252,8 +254,8 @@ def process_adv_argv():
             ff
             for ff in os.listdir(PATHS["PRJ_PATH"])
             if not ff.startswith("_")
-            and os.path.isdir(os.path.join(PATHS["PRJ_PATH"], ff))
-            and os.path.exists(os.path.join(PATHS["PRJ_PATH"], ff, "settings_app.py"))
+            and (Path(PATHS["PRJ_PATH"]) / ff).is_dir()
+            and (Path(PATHS["PRJ_PATH"]) / ff / "settings_app.py").exists()
         ]
         dlg = wx.SingleChoiceDialog(
             None,
@@ -276,12 +278,12 @@ def process_adv_argv():
     else:
         arg = _PARAM["args"][0].strip()
     if not (arg == "embeded" or "." in arg or "/" in arg):
-        CWD_PATH = os.path.join(PATHS["PRJ_PATH"], arg)
-        if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
+        CWD_PATH = Path(PATHS["PRJ_PATH"]) / arg
+        if not (Path(CWD_PATH) / "settings_app.py").exists():
             logger.error(_("Application pack: '%s' does not exists"), arg)
             sys.exit(0)
         else:
-            sys.path.insert(0, CWD_PATH)
+            sys.path.insert(0, str(CWD_PATH))
 
             import settings_app
 
@@ -289,7 +291,7 @@ def process_adv_argv():
                 x = settings_app.GUI_COMMAND_LINE.split(" ")
                 param = process_argv(x)
                 for key, value in param.items():
-                    if not key in _PARAM:
+                    if key not in _PARAM:
                         _PARAM[key] = value
 
 
@@ -435,9 +437,13 @@ class SchApp(App, _BASE_APP):
         if _RPC:
             xmlrpc.XMLRPC.__init__(self)
 
-        if not "no_splash" in _PARAM and not "nogui" in _PARAM and not "server_only" in _PARAM:
+        if (
+            not "no_splash" in _PARAM
+            and not "nogui" in _PARAM
+            and not "server_only" in _PARAM
+        ):
             # bitmap = wx.Bitmap(SRC_PATH + "/pytigon.svg", wx.BITMAP_TYPE_JPEG)
-            img = wx.svg.SVGimage.CreateFromFile(SRC_PATH + "/pytigon.svg")
+            img = wx.svg.SVGimage.CreateFromFile(str(SRC_PATH / "pytigon.svg"))
             # img.ConvertAlphaToMask()
             bitmap = img.ConvertToBitmap(
                 scale=2, width=int(img.width * 2), height=int(img.height * 2)
@@ -456,7 +462,7 @@ class SchApp(App, _BASE_APP):
             splash.Update()
             wx.Yield()
 
-        config_name = os.path.join(SRC_PATH, "pytigon.ini")
+        config_name = SRC_PATH / "pytigon.ini"
         self.config = configparser.ConfigParser()
         self.config.read(config_name)
 
@@ -499,16 +505,28 @@ class SchApp(App, _BASE_APP):
         self.websockets = {}
         self.websockets_callbacks = {}
 
-        self.gui_style = "app.gui_style = tree(toolbar(file(exit,open),clipboard, statusbar))"
+        self.gui_style = (
+            "app.gui_style = tree(toolbar(file(exit,open),clipboard, statusbar))"
+        )
 
-        self.COLOUR_HIGHLIGHT = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
-        self.COLOUR_BACKGROUND = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
-        self.COLOUR_SHADOW = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
-        self.COLOUR_DKSHADOW = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW))
+        self.COLOUR_HIGHLIGHT = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+        )
+        self.COLOUR_BACKGROUND = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+        )
+        self.COLOUR_SHADOW = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+        )
+        self.COLOUR_DKSHADOW = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW)
+        )
         self.COLOUR_ACTIVECATPION = colour_to_html(
             wx.SystemSettings.GetColour(wx.SYS_COLOUR_ACTIVECAPTION)
         )
-        self.COLOUR_INFOBK = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK))
+        self.COLOUR_INFOBK = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK)
+        )
 
         self.ctrl_process = {}
 
@@ -646,7 +664,7 @@ class SchApp(App, _BASE_APP):
         while True:
             await asyncio.sleep(1)
             await self.websocket_send(
-                "/schbuilder/clock/channel/", {"title": "Hello world %s" % count}
+                "/schbuilder/clock/channel/", {"title": f"Hello world {count}"}
             )
             count -= 1
 
@@ -743,7 +761,7 @@ class SchApp(App, _BASE_APP):
 
     def SetTopWindow(self, frame):
         wx.App.SetTopWindow(self, frame)
-        icon = wx.Icon(SRC_PATH + "/pytigon.ico", wx.BITMAP_TYPE_ICO)
+        icon = wx.Icon(str(SRC_PATH / "pytigon.ico"), wx.BITMAP_TYPE_ICO)
         frame.SetIcon(icon)
 
         if hasattr(frame, "statusbar") and frame.statusbar:
@@ -800,10 +818,10 @@ class SchApp(App, _BASE_APP):
 
         Returns :class:'~pytigon_lib.schparser.html_parsers.ShtmlParser' object
         """
-        if type(address_or_parser) == str:
+        if isinstance(address_or_parser, str):
             http = self.get_http(win)
 
-            if parameters and type(parameters) == dict:
+            if parameters and isinstance(parameters, dict):
                 adr = address_or_parser
                 response = http.post(self, adr, parm=parameters)
             else:
@@ -817,12 +835,12 @@ class SchApp(App, _BASE_APP):
                     adr = address_or_parser
                 response = http.get(win, adr)
             if response is None or response.ret_code == 404:
-                raise ValueError("HTTP request failed with 404 for address: %s" % adr)
+                raise ValueError(f"HTTP request failed with 404 for address: {adr}")
             ptr = response.str()
             mp = ShtmlParser()
             mp.process(ptr, address_or_parser)
             mp.address = adr
-        elif type(address_or_parser) == HttpResponse:
+        elif isinstance(address_or_parser, HttpResponse):
             adr = address_or_parser.url
             ptr = address_or_parser.str()
             mp = ShtmlParser()
@@ -856,7 +874,7 @@ class SchApp(App, _BASE_APP):
 
     def get_working_dir(self):
         """Return pytigon working directory - ~/pytigon_data/."""
-        return os.path.join(os.path.expanduser("~"), "pytigon_data/")
+        return Path.home() / "pytigon_data/"
 
     def _get_parm_for_server(self):
         """Build a parameter string containing colour settings for the server.
@@ -864,10 +882,9 @@ class SchApp(App, _BASE_APP):
         Returns:
             A comma-separated string of colour name:value pairs without '#' prefixes.
         """
-        ret = ""
-        for pos in standard_tab_colour():
-            ret = ret + pos[0] + ":" + pos[1] + ","
-        return ret[:-1].replace("#", "")
+        return ",".join(f"{pos[0]}:{pos[1]}" for pos in standard_tab_colour()).replace(
+            "#", ""
+        )
 
     def _install_plugins(self):
         """Install plugins from the server if they are not already cached locally.
@@ -890,27 +907,29 @@ class SchApp(App, _BASE_APP):
                 app_name = plugin.split("/")[0]
                 plugin_name = plugin.split("/")[1]
                 plugins_cache = "" if plugin_name == "install" else "plugins_cache/"
-                plugin_dir = home_dir + plugins_cache + str(app_name)
-                if not os.path.exists(plugin_dir):
-                    os.makedirs(plugin_dir, exist_ok=True)
-                    init_path = os.path.join(plugin_dir, "__init__.py")
-                    with open(init_path, "w") as ini:
+                plugin_dir = Path(home_dir) / plugins_cache / str(app_name)
+                if not Path(plugin_dir).exists():
+                    os.makedirs(str(plugin_dir), exist_ok=True)
+                    init_path = Path(plugin_dir) / "__init__.py"
+                    with open(str(init_path), "w") as ini:
                         ini.write(" ")
-                zip_path = home_dir + plugins_cache + str(plugin) + ".zip"
-                if not os.path.exists(zip_path):
+                zip_path = Path(home_dir) / plugins_cache / (str(plugin) + ".zip")
+                if not Path(zip_path).exists():
                     http = wx.GetApp().http
                     response = http.get(self, "/schsys/plugins/" + str(plugin) + "/")
                     if response and response.ret_code == 200:
                         z_data = response.ptr()
                         if z_data:
-                            with open(zip_path, "wb") as x:
+                            with open(str(zip_path), "wb") as x:
                                 x.write(z_data)
                             try:
-                                zip_handle = zipfile.ZipFile(zip_path)
-                                extractall(zip_handle, plugin_dir)
+                                zip_handle = zipfile.ZipFile(str(zip_path))
+                                extractall(zip_handle, str(plugin_dir))
                                 zip_handle.close()
                             except (zipfile.BadZipFile, OSError) as e:
-                                logger.error("Error extracting plugin %s: %s", plugin, e)
+                                logger.error(
+                                    "Error extracting plugin %s: %s", plugin, e
+                                )
             except Exception as e:
                 logger.error("Error installing plugin %s: %s", plugin, e)
 
@@ -920,10 +939,8 @@ class SchApp(App, _BASE_APP):
         Terminates the task manager if it is running.
         """
         if self.task_manager:
-            try:
+            with contextlib.suppress(Exception):
                 self.task_manager.terminate()
-            except Exception:
-                pass
 
     def run_script(self, app_name, script_path):
         """Run a script file and send its content to the server.
@@ -942,7 +959,7 @@ class SchApp(App, _BASE_APP):
                         "Run script",
                         {"script": s.read()},
                     )
-        except (IOError, OSError) as e:
+        except OSError as e:
             logger.error("Error reading script %s: %s", script_path, e)
 
     def add_websoket_callback(self, websocket_id, callback):
@@ -998,11 +1015,15 @@ class SchApp(App, _BASE_APP):
                     try:
                         getattr(callback, event_name)(**argv)
                     except Exception as e:
-                        logger.error("Websocket callback error for %s: %s", event_name, e)
+                        logger.error(
+                            "Websocket callback error for %s: %s", event_name, e
+                        )
 
     def on_websocket_connect(self, client, websocket_id, response):
         """Handle websocket connect event."""
-        return self.on_websocket_callback(client, "on_websocket_connect", {"response": response})
+        return self.on_websocket_callback(
+            client, "on_websocket_connect", {"response": response}
+        )
 
     def on_websocket_open(self, client, websocket_id):
         """Handle websocket open event."""
@@ -1069,9 +1090,11 @@ def login(base_href, auth_type=None, username=None):
                     return True
                 else:
                     ret_code = result.ret_code if result else "N/A"
-                    dlg.message.SetLabel(_("Failed login attempt! http error: %s") % ret_code)
+                    dlg.message.SetLabel(
+                        _(f"Failed login attempt! http error: {ret_code}")
+                    )
         except Exception as e:
-            dlg.message.SetLabel(_("Login error: %s") % str(e))
+            dlg.message.SetLabel(_(f"Login error: {str(e)}"))
     dlg.Destroy()
     return False
 
@@ -1115,21 +1138,23 @@ def _main_init():
             x = prg_name.split(".")
             if len(x) == 2 or (len(x) > 2 and x[-2].lower() == "inst"):
                 prg_name2 = x[0]
-                path = os.path.join(PATHS["PRJ_PATH_ALT"], "_schremote")
-                sys.path.append(path)
+                path = Path(PATHS["PRJ_PATH_ALT"]) / "_schremote"
+                sys.path.append(str(path))
                 if not pytigon_install.install(args[0]):
                     return (None, None)
                 # sys.path.remove(path)
-                CWD_PATH = os.path.join(PATHS["PRJ_PATH"], prg_name2)
+                CWD_PATH = Path(PATHS["PRJ_PATH"]) / prg_name2
                 return (None, None)
             else:
                 if len(x) > 3:
                     prg_name2 = x[0]
                     app_name2 = x[-2]
                     prj = x[-3]
-                    CWD_PATH = os.path.join(PATHS["PRJ_PATH"], prj.strip())
-                    if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
-                        logger.error(_("Application pack: '%s' does not exists"), prj.strip())
+                    CWD_PATH = Path(PATHS["PRJ_PATH"]) / prj.strip()
+                    if not (Path(CWD_PATH) / "settings_app.py").exists():
+                        logger.error(
+                            _("Application pack: '%s' does not exists"), prj.strip()
+                        )
                         return (None, None)
                     wx.CallAfter(app.run_script, app_name2, args[0])
                 else:
@@ -1139,7 +1164,7 @@ def _main_init():
             arg = args[0].strip()
             if arg == "embeded" or "." in arg or "/" in arg:
                 if arg != "embeded":
-                    CWD_PATH = os.path.join(PATHS["PRJ_PATH_ALT"], "_schremote")
+                    CWD_PATH = Path(PATHS["PRJ_PATH_ALT"]) / "_schremote"
 
                 tmp = arg.replace("//", "$$$")
                 if "/" in arg:
@@ -1154,11 +1179,11 @@ def _main_init():
 
                 extern_prj = True
             else:
-                CWD_PATH = os.path.join(PATHS["PRJ_PATH"], arg)
-                if not os.path.exists(os.path.join(CWD_PATH, "settings_app.py")):
+                CWD_PATH = Path(PATHS["PRJ_PATH"]) / arg
+                if not (Path(CWD_PATH) / "settings_app.py").exists():
                     logger.error(_("Application pack: '%s' does not exists"), arg)
                     return (None, None)
-    sys.path.insert(0, CWD_PATH)
+    sys.path.insert(0, str(CWD_PATH))
 
     httpclient.init_embeded_django()
 
@@ -1170,7 +1195,7 @@ def _main_init():
     from django.conf import settings
 
     if wx.Font.CanUsePrivateFont():
-        fonts_path = os.path.join(settings.STATIC_ROOT, "fonts")
+        fonts_path = Path(settings.STATIC_ROOT) / "fonts"
         font_names = [
             "DejaVuSansCondensed.ttf",
             "DejaVuSansCondensed-Bold.ttf",
@@ -1186,27 +1211,23 @@ def _main_init():
             "DejaVuSansMono-BoldOblique.ttf",
         ]
         for font_name in font_names:
-            wx.Font.AddPrivateFont(os.path.join(fonts_path, font_name))
+            wx.Font.AddPrivateFont(str(Path(fonts_path) / font_name))
 
     if "sync" in _PARAM:
         from django.core.management.commands.migrate import Command as migrate_command
 
         migrate = migrate_command()
-        try:
+        with contextlib.suppress(SystemExit):
             migrate.run_from_argv(["manage.py", "migrate"])
-        except SystemExit:
-            pass
     if "loaddb" in _PARAM:
         from django.core.management.commands.loaddata import Command as load_command
 
         load = load_command()
-        try:
+        with contextlib.suppress(SystemExit):
             load.run_from_argv(["manage.py", "loaddata"])
-        except SystemExit:
-            pass
 
-    cwd = CWD_PATH
-    inst_dir = SRC_PATH
+    cwd = str(CWD_PATH)
+    inst_dir = str(SRC_PATH)
     if inst_dir == "":
         inst_dir = cwd
 
@@ -1268,7 +1289,9 @@ def _main_init():
         from django_q.management.commands.qcluster import Command as qcluster_command
 
         qcluster = qcluster_command()
-        app.task_manager = Process(target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],))
+        app.task_manager = Process(
+            target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],)
+        )
         app.task_manager.start()
         logger.info("Task manager started")
 
@@ -1308,7 +1331,9 @@ def _main_init():
             elif row[0].data == "csrf_token":
                 app.csrf_token = row[1].data
             elif "start_page" in row[0].data:
-                app.start_pages.extend([x for x in row[1].data.split(";") if x and x != "None"])
+                app.start_pages.extend(
+                    [x for x in row[1].data.split(";") if x and x != "None"]
+                )
             elif row[0].data == "title":
                 app.title = row[1].data
             elif row[0].data == "plugins":
@@ -1320,7 +1345,8 @@ def _main_init():
     ready_to_run = True
 
     if not app.authorized and (
-        (autologin and not "username" in _PARAM) or ("username" in _PARAM and "password" in _PARAM)
+        (autologin and not "username" in _PARAM)
+        or ("username" in _PARAM and "password" in _PARAM)
     ):
         if "username" in _PARAM:
             username2 = _PARAM["username"]
@@ -1366,7 +1392,7 @@ def _main_run():
     """Create the main application frame and start the wx event loop."""
     app = wx.GetApp()
     app.locale = wx.Locale(wx.LANGUAGE_DEFAULT)
-    app.locale.AddCatalogLookupPathPrefix(SRC_PATH + "/pytigon_gui/locale")
+    app.locale.AddCatalogLookupPathPrefix(str(SRC_PATH / "pytigon_gui/locale"))
 
     app.locale.AddCatalog("wx")
     app.locale.AddCatalog("pytigon")
@@ -1414,7 +1440,9 @@ def _main_run():
             websockets = [_WEBSOCKET]
 
         local = (
-            True if app.base_address and app.base_address.startswith("http://127.0.0.2") else False
+            True
+            if app.base_address and app.base_address.startswith("http://127.0.0.2")
+            else False
         )
 
         for websocket_id in websockets:

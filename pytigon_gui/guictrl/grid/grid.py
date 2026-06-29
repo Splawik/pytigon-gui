@@ -187,7 +187,7 @@ class SchTableGrid(wx.grid.Grid):
 
     def get_html_parent(self):
         parent = self.GetParent()
-        while parent != None:
+        while parent is not None:
             if parent.__class__.__name__ == "SchForm":
                 return parent
             parent = parent.GetParent()
@@ -339,14 +339,14 @@ class SchTableGrid(wx.grid.Grid):
                     font.SetPointSize(fs)
                 dc.SetFont(font)
                 dc.DrawLabel(
-                    "%s" % self.GetColLabelValue(col), rect, alignment=wx.ALIGN_CENTER
+                    f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER
                 )
             else:
                 font.SetWeight(wx.NORMAL)
                 font.SetPointSize(fs)
                 dc.SetFont(font)
                 dc.DrawLabel(
-                    "%s" % self.GetColLabelValue(col), rect, alignment=wx.ALIGN_CENTER
+                    f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER
                 )
 
     def on_select_cell(self, evt):
@@ -543,12 +543,12 @@ class SchTableGrid(wx.grid.Grid):
                 if row < self.GetNumberRows() - 1:
                     self.SetGridCursor(row + 1, self.GetGridCursorCol())
                 return
-        if (evt.KeyCode == ord("S") or evt.KeyCode == ord("s")) and evt.ControlDown():
+        if evt.KeyCode in (ord("S"), ord("s")) and evt.ControlDown():
             self.GetTable().commit()
             self.GetTable().refresh(True)
             evt.Skip()
             return
-        if (evt.KeyCode == ord("R") or evt.KeyCode == ord("r")) and evt.ControlDown():
+        if evt.KeyCode in (ord("R"), ord("r")) and evt.ControlDown():
             self.GetTable().refresh(True)
             evt.Skip()
             return

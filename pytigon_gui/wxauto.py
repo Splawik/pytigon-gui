@@ -82,6 +82,7 @@ import os
 import traceback
 import logging
 import datetime
+import importlib
 import wx
 from asyncio import sleep
 
@@ -452,7 +453,7 @@ class WxAuto:
                         t = Template(txt2)
                         c = Context(argv)
                         txt2 = t.render(c)
-            except (OSError, IOError) as e:
+            except OSError as e:
                 logger.error("Error reading script file '%s': %s", txt[1:], e)
                 return
             except Exception as e:
@@ -750,7 +751,7 @@ def autoit(win):
                 # Python module: import and call wxauto().
                 sys.path.insert(0, os.getcwd())
                 module_name = SCRIPT.rsplit(".", 1)[0]
-                scr = __import__(module_name, globals(), locals(), [], 0)
+                scr = importlib.import_module(module_name)
                 await scr.wxauto(wx_auto, wx_auto.pyautogui, wx)
         except Exception:
             logger.error("Automation error: %s", traceback.format_exc())

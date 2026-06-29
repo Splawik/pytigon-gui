@@ -268,7 +268,7 @@ class TestImportPlugin:
     }
 
     @patch("pytigon_gui.guilib.tools.importlib.import_module")
-    @patch("pytigon_gui.guilib.tools.os.path.exists")
+    @patch("pathlib.Path.exists")
     @patch("pytigon_gui.guilib.tools.get_main_paths")
     def test_import_success_no_project(self, mock_paths, mock_exists, mock_import):
         """Imports a plugin without project name."""
@@ -282,7 +282,7 @@ class TestImportPlugin:
         assert result == "plugin_module"
 
     @patch("pytigon_gui.guilib.tools.importlib.import_module")
-    @patch("pytigon_gui.guilib.tools.os.path.exists")
+    @patch("pathlib.Path.exists")
     @patch("pytigon_gui.guilib.tools.get_main_paths")
     def test_import_with_project(self, mock_paths, mock_exists, mock_import):
         """Imports a plugin with project name."""
@@ -295,7 +295,7 @@ class TestImportPlugin:
         result = import_plugin("plugins.myplugin", prj_name="myproject")
         assert result == "plugin_module"
 
-    @patch("pytigon_gui.guilib.tools.os.path.exists")
+    @patch("pathlib.Path.exists")
     @patch("pytigon_gui.guilib.tools.get_main_paths")
     def test_path_not_found(self, mock_paths, mock_exists):
         """Returns None when plugin path not found."""
@@ -308,7 +308,7 @@ class TestImportPlugin:
         assert result is None
 
     @patch("pytigon_gui.guilib.tools.importlib.import_module")
-    @patch("pytigon_gui.guilib.tools.os.path.exists")
+    @patch("pathlib.Path.exists")
     @patch("pytigon_gui.guilib.tools.get_main_paths")
     def test_import_failure(self, mock_paths, mock_exists, mock_import):
         """Returns None when import fails."""

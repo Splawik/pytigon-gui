@@ -84,6 +84,6 @@ class TestEventIds:
 
         public = [attr for attr in dir(events_module) if not attr.startswith("_")]
         for attr in public:
-            assert attr.startswith("ID_") or attr == "wx", (
-                f"Unexpected public attribute: {attr}"
-            )
+            assert (
+                attr.startswith("ID_") or attr == "wx"
+            ), f"Unexpected public attribute: {attr}"

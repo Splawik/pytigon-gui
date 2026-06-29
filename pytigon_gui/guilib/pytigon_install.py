@@ -12,9 +12,9 @@ except ImportError:
 
     EVT_WIZARD_PAGE_CHANGING = wx.wizard.EVT_WIZARD_PAGE_CHANGING
 
-import os
 import configparser
 import logging
+from pathlib import Path
 
 from pytigon_lib.schtools.install import Ptig
 from pytigon_gui.guilib.tools import create_desktop_shortcut
@@ -152,10 +152,10 @@ class InstallWizard(Wizard):
             logger.exception("Failed to extract ptig archive")
             return False
 
-        ini_file = os.path.join(self.ptig.extract_to, "install.ini")
+        ini_file = Path(self.ptig.extract_to) / "install.ini"
         shortcut_created = False
 
-        if os.path.exists(ini_file):
+        if Path(ini_file).exists():
             try:
                 config = configparser.ConfigParser()
                 config.read(ini_file)

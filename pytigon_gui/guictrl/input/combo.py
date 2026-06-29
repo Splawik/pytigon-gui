@@ -10,6 +10,7 @@ Classes:
 """
 
 import os
+from pathlib import Path
 from base64 import b64encode
 
 import wx
@@ -72,12 +73,14 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
 
     def init_embeded_icons(self):
         """Load embedded PNG icons from the static/icons/22x22 directory."""
-        base_path = wx.GetApp().src_path + "/static/icons/22x22/"
+        base_path = str(wx.GetApp().src_path) + "/static/icons/22x22/"
         return self._init_icons(base_path, "png://")
 
     def init_fa_icons(self):
         """Load Fork Awesome font icons from the static/fonts directory."""
-        base_path = wx.GetApp().src_path + "/static/fonts/fork-awesome/fonts/22x22/"
+        base_path = (
+            str(wx.GetApp().src_path) + "/static/fonts/fork-awesome/fonts/22x22/"
+        )
         return self._init_icons(base_path, "fa://")
 
     def init_extern_icons(self, base_path, prefix):
@@ -98,15 +101,15 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
             subpath: Current subdirectory relative to base_path (or None).
         """
         if subpath:
-            dirname = os.path.join(base_path, subpath)
+            dirname = Path(base_path) / subpath
         else:
-            dirname = base_path
+            dirname = Path(base_path)
 
-        if os.path.exists(dirname):
+        if Path(dirname).exists():
             for ff in os.listdir(dirname):
-                full_path = os.path.join(dirname, ff)
-                if os.path.isdir(full_path):
-                    new_sub = os.path.join(subpath, ff) if subpath else ff
+                full_path = Path(dirname) / ff
+                if Path(full_path).is_dir():
+                    new_sub = str(Path(subpath) / ff) if subpath else ff
                     self._init_icons(base_path, prefix, new_sub)
                 else:
                     if ".png" in ff.lower():

@@ -97,9 +97,7 @@ class ModernToolbarButton(ToolbarButton):
         bitmap_disabled=None,
         kind=ToolbarButton.TYPE_SIMPLE,
     ):
-        ToolbarButton.__init__(
-            self, parent_panel, id, title, bitmap, bitmap_disabled, kind
-        )
+        super().__init__(parent_panel, id, title, bitmap, bitmap_disabled, kind)
 
 
 class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
@@ -248,7 +246,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
             gui_style: GUI style string.
         """
         RB.RibbonBar.__init__(self, parent, wx.ID_ANY)
-        ToolbarBar.__init__(self, parent, gui_style)
+        super().__init__(parent, gui_style)
 
     def create_page(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
         """Create a new ribbon page.

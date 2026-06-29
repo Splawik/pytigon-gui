@@ -101,7 +101,7 @@ class IconAndStringRenderer(MultiLineStringRenderer):
         self.cache = {}
 
     def get_image_from_cache(self, image):
-        if not image in self.cache:
+        if image not in self.cache:
             self.cache[image] = SchImage(image)
         return self.cache[image].bmp
 

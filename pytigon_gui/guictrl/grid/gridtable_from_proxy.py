@@ -107,7 +107,7 @@ class DataSource(SchGridTableBase):
                         self.is_valid = False
                         nowaStrona = None
 
-                    if nowaStrona != None:
+                    if nowaStrona is not None:
                         self._scroll(0)
                         (self.pages_nr)[0] = strona
                         (self.pages)[0] = nowaStrona
@@ -343,8 +343,8 @@ class DataSource(SchGridTableBase):
 
     def IsEmptyCell(self, row, col):
         rec = self.get_rec(row)
-        if rec != None:
-            if rec[col] == None:
+        if rec is not None:
+            if rec[col] is None:
                 return True
             else:
                 return False
@@ -357,8 +357,8 @@ class DataSource(SchGridTableBase):
                 rec = (self.rec_to_update)[row]
             else:
                 rec = self.get_rec(row)
-            if rec != None:
-                if rec[col + 1] == None:
+            if rec is not None:
+                if rec[col + 1] is None:
                     return ""
                 else:
                     ret = rec[col + 1]

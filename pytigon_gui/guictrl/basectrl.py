@@ -35,7 +35,7 @@ def _extract_kwarg(kwds, key, default=None):
 # ---------------------------------------------------------------------------
 
 
-class SchBaseCtrl(object):
+class SchBaseCtrl:
     """Base mixin class for all SchForm wxPython widgets.
 
     Provides:

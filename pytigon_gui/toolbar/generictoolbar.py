@@ -30,7 +30,7 @@ class SchAuiToolBarArt(aui.AuiDefaultToolBarArt):
     """
 
     def __init__(self):
-        aui.AuiDefaultToolBarArt.__init__(self)
+        super().__init__()
         self._base_colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND)
 
     def draw_background(self, dc, wnd, _rect, horizontal=True):
@@ -187,7 +187,7 @@ class GenericToolbarBar(ToolbarBar):
     """The top-level AUI toolbar bar managing multiple AUI toolbar pages."""
 
     def __init__(self, parent, gui_style):
-        ToolbarBar.__init__(self, parent, gui_style)
+        super().__init__(parent, gui_style)
 
     def create_page(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
         """Create a new AUI toolbar page.

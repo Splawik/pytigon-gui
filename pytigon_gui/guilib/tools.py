@@ -4,9 +4,9 @@ Includes color manipulation helpers, desktop shortcut creation,
 focus tracking, and plugin import functionality.
 """
 
-import os
 import sys
 import logging
+from pathlib import Path
 
 import importlib
 import wx
@@ -145,7 +145,7 @@ def create_desktop_shortcut(app_name, title=None, parameters=""):
         title: Shortcut display name (defaults to app_name).
         parameters: Additional command-line parameters.
     """
-    pytigon_init_path = os.path.abspath(pytigon.__file__)
+    pytigon_init_path = Path(pytigon.__file__).resolve()
     ico_path = pytigon_init_path.replace("__init__.py", "pytigon.ico")
     ptig_path = pytigon_init_path.replace("__init__.py", "ptig.py")
 
@@ -221,12 +221,12 @@ def import_plugin(plugin_name, prj_name=None):
 
     path = None
     for folder in folders:
-        plugins_path = os.path.join(folder[0], *folder[1:])
+        plugins_path = Path(folder[0]).joinpath(*folder[1:])
         if prj_name:
-            plugin_path = os.path.join(plugins_path, *plugin_name.split(".")[:-1])
+            plugin_path = Path(plugins_path).joinpath(*plugin_name.split(".")[:-1])
         else:
-            plugin_path = os.path.join(plugins_path, *plugin_name.split("."))
-        if os.path.exists(plugin_path):
+            plugin_path = Path(plugins_path).joinpath(*plugin_name.split("."))
+        if Path(plugin_path).exists():
             path = plugins_path
             break
 

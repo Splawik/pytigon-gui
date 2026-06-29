@@ -154,7 +154,7 @@ class ToolbarButton:
         self.kind = kind
 
 
-class ToolbarPanel(object):
+class ToolbarPanel:
     """A panel within a toolbar page that holds a group of buttons.
 
     Panel type constants:
@@ -312,7 +312,7 @@ class ToolbarPanel(object):
         pass
 
 
-class ToolbarPage(object):
+class ToolbarPage:
     """A page (tab) within a toolbar bar, containing one or more panels.
 
     Page type constants:
@@ -377,7 +377,7 @@ class ToolbarPage(object):
         return p
 
 
-class ToolbarBar(object):
+class ToolbarBar:
     """Base class for all menus and toolbars connected to the top frame window.
 
     Manages a collection of ToolbarPage objects and provides common

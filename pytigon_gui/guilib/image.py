@@ -187,8 +187,7 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
         icon_size = 32
 
     if href2[:3] == "wx.":
-        art_id = _resolve_art_id(href2)
-        if art_id is not None:
+        if (art_id := _resolve_art_id(href2)) is not None:
             bmp = wx.ArtProvider.GetBitmap(
                 art_id, wx.ART_TOOLBAR, (icon_size, icon_size)
             )
@@ -198,15 +197,15 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
             )
     elif href.startswith("client://"):
         image = wx.Image(
-            wx.GetApp().src_path
-            + "/static/icons/%dx%d/" % (icon_size, icon_size)
+            str(wx.GetApp().src_path)
+            + f"/static/icons/{icon_size}x{icon_size}/"
             + href2[9:]
         )
         bmp = wx.Bitmap(image)
     elif href.startswith("png://"):
         image = wx.Image(
-            wx.GetApp().src_path
-            + "/static/icons/%dx%d/" % (icon_size, icon_size)
+            str(wx.GetApp().src_path)
+            + f"/static/icons/{icon_size}x{icon_size}/"
             + href2[6:]
         )
         bmp = wx.Bitmap(image)
@@ -214,8 +213,8 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
         suffix = "" if ".png" in href.lower() else ".png"
         try:
             image = wx.Image(
-                wx.GetApp().src_path
-                + "/static/fonts/fork-awesome/fonts/%dx%d/" % (icon_size, icon_size)
+                str(wx.GetApp().src_path)
+                + f"/static/fonts/fork-awesome/fonts/{icon_size}x{icon_size}/"
                 + href2[5:].replace("fa-", "")
                 + suffix
             )
@@ -261,7 +260,7 @@ class ArtProviderFromIcon(wx.ArtProvider):
         self.tab_22 = {}
         self.tab_32 = {}
 
-        ids_path = wx.GetApp().src_path + "/static/icons/ids.txt"
+        ids_path = str(wx.GetApp().src_path) + "/static/icons/ids.txt"
         try:
             with open(ids_path) as ids:
                 for line in ids:
@@ -272,8 +271,7 @@ class ArtProviderFromIcon(wx.ArtProvider):
                     if len(l) > 1:
                         image_path = l[1]
                         art_key = "wx.ART_" + l[0]
-                        art_id = _resolve_art_id(art_key)
-                        if art_id is not None:
+                        if (art_id := _resolve_art_id(art_key)) is not None:
                             self.tab_16[art_id] = [image_path, None]
                             self.tab_22[art_id] = [image_path, None]
                             self.tab_32[art_id] = [image_path, None]

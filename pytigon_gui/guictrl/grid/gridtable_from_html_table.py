@@ -33,7 +33,10 @@ class KeyForRec:
             if pos > 0:
                 x = self.rec[pos - 1].data.lower() < other.rec[pos - 1].data.lower()
             else:
-                x = self.rec[-1 * pos - 1].data.lower() > other.rec[-1 * pos - 1].data.lower()
+                x = (
+                    self.rec[-1 * pos - 1].data.lower()
+                    > other.rec[-1 * pos - 1].data.lower()
+                )
             if x:
                 return x
         return False
@@ -43,7 +46,7 @@ def make_key(tabsort):
     return lambda rec: KeyForRec(rec, tabsort)
 
 
-class PageData(object):
+class PageData:
     def __init__(self, parent, page_len, count, titles, first_page):
         self.count = count
         self.page_len = page_len
@@ -71,7 +74,11 @@ class PageData(object):
             return []
 
     def __getitem__(self, id):
-        if len(self.inserted) > 0 and self.count > 0 and id >= self.count - len(self.inserted):
+        if (
+            len(self.inserted) > 0
+            and self.count > 0
+            and id >= self.count - len(self.inserted)
+        ):
             return self.inserted[id - (self.count - len(self.inserted))]
 
         page = id // self.page_len
@@ -109,7 +116,11 @@ class PageData(object):
         return self.count
 
     def set_rec(self, id, row):
-        if len(self.inserted) > 0 and self.count > 0 and id >= self.count - len(self.inserted):
+        if (
+            len(self.inserted) > 0
+            and self.count > 0
+            and id >= self.count - len(self.inserted)
+        ):
             self.inserted[id - (self.count - len(self.inserted))] = row
             return
 
@@ -162,7 +173,9 @@ class PageData(object):
             def set_h():
                 nonlocal row_h, self
                 for key, value in row_h.items():
-                    self.parent.grid.SetRowSize(key, value * self.parent.grid.GetDefaultRowSize())
+                    self.parent.grid.SetRowSize(
+                        key, value * self.parent.grid.GetDefaultRowSize()
+                    )
 
             wx.CallAfter(set_h)
 
@@ -420,7 +433,9 @@ class SimpleDataTable(SchGridTableBase):
         except IndexError:
             self.data.append([""] * self.GetNumberCols())
             self.SetValue(row, col, value)
-            msg = wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, 1)
+            msg = wx.grid.GridTableMessage(
+                self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, 1
+            )
             self.GetView().ProcessTableMessage(msg)
 
     def GetColLabelValue(self, col):

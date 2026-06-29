@@ -70,7 +70,6 @@ class Signal:
         ret = []
         if signal_name in self._signals:
             for obj in self._signals[signal_name]:
-                x = getattr(obj, signal_name)(*argi, **argv)
-                if x is not None:
+                if (x := getattr(obj, signal_name)(*argi, **argv)) is not None:
                     ret.append(x)
         return ret

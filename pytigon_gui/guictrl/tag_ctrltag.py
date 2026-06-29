@@ -9,6 +9,7 @@ Classes:
 """
 
 from urllib.parse import unquote
+import ast
 import logging
 
 import wx
@@ -421,8 +422,8 @@ class CtrlTag(TableTag):
                 value = unquote(self.attrs["value"])
             else:
                 try:
-                    value = eval(self.attrs["value"])
-                except Exception:
+                    value = ast.literal_eval(self.attrs["value"])
+                except (ValueError, SyntaxError):
                     logger.warning("Value error: %s", self.attrs["value"])
                     value = None
         else:

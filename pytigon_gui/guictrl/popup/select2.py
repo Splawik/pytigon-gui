@@ -149,10 +149,7 @@ class Select2Popup(wx.MiniFrame):
             return
 
         base_url = self.url if self.url else "/select2/fields/auto.json"
-        url = base_url + "?term=%s&page=1&context=&field_id=%s" % (
-            s,
-            self.field_id,
-        )
+        url = f"{base_url}?term={s}&page=1&context=&field_id={self.field_id}"
 
         try:
             http = wx.GetApp().get_http(self.combo)

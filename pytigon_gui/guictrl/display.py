@@ -13,6 +13,7 @@ Classes:
 """
 
 import os
+from pathlib import Path
 import logging
 
 import wx
@@ -310,13 +311,13 @@ class IMAGEBROWSEBUTTON(FILEBROWSEBUTTON, SchBaseCtrl):
             event: Button event (optional).
         """
         current = self.GetValue()
-        directory = os.path.split(current)
-        if os.path.isdir(current):
+        directory = Path(current).parent
+        if Path(current).is_dir():
             directory = current
             current = ""
-        elif directory and os.path.isdir(directory[0]):
-            current = directory[1]
-            directory = directory[0]
+        elif directory and Path(directory).is_dir():
+            current = Path(current).name
+            directory = str(directory)
         else:
             directory = self.startDirectory
             current = ""

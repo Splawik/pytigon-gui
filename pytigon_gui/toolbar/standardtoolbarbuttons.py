@@ -35,7 +35,7 @@ TYPE_BUTTONBAR = 1
 TYPE_PANELBAR = 2
 
 
-class WebHistory(object):
+class WebHistory:
     """A simple list-like object providing address bar history.
 
     Wraps the ADDRESS_HISTORY list and exposes a limited subset.
@@ -96,7 +96,7 @@ class SchAutoComplete(TextCtrlAutoComplete):
         """
         self.dynamic_choices = WebHistory()
         argv["choices"] = self.dynamic_choices
-        TextCtrlAutoComplete.__init__(self, *argi, **argv)
+        super().__init__(*argi, **argv)
         self.SetEntryCallback(self.set_dynamic_choices)
         self.SetMatchFunction(self.match)
         self.Bind(wx.EVT_KEY_DOWN, self.on_return_key_down, self)
@@ -167,7 +167,7 @@ class SchAutoComplete(TextCtrlAutoComplete):
         return x
 
 
-class EmptyControl(object):
+class EmptyControl:
     """A stub control used when no real address bar is available.
 
     Provides SetValue/GetValue with no-op behavior.
@@ -193,7 +193,7 @@ class EmptyControl(object):
         return self.value
 
 
-class EmptyBar(object):
+class EmptyBar:
     """A stub toolbar bar used when a browser panel is not enabled.
 
     Provides a no-op refr method for compatibility.
@@ -207,7 +207,7 @@ class EmptyBar(object):
         pass
 
 
-class StandardButtons(object):
+class StandardButtons:
     """Creates and manages standard toolbar buttons and their event handlers.
 
     Reads the gui_style string to determine which panels (File, Clipboard,
@@ -721,16 +721,16 @@ class StandardButtons(object):
         if self.web_info and (txt != self.info or proc != self.progress):
             if txt:
                 self.web_info.SetPage(
-                    "<body bgcolor='%s'><table width='100%%'>"
-                    "<tr><td bgcolor='%s' width='%s%%'></td><td></td></tr>"
-                    "<tr><td colspan='2' bgcolor='%s'><small>%s</small></td></tr>"
-                    "</table></body>" % (self.bg, self.bg_h, proc, self.bg_info, txt)
+                    f"<body bgcolor='{self.bg}'><table width='100%'>"
+                    f"<tr><td bgcolor='{self.bg_h}' width='{proc}%'></td><td></td></tr>"
+                    f"<tr><td colspan='2' bgcolor='{self.bg_info}'><small>{txt}</small></td></tr>"
+                    f"</table></body>"
                 )
             else:
                 self.web_info.SetPage(
-                    "<body bgcolor='%s'><table width='100%%'>"
-                    "<tr><td bgcolor='%s' width='%s%%'></td><td></td></tr>"
-                    "</table></body>" % (self.bg, self.bg_h, proc)
+                    f"<body bgcolor='{self.bg}'><table width='100%'>"
+                    f"<tr><td bgcolor='{self.bg_h}' width='{proc}%'></td><td></td></tr>"
+                    f"</table></body>"
                 )
             self.info = txt
             self.progress = proc
@@ -743,9 +743,9 @@ class StandardButtons(object):
         """
         if self.web_info and txt != self.info:
             self.web_info.SetPage(
-                "<body bgcolor='%s'><table width='100%%'>"
-                "<tr><td bgcolor='%s'><strong><small>%s</small></strong></td></tr>"
-                "</table></body>" % (self.bg, self.bg_info, txt)
+                f"<body bgcolor='{self.bg}'><table width='100%'>"
+                f"<tr><td bgcolor='{self.bg_info}'><strong><small>{txt}</small></strong></td></tr>"
+                f"</table></body>"
             )
             self.info = txt
             self.progress = -1
@@ -758,9 +758,9 @@ class StandardButtons(object):
         """
         if self.web_info and txt != self.info:
             self.web_info.SetPage(
-                "<body bgcolor='%s'><table width='100%%'>"
-                "<tr><td bgcolor='%s'><strong><small>%s</small></strong></td></tr>"
-                "</table></body>" % (self.bg, self.bg_info, txt)
+                f"<body bgcolor='{self.bg}'><table width='100%'>"
+                f"<tr><td bgcolor='{self.bg_info}'><strong><small>{txt}</small></strong></td></tr>"
+                f"</table></body>"
             )
             self.info = txt
             self.progress = -1
@@ -768,7 +768,7 @@ class StandardButtons(object):
     def _info_clear(self):
         """Clear the web info area."""
         if self.web_info and (self.info != "" or self.progress != -1):
-            self.web_info.SetPage("<body bgcolor='%s'></body>" % self.bg)
+            self.web_info.SetPage(f"<body bgcolor='{self.bg}'></body>")
             self.info = ""
             self.progress = -1
 

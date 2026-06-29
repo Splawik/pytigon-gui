@@ -116,7 +116,7 @@ def _make_button_class(
                         nr_id = int(self.nr_id)
                     except (ValueError, TypeError):
                         if isinstance(self.nr_id, str) and "wx." in self.nr_id:
-                            nr_id = eval(self.nr_id)
+                            nr_id = getattr(wx, self.nr_id.split(".", 1)[1], None)
                         else:
                             nr_id = None
                     if nr_id is not None:

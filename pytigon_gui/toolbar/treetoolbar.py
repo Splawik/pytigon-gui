@@ -242,7 +242,7 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
         self._hypertextnewcolour = c3
         self._hypertextvisitedcolour = c3
 
-        ToolbarBar.__init__(self, parent, gui_style)
+        super().__init__(parent, gui_style)
         self.EnableSelectionVista(True)
 
         self.Bind(wx.EVT_CLOSE, self.on_close)

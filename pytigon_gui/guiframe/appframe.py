@@ -204,7 +204,7 @@ class SchAppFrame(SchBaseFrame):
         wx.ArtProvider.Push(ArtProviderFromIcon())
 
         icon = wx.Icon()
-        b = wx.Bitmap(wx.Image(wx.GetApp().src_path + "/static/icons/schweb.png"))
+        b = wx.Bitmap(wx.Image(str(wx.GetApp().src_path) + "/static/icons/schweb.png"))
         icon.CopyFromBitmap(b)
         self.SetIcon(icon)
 
@@ -756,7 +756,7 @@ class SchAppFrame(SchBaseFrame):
 
         ext = address.split("?")[0].split(".")[-1]
         if (
-            (not view_in or not "browser" in view_in)
+            (not view_in or "browser" not in view_in)
             and ext
             and ext
             in (
@@ -1077,7 +1077,7 @@ class SchAppFrame(SchBaseFrame):
         count = 0
         for panel in self._mgr.GetAllPanes():
             if panel.IsShown():
-                if (not "Toolbar" in panel.caption) or count_toolbars:
+                if ("Toolbar" not in panel.caption) or count_toolbars:
                     count += 1
         return count
 
@@ -1231,7 +1231,7 @@ class SchAppFrame(SchBaseFrame):
         )
 
         def _after_init():
-            form_frame.body.WEB.execute_javascript("document.title = '%s';" % title)
+            form_frame.body.WEB.execute_javascript(f"document.title = '{title}';")
 
         wx.CallAfter(_after_init)
 
@@ -1258,7 +1258,7 @@ class SchAppFrame(SchBaseFrame):
             printout = wx.GetApp().get_printout(temp_filename)
             printer.Print(self, printout, True)
 
-            os.unlink(temp_filename)
+            Path(temp_filename).unlink()
         return
 
     def show_document(self, response, title="", parameters=None):
@@ -1281,7 +1281,7 @@ class SchAppFrame(SchBaseFrame):
         p = response.ptr()
         path = gettempdir()
 
-        file_path = os.path.join(path, name)
+        file_path = Path(path) / name
 
         try:
             with open(file_path, "wb") as f:
@@ -1328,8 +1328,8 @@ class SchAppFrame(SchBaseFrame):
 
         p = response.ptr()
 
-        path = str(Path.home() / "Downloads")
-        file_path = os.path.join(path, name)
+        path = Path.home() / "Downloads"
+        file_path = path / name
 
         try:
             with open(file_path, "wb") as f:

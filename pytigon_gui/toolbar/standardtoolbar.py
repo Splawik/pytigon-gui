@@ -29,9 +29,7 @@ class StandardToolbarButton(ToolbarButton):
         bitmap_disabled=None,
         kind=ToolbarButton.TYPE_SIMPLE,
     ):
-        ToolbarButton.__init__(
-            self, parent_panel, id, title, bitmap, bitmap_disabled, kind
-        )
+        super().__init__(parent_panel, id, title, bitmap, bitmap_disabled, kind)
 
 
 class StandardToolbarPanel(ToolbarPanel):
@@ -150,7 +148,7 @@ class StandardToolbarBar(ToolbarBar):
             gui_style: GUI style string.
         """
         self.standard_tool_bar = parent.CreateToolBar()
-        ToolbarBar.__init__(self, parent, gui_style)
+        super().__init__(parent, gui_style)
 
     def create_page(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
         """Create a new standard toolbar page.

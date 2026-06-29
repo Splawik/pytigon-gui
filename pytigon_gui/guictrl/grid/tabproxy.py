@@ -60,8 +60,8 @@ class DataProxy:
         self.col_size = ret["col_length"]
 
         for i in range(0, len(self.col_size)):
-            if (self.col_size)[i] > 32:
-                (self.col_size)[i] = 32
+            if self.col_size[i] > 32:
+                self.col_size[i] = 32
 
         self.auto_cols = ret["auto_cols"]
 
@@ -103,7 +103,7 @@ class DataProxy:
             return None
 
     def conw_none(self, n):
-        if n != None:
+        if n is not None:
             return n
         else:
             return ""

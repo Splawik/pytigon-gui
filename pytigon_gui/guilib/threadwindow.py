@@ -147,7 +147,7 @@ class SchThreadWindow(wx.Panel):
             logger.exception("Failed to kill thread %s", self.thread_name)
 
 
-class SchThreadManager(object):
+class SchThreadManager:
     """Manages multiple SchThreadWindow instances in a status bar.
 
     Handles layout, positioning, and periodic polling of thread windows.

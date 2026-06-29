@@ -5,7 +5,7 @@ custom wxDC backend, and manages interactive widgets defined by
 the HTML markup.
 """
 
-#import gc
+# import gc
 import sys
 import traceback
 import types
@@ -51,9 +51,9 @@ def _get_css():
     """
     global _INIT_CSS_STR
     if _INIT_CSS_STR is None:
-        with open(wx.GetApp().src_path + "/appdata/icss/_core.icss", "r") as f:
+        with open(str(wx.GetApp().src_path) + "/appdata/icss/_core.icss", "r") as f:
             _INIT_CSS_STR = f.read()
-        with open(wx.GetApp().src_path + "/appdata/icss/wx.icss", "r") as f:
+        with open(str(wx.GetApp().src_path) + "/appdata/icss/wx.icss", "r") as f:
             _INIT_CSS_STR += f.read()
     return _INIT_CSS_STR
 
@@ -400,7 +400,7 @@ class SchForm(ScrolledPanel):
 
     def enable(self, enable=True):
         """enable od disable the form"""
-        ret = super(SchForm, self).Enable(enable)
+        ret = super().Enable(enable)
         if enable:
             wx.CallAfter(self.restore_scroll_pos)
         return ret
@@ -608,7 +608,7 @@ class SchForm(ScrolledPanel):
             self.on_close()
         for x in self.websockets:
             app.remove_websocket_callback(x[0], x[1])
-        #gc.collect()
+        # gc.collect()
 
     def any_parent_command(self, command, *args, **kwds):
         """Walk up the parent hierarchy to find and call *command*.
@@ -1221,11 +1221,11 @@ class SchForm(ScrolledPanel):
             return
         for a in self.acc_tab:
             if event.KeyCode == a[1]:
-                if (not event.AltDown()) and (a[0] & wx.ACCEL_ALT):
+                if not event.AltDown() and a[0] & wx.ACCEL_ALT:
                     continue
-                if (not event.ControlDown()) and (a[0] & wx.ACCEL_CTRL):
+                if not event.ControlDown() and a[0] & wx.ACCEL_CTRL:
                     continue
-                if (not event.ShiftDown()) and (a[0] & wx.ACCEL_SHIFT):
+                if not event.ShiftDown() and a[0] & wx.ACCEL_SHIFT:
                     continue
 
                 if event.AltDown() and not (a[0] & wx.ACCEL_ALT):

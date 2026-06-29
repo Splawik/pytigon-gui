@@ -128,8 +128,10 @@ class SchNotebookPage(wx.Window):
             # Vertical divider handles
             dc.DrawLine(int(x - margin), int(y), int(x - margin), int(y + dy))
             dc.DrawLine(
-                int(x - 5 * margin), int(y),
-                int(x - 5 * margin), int(y + dy),
+                int(x - 5 * margin),
+                int(y),
+                int(x - 5 * margin),
+                int(y + dy),
             )
             for i in range(-4, 5, 2):
                 dc.DrawLine(
@@ -142,8 +144,10 @@ class SchNotebookPage(wx.Window):
             # Horizontal divider handles
             dc.DrawLine(int(x), int(y - margin), int(x + dx), int(y - margin))
             dc.DrawLine(
-                int(x), int(y - 5 * margin),
-                int(x + dx), int(y - 5 * margin),
+                int(x),
+                int(y - 5 * margin),
+                int(x + dx),
+                int(y - 5 * margin),
             )
             for i in range(-4, 5, 2):
                 dc.DrawLine(
@@ -282,9 +286,12 @@ class SchNotebookPage(wx.Window):
             self._layout_style = 0
             self._set_dimensions(
                 self.get_page(0),
-                margin, margin,
-                dx - 2 * margin, dy - 2 * margin,
-                dx, dy,
+                margin,
+                margin,
+                dx - 2 * margin,
+                dy - 2 * margin,
+                dx,
+                dy,
             )
             return
 
@@ -312,26 +319,42 @@ class SchNotebookPage(wx.Window):
         if (dx - x) * dy < 2 * ((dy - y) * dx):
             self._layout_style = 1  # left/right
             self._set_dimensions(
-                self.get_page(0), margin, margin,
-                x - 2 * margin, dy - 2 * margin,
-                dx, dy,
+                self.get_page(0),
+                margin,
+                margin,
+                x - 2 * margin,
+                dy - 2 * margin,
+                dx,
+                dy,
             )
             self._set_dimensions(
-                self.get_page(1), x + 5 * margin, margin,
-                (dx - x) - 6 * margin, dy - 2 * margin,
-                dx, dy,
+                self.get_page(1),
+                x + 5 * margin,
+                margin,
+                (dx - x) - 6 * margin,
+                dy - 2 * margin,
+                dx,
+                dy,
             )
         else:
             self._layout_style = 2  # top/bottom
             self._set_dimensions(
-                self.get_page(0), margin, margin,
-                dx - 2 * margin, y - 2 * margin,
-                dx, dy,
+                self.get_page(0),
+                margin,
+                margin,
+                dx - 2 * margin,
+                y - 2 * margin,
+                dx,
+                dy,
             )
             self._set_dimensions(
-                self.get_page(1), margin, y + 5 * margin,
-                dx - 2 * margin, (dy - y) - 6 * margin,
-                dx, dy,
+                self.get_page(1),
+                margin,
+                y + 5 * margin,
+                dx - 2 * margin,
+                (dy - y) - 6 * margin,
+                dx,
+                dy,
             )
 
     def _layout_many_pages(self, count, x, y, dx, dy, margin, dx2, dy2):
@@ -349,19 +372,26 @@ class SchNotebookPage(wx.Window):
                 margin + (i * dy) / (count - 2),
                 x - 2 * margin,
                 dy / (count - 2) - 2 * margin,
-                dx, dy,
+                dx,
+                dy,
             )
         self._set_dimensions(
             self.get_page(-2),
-            x + margin, margin,
-            (dx - x) - 2 * margin, y - 2 * margin,
-            dx, dy,
+            x + margin,
+            margin,
+            (dx - x) - 2 * margin,
+            y - 2 * margin,
+            dx,
+            dy,
         )
         self._set_dimensions(
             self.get_page(-1),
-            x + 5 * margin, y + 5 * margin,
-            (dx - x) - 6 * margin, (dy - y) - 6 * margin,
-            dx, dy,
+            x + 5 * margin,
+            y + 5 * margin,
+            (dx - x) - 6 * margin,
+            (dy - y) - 6 * margin,
+            dx,
+            dy,
         )
 
     # ------------------------------------------------------------------
@@ -516,11 +546,11 @@ class SchNotebookPage(wx.Window):
             h.parent_page = self.get_page(-1)
 
         nr = 0
-        if h.header is not None:
+        if (header := h.header) is not None:
             nr += 4
-        if h.footer is not None:
+        if (footer := h.footer) is not None:
             nr += 2
-        if h.panel is not None:
+        if (panel := h.panel) is not None:
             nr += 1
 
         title2 = title if title else h.get_title()
@@ -555,9 +585,5 @@ class SchNotebookPage(wx.Window):
         top = wx.GetApp().GetTopWindow()
         if view_in is None:
             pp = top._mgr.GetPane(self.GetParent())
-            return top.new_main_page(
-                address_or_parser, title, parameters, pp.name
-            )
-        return top.new_main_page(
-            address_or_parser, title, parameters, view_in
-        )
+            return top.new_main_page(address_or_parser, title, parameters, pp.name)
+        return top.new_main_page(address_or_parser, title, parameters, view_in)

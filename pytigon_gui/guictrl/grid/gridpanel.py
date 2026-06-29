@@ -57,8 +57,8 @@ class SchGridPanel(wx.Panel):
             else:
                 title = ""
             if (
-                not name in ("insert", "edit", "delete", "new", "get_row", "view_row")
-                and not name in self.commands
+                name not in ("insert", "edit", "delete", "new", "get_row", "view_row")
+                and name not in self.commands
             ):
                 if name in self._bitmaps:
                     b = self._get_bmp(name)
@@ -71,7 +71,7 @@ class SchGridPanel(wx.Panel):
                     x = label.split("(")
                     label1 = x[0]
                     label2 = x[1].split(")")[0]
-                    if not label2 in self._menu_buttons:
+                    if label2 not in self._menu_buttons:
                         self.toolbar.AddTool(
                             self.lp2,
                             label2,

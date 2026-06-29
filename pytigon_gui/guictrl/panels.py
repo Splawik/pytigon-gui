@@ -61,7 +61,7 @@ class HTML(page.SchPage, SchBaseCtrl):
             refresh: If True, redraws the page body.
         """
         if "<html" not in value:
-            self._value = "<html><body>%s</body></html>" % value
+            self._value = f"<html><body>{value}</body></html>"
         else:
             self._value = value
         mp = ShtmlParser()

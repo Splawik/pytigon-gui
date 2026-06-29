@@ -9,6 +9,7 @@ import os
 import sys
 import traceback
 import logging
+from pathlib import Path
 
 import wx
 
@@ -69,10 +70,10 @@ class SchBaseFrame(wx.Frame):
         and accelerator table.
         """
         home_dir = wx.GetApp().get_working_dir()
-        app_plugins = os.path.join(wx.GetApp().cwd, "plugins")
+        app_plugins = Path(wx.GetApp().cwd) / "plugins"
         dirnames = [
-            os.path.join(wx.GetApp().pytigon_path, "appdata", "plugins"),
-            os.path.join(wx.GetApp().data_path, "plugins"),
+            Path(wx.GetApp().pytigon_path) / "appdata" / "plugins",
+            Path(wx.GetApp().data_path) / "plugins",
             app_plugins,
         ]
 
@@ -85,18 +86,18 @@ class SchBaseFrame(wx.Frame):
             pass
 
         for dirname in dirnames:
-            if not os.path.exists(dirname):
+            if not Path(dirname).exists():
                 continue
 
             for ff in sorted(os.listdir(dirname)):
-                dirname2 = os.path.join(dirname, ff)
-                if not os.path.isdir(dirname2):
+                dirname2 = Path(dirname) / ff
+                if not Path(dirname2).is_dir():
                     continue
 
                 files = sorted(os.listdir(dirname2))
 
                 for f in files:
-                    if not os.path.isdir(os.path.join(dirname2, f)):
+                    if not (Path(dirname2) / f).is_dir():
                         continue
 
                     mod_name = ff + "." + f
