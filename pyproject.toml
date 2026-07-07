@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytigon-gui"
-version = "0.260629"
+version = "0.260707"
 description = "Pytigon GUI"
 authors = [{name = "Sławomir Chołaj", email = "slawomir.cholaj@gmail.com"}]
 license = {text = "LGPLv3"}
