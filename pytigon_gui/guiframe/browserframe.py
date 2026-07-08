@@ -18,6 +18,7 @@ from pytigon_gui.guiframe.baseframe import SchBaseFrame
 from django.conf import settings
 
 from pytigon.pytigon_request import init, request
+from pytigon_lib.schtools.env import get_environ
 
 _ = wx.GetTranslation
 
@@ -71,7 +72,11 @@ class SchBrowserFrame(SchBaseFrame):
         self.Bind(wx.EVT_IDLE, self.on_idle)
         self.Bind(wx.EVT_SIZE, self.on_size)
 
-        init(os.environ["PRJ_NAME"], "auto", "anawa", user_agent="webviewembeded")
+        env = get_environ()
+        username = env("USERNAME")
+        password = env("PASSWORD")
+
+        init(os.environ["PRJ_NAME"], username, password, user_agent="webviewembeded")
         start_request = request("/", None, user_agent="webviewembeded")
 
         self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(

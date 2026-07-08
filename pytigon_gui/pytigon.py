@@ -50,6 +50,8 @@ from pytigon_lib import init_paths
 
 init_paths()
 
+from pytigon_lib.schtools.env import get_environ
+
 if platform.system() == "Windows":
     sys.path.insert(0, str(SRC_PATH / "ext_lib_cli_win"))
 else:
@@ -1352,8 +1354,9 @@ def _main_init():
             username2 = _PARAM["username"]
             password2 = _PARAM["password"]
         else:
-            username2 = "auto"
-            password2 = "anawa"
+            env = get_environ(ROOT_PATH)
+            username2 = env("USERNAME")
+            password2 = env("PASSWORD")
 
         ready_to_run = False
         response = app.http.post(
