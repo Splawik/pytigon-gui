@@ -8,6 +8,8 @@ application runs in a webview-embedded mode.
 
 import os
 import sys
+import time
+import logging
 
 import wx
 
@@ -19,6 +21,8 @@ from django.conf import settings
 
 from pytigon.pytigon_request import init, request
 from pytigon_lib.schtools.env import get_environ
+
+logger = logging.getLogger(__name__)
 
 _ = wx.GetTranslation
 
@@ -79,15 +83,20 @@ class SchBrowserFrame(SchBaseFrame):
         init(os.environ["PRJ_NAME"], username, password, user_agent="webviewembeded")
         start_request = request("/", None, user_agent="webviewembeded")
 
+        size = self.GetClientSize()
+        if size.width < 0 or size.height < 0:
+            size = wx.Size(1024, 768)
         self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(
-            self, name="schbrowser", size=self.GetClientSize()
+            self, name="schbrowser", size=size
         )
         self.ctrl.load_str(start_request.str(), "http://127.0.0.5/")
 
         if sys.platform != "win32":
-            # On non-Windows platforms, yield until the page is loaded
-            # so that the initial paint is correct.
+            start = time.time()
             while not self.ctrl.page_loaded:
+                if time.time() - start > 10:
+                    logger.warning("Page load timed out")
+                    break
                 wx.Yield()
 
         size = wx.GetApp().app_size
@@ -95,17 +104,16 @@ class SchBrowserFrame(SchBaseFrame):
         wx.CallAfter(self.Show)
 
     def on_size(self, event):
-        """Resize the embedded webview to match the frame.
-
-        Args:
-            event: wx.SizeEvent or None.
-        """
         if self.ctrl:
             if event:
-                self.ctrl.SetSize(event.GetSize())
+                sz = event.GetSize()
+                if sz.width > 0 and sz.height > 0:
+                    self.ctrl.SetSize(sz)
                 event.Skip()
             else:
-                self.ctrl.SetSize(self.GetSize())
+                sz = self.GetSize()
+                if sz.width > 0 and sz.height > 0:
+                    self.ctrl.SetSize(sz)
 
     def get_menu_bar(self):
         """Return None; browser frames have no menu bar."""
@@ -124,7 +132,7 @@ class SchBrowserFrame(SchBaseFrame):
             try:
                 obj.on_idle()
             except Exception:
-                pass
+                logger.debug("Error in idle object %s", type(obj).__name__, exc_info=True)
 
         if not self.after_init:
             self.after_init = True

@@ -7,29 +7,34 @@ name = "pytigon-gui"
 version = "0.260707"
 description = "Pytigon GUI"
 authors = [{name = "Sławomir Chołaj", email = "slawomir.cholaj@gmail.com"}]
-license = {text = "LGPLv3"}
+license = {text = "LGPL-2.1"}
 readme = "README.md"
 requires-python = ">=3.12"
+keywords = ["pytigon", "gui", "wxpython", "django", "desktop", "framework"]
 classifiers = [
     "Development Status :: 3 - Alpha",
-    "Environment :: Web Environment",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
-    "Topic :: Internet :: WWW/HTTP :: Dynamic Content",
-    "Topic :: Internet :: WWW/HTTP :: WSGI :: Application",
+    "Topic :: Desktop Environment",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: User Interfaces",
 ]
 dynamic = ["dependencies"]
 
-[project.gui-scripts]
-ptigw = "pytigon.pytigon_run:run"
+[project.urls]
+homepage = "https://github.com/pytigon/pytigon-gui"
+repository = "https://github.com/pytigon/pytigon-gui"
+documentation = "https://pytigon-gui.readthedocs.io/"
+
+[project.scripts]
+ptigw = "pytigon_gui.pytigon:main"
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}

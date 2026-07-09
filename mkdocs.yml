@@ -1,10 +1,10 @@
 site_name: Pytigon GUI
 site_description: API documentation for pytigon_gui - wxPython desktop application framework
-site_author: Slawomir Cholaj
-site_url: ""
-repo_name: pytigon
-repo_url: ""
-copyright: "&copy; 2025 Slawomir Cholaj &middot; LGPL 3.0"
+site_author: Sławomir Chołaj
+site_url: "https://pytigon-gui.readthedocs.io/"
+repo_name: pytigon-gui
+repo_url: "https://github.com/pytigon/pytigon-gui"
+copyright: "&copy; 2026 Sławomir Chołaj &middot; LGPL 2.1"
 
 theme:
   name: material
@@ -46,7 +46,7 @@ plugins:
       handlers:
         python:
           paths: [.]
-          import:
+          inventories:
             - https://docs.python.org/3/objects.inv
           options:
             docstring_style: google
@@ -116,7 +116,7 @@ extra:
     provider: mike
   social:
     - icon: fontawesome/solid/globe
-      link: ""
+      link: "https://github.com/pytigon/pytigon-gui"
       name: Pytigon
 
 nav:

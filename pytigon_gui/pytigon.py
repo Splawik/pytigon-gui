@@ -1,4 +1,4 @@
-"""This is the main Pytigon client moudule. Function :func:`~pytigon_gui.pytigon.main` create SchApp object, witch extends wxPython wx.App.
+"""This is the main Pytigon client module. Function :func:`~pytigon_gui.pytigon.main` create SchApp object, which extends wxPython wx.App.
 Function :func:`~pytigon_gui.pytigon.main` process pytigon command line arguments. Module supports:
 
 - instalation of pytigon applications,
@@ -8,9 +8,6 @@ Function :func:`~pytigon_gui.pytigon.main` process pytigon command line argument
 - login to server process
 """
 
-# import warnings
-# warnings.filterwarnings("error")
-
 import os
 import sys
 from pathlib import Path
@@ -18,7 +15,6 @@ import time
 import platform
 import zipfile
 import getopt
-from multiprocessing import Process
 import configparser
 import logging
 from urllib.parse import urljoin
@@ -40,9 +36,9 @@ SRC_PATH = Path(pytigon.__file__).parent
 ROOT_PATH = str(SRC_PATH)
 
 if ROOT_PATH.startswith("."):
-    ROOT_PATH = str(CWD_PATH) + "/" + ROOT_PATH
+    ROOT_PATH = str(CWD_PATH / ROOT_PATH)
 sys.path.append(ROOT_PATH)
-sys.path.append(ROOT_PATH + "/appdata")
+sys.path.append(str(Path(ROOT_PATH) / "appdata"))
 
 os.environ["EMBEDED_DJANGO_SERVER"] = "1"
 
@@ -68,8 +64,6 @@ _WEBSOCKET = None
 
 
 def usage():
-    import sys
-
     sys.stdout.write(str(process_argv.__doc__) + "\n")
 
 
@@ -306,7 +300,7 @@ if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
         asyncio.futures.CancelledError = asyncio.CancelledError
         from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
 
-    class SChAsyncApp(WxAsyncApp):
+    class SchAsyncApp(WxAsyncApp):
         async def MainLoop(self):
             evtloop = wx.GUIEventLoop()
             with wx.EventLoopActivator(evtloop):
@@ -370,7 +364,7 @@ if _INSPECTION:
 
     if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
 
-        class InspectableApp(SChAsyncApp, wx.lib.mixins.inspection.InspectionMixin):
+        class InspectableApp(SchAsyncApp, wx.lib.mixins.inspection.InspectionMixin):
             def OnInit(self):
                 self.InitInspection()
                 return True
@@ -413,7 +407,7 @@ if _INSPECTION:
 
 else:
     if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
-        App = SChAsyncApp
+        App = SchAsyncApp
     else:
         App = wx.App
 
@@ -444,13 +438,10 @@ class SchApp(App, _BASE_APP):
             and not "nogui" in _PARAM
             and not "server_only" in _PARAM
         ):
-            # bitmap = wx.Bitmap(SRC_PATH + "/pytigon.svg", wx.BITMAP_TYPE_JPEG)
             img = wx.svg.SVGimage.CreateFromFile(str(SRC_PATH / "pytigon.svg"))
-            # img.ConvertAlphaToMask()
             bitmap = img.ConvertToBitmap(
                 scale=2, width=int(img.width * 2), height=int(img.height * 2)
             )
-            wx.BITMAP_TYPE_PNG
             splash = wx.adv.SplashScreen(
                 bitmap,
                 wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT,
@@ -752,9 +743,6 @@ class SchApp(App, _BASE_APP):
 
                     self.StartCoroutine(reinit_websockets, self.GetTopWindow())
 
-        # if local:
-        #    self.StartCoroutine(self.init_websockets, self)
-
     def make_href(self, href):
         if self.base_app and href.startswith("/"):
             return "/" + self.base_app + href
@@ -774,8 +762,6 @@ class SchApp(App, _BASE_APP):
         if hasattr(self, "StartCoroutine"):
             if self.base_address and self.base_address.startswith("http://127.0.0.2"):
                 wx.CallAfter(self.StartCoroutine, self.init_websockets, frame)
-            # if _DEBUG:
-            #    self.StartCoroutine(self.test_websockets, frame)
 
     def register_extern_app(self, address, app):
         self.ext_app.append((app, address))
@@ -888,11 +874,16 @@ class SchApp(App, _BASE_APP):
             "#", ""
         )
 
+    def _is_safe_zip_member(self, member_name, target_path):
+        resolved = os.path.realpath(os.path.join(target_path, member_name))
+        target_real = os.path.realpath(target_path)
+        return os.path.commonpath([resolved, target_real]) == target_real
+
     def _install_plugins(self):
         """Install plugins from the server if they are not already cached locally.
 
         Downloads plugin zip files from the server and extracts them into the
-        local plugin cache directory.
+        local plugin cache directory. Path traversal is prevented.
         """
         home_dir = self.get_working_dir()
         p = self.plugins
@@ -926,7 +917,21 @@ class SchApp(App, _BASE_APP):
                                 x.write(z_data)
                             try:
                                 zip_handle = zipfile.ZipFile(str(zip_path))
-                                extractall(zip_handle, str(plugin_dir))
+                                for member in zip_handle.infolist():
+                                    if member.filename.endswith(("/", "\\")):
+                                        os.makedirs(
+                                            os.path.join(str(plugin_dir), member.filename),
+                                            exist_ok=True,
+                                        )
+                                    elif self._is_safe_zip_member(
+                                        member.filename, str(plugin_dir)
+                                    ):
+                                        zip_handle.extract(member, str(plugin_dir))
+                                    else:
+                                        logger.warning(
+                                            "Skipping unsafe plugin zip entry: %s",
+                                            member.filename,
+                                        )
                                 zip_handle.close()
                             except (zipfile.BadZipFile, OSError) as e:
                                 logger.error(
@@ -1101,12 +1106,7 @@ def login(base_href, auth_type=None, username=None):
     return False
 
 
-def _main_init():
-    """Initialize the Pytigon application: parse args, set up Django, connect to server.
-
-    Returns:
-        Tuple of (ready_to_run: bool, nogui: bool), or (None, None) on failure.
-    """
+def _setup_app_params():
     global CWD_PATH, _PARAM, app
 
     args = _PARAM["args"]
@@ -1133,7 +1133,12 @@ def _main_init():
     if "address" in _PARAM:
         address = _PARAM["address"]
 
-    os.environ["DJANGO_SETTINGS_MODULE"] = "settings_app"
+    return args, apps, address, app_title, app_name, extern_prj
+
+
+def _process_args(args, address, app_name, extern_prj):
+    global CWD_PATH
+
     if len(args) > 0:
         if ".ptig" in args[0].lower():
             prg_name = args[0].replace("\\", "/").split("/")[-1]
@@ -1143,10 +1148,9 @@ def _main_init():
                 path = Path(PATHS["PRJ_PATH_ALT"]) / "_schremote"
                 sys.path.append(str(path))
                 if not pytigon_install.install(args[0]):
-                    return (None, None)
-                # sys.path.remove(path)
+                    return None, None, None
                 CWD_PATH = Path(PATHS["PRJ_PATH"]) / prg_name2
-                return (None, None)
+                return None, None, None
             else:
                 if len(x) > 3:
                     prg_name2 = x[0]
@@ -1157,11 +1161,11 @@ def _main_init():
                         logger.error(
                             _("Application pack: '%s' does not exists"), prj.strip()
                         )
-                        return (None, None)
+                        return None, None, None
                     wx.CallAfter(app.run_script, app_name2, args[0])
                 else:
                     logger.error(_("Name of script: '%s' is not valid"), prg_name)
-                    return (None, None)
+                    return None, None, None
         else:
             arg = args[0].strip()
             if arg == "embeded" or "." in arg or "/" in arg:
@@ -1184,9 +1188,13 @@ def _main_init():
                 CWD_PATH = Path(PATHS["PRJ_PATH"]) / arg
                 if not (Path(CWD_PATH) / "settings_app.py").exists():
                     logger.error(_("Application pack: '%s' does not exists"), arg)
-                    return (None, None)
-    sys.path.insert(0, str(CWD_PATH))
+                    return None, None, None
 
+    return address, app_name, extern_prj
+
+
+def _setup_django(apps):
+    sys.path.insert(0, str(CWD_PATH))
     httpclient.init_embeded_django()
 
     if not ("channels" in _PARAM or "rpc" in _PARAM):
@@ -1241,6 +1249,10 @@ def _main_init():
     for a in apps:
         settings.INSTALLED_APPS.append(a)
 
+    return settings, cwd, inst_dir
+
+
+def _setup_server(address):
     port = 0
     if "server_only" in _PARAM:
         port = 8000
@@ -1283,11 +1295,14 @@ def _main_init():
             server = run_server(address, port, prod=False)
         address = "http://" + address + ":" + str(port)
     else:
-        #    from pytigon_lib.schtasks.base_task import get_process_manager
-        #    app.task_manager = get_process_manager()
         server = None
 
+    return address, server
+
+
+def _start_task_queue():
     if "embeded_taskqueue" in _PARAM:
+        from multiprocessing import Process
         from django_q.management.commands.qcluster import Command as qcluster_command
 
         qcluster = qcluster_command()
@@ -1297,37 +1312,20 @@ def _main_init():
         app.task_manager.start()
         logger.info("Task manager started")
 
-    settings.BASE_URL = "http://" + address
-    settings.URL_ROOT_FOLDER = ""
-    if not "server_only" in _PARAM:
-        init_ret = app._init2(address, app_name)
-        if init_ret != 200:
-            return (False, False)
 
-    if app.authorized:
-        reinit = False
-    else:
-        reinit = True
-
-    app.server = server
-    app.cwd = cwd
-    app.inst_dir = inst_dir
-
+def _do_login_flow(app_name, address):
     tab = app.get_tab(0)
 
-    app.title = app_title
     autologin = True
     if "server_only" in _PARAM:
         app.gui_style = "app.gui_style = tray(file(exit,open))"
         app.authorized = True
         reinit = False
     else:
+        reinit = True
         for row in tab:
             if row[0].data == "autologin":
-                if row[1].data == "1":
-                    autologin = True
-                else:
-                    autologin = False
+                autologin = row[1].data == "1"
             elif row[0].data == "gui_style":
                 app.gui_style = row[1].data
             elif row[0].data == "csrf_token":
@@ -1347,7 +1345,7 @@ def _main_init():
     ready_to_run = True
 
     if not app.authorized and (
-        (autologin and not "username" in _PARAM)
+        (autologin and "username" not in _PARAM)
         or ("username" in _PARAM and "password" in _PARAM)
     ):
         if "username" in _PARAM:
@@ -1365,7 +1363,6 @@ def _main_init():
             if app_name
             else "/schsys/do_login/?from_pytigon",
             {
-                #'csrfmiddlewaretoken': app.csrf_token,
                 "username": username2,
                 "password": password2,
                 "next": address + "/" + app_name + "/schsys/ok/"
@@ -1388,7 +1385,46 @@ def _main_init():
             ready_to_run = True
     if reinit:
         app._re_init(address, app_name)
-    return (ready_to_run, True if "nogui" in _PARAM else False)
+    return ready_to_run
+
+
+def _main_init():
+    """Initialize the Pytigon application: parse args, set up Django, connect to server.
+
+    Returns:
+        Tuple of (ready_to_run: bool, nogui: bool), or (None, None) on failure.
+    """
+    global CWD_PATH, _PARAM, app
+
+    args, apps, address, app_title, app_name, extern_prj = _setup_app_params()
+
+    os.environ["DJANGO_SETTINGS_MODULE"] = "settings_app"
+    result = _process_args(args, address, app_name, extern_prj)
+    if result[0] is None:
+        return (None, None)
+    address, app_name, extern_prj = result
+
+    settings, cwd, inst_dir = _setup_django(apps)
+
+    address, server = _setup_server(address)
+
+    _start_task_queue()
+
+    settings.BASE_URL = "http://" + address
+    settings.URL_ROOT_FOLDER = ""
+    if "server_only" not in _PARAM:
+        init_ret = app._init2(address, app_name)
+        if init_ret != 200:
+            return (False, False)
+
+    app.server = server
+    app.cwd = cwd
+    app.inst_dir = inst_dir
+
+    app.title = app_title
+    ready_to_run = _do_login_flow(app_name, address)
+
+    return (ready_to_run, "nogui" in _PARAM)
 
 
 def _main_run():
@@ -1419,9 +1455,6 @@ def _main_run():
         )
 
     frame.CenterOnScreen()
-
-    # if not "tray" in app.gui_style:
-    #    frame.Show()
 
     wx.Log.SetActiveTarget(wx.LogStderr())
 

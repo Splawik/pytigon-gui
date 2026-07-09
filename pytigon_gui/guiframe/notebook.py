@@ -9,9 +9,12 @@ splitting, and wiki-based help lookup.
 import wx
 import wx.lib.agw.aui as aui
 from wx.lib.agw.aui import framemanager
+import logging
 from pytigon_lib.schtools.wiki import wiki_from_str
 from pytigon_gui.guiframe.manager import SChAuiBaseManager
 from wx.lib.agw.aui.aui_constants import *
+
+logger = logging.getLogger(__name__)
 
 
 class SchNotebook(aui.AuiNotebook):
@@ -163,7 +166,7 @@ class SchNotebook(aui.AuiNotebook):
                     mp, "?: " + wiki, panel="desktop2"
                 )
         except Exception:
-            pass
+            logger.debug("Failed to open wiki page for: %s", txt, exc_info=True)
 
     def SetPanel(self, panel):
         """Store a reference to the owning panel.

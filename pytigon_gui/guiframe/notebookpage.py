@@ -249,12 +249,18 @@ class SchNotebookPage(wx.Window):
         if x > 0 and y > 0 and width >= 0 and height >= 0:
             if self.child_panels[-1].vertical_position:
                 if self.child_panels[-1].vertical_position == "top":
-                    page.SetSize(int(x), int(dy - height - y), int(width), int(height))
+                    calculated_y = int(dy - height - y)
+                    if calculated_y < 0:
+                        calculated_y = 0
+                    page.SetSize(int(x), calculated_y, int(width), int(height))
                 else:
                     page.SetSize(int(x), int(y), int(width), int(height))
             else:
                 if self.reverse_style:
-                    page.SetSize(int(x), int(dy - height - y), int(width), int(height))
+                    calculated_y = int(dy - height - y)
+                    if calculated_y < 0:
+                        calculated_y = 0
+                    page.SetSize(int(x), calculated_y, int(width), int(height))
                 else:
                     page.SetSize(int(x), int(y), int(width), int(height))
 

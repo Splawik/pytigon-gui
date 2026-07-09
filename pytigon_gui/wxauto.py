@@ -164,6 +164,7 @@ class WxAuto:
         self.time_unit = 0.5
         #: float: Delay between system UI operations.
         self.sys_time_unit = 0.5
+        self._window_cache = {}
 
         # Lazy-import pyautogui with a clear error message if missing.
         try:
@@ -227,10 +228,13 @@ class WxAuto:
                 The found window, or None if no window with the given
                 name exists.
         """
-        # Small delay to let the UI settle before searching.
         await sleep(self.sys_time_unit / 3)
 
-        win = wx.Window.FindWindowByName(window_name)
+        win = self._window_cache.get(window_name)
+        if win is None or not win:
+            win = wx.Window.FindWindowByName(window_name)
+            if win:
+                self._window_cache[window_name] = win
         if win and set_focus:
             win.SetFocus()
             await sleep(self.sys_time_unit / 3)

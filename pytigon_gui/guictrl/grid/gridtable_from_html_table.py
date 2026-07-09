@@ -226,10 +226,13 @@ class SimpleDataTable(SchGridTableBase):
                 tab[1 : self.per_page + 1],
             )
         else:
+            data_len = len(tab) - 1
+            if data_len < 1:
+                data_len = 1
             self.data = PageData(
                 self._parent,
-                len(tab) - 1,
-                len(tab) - 1,
+                data_len,
+                data_len,
                 tab[0],
                 tab[1:],
             )

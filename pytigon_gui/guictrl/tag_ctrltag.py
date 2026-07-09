@@ -339,8 +339,8 @@ class CtrlTag(TableTag):
             self.obj.SetSize(
                 int(dc.x + self.extra_space[0]),
                 int(dc.y + self.extra_space[2]),
-                int((self.width - self.extra_space[0]) - self.extra_space[1]),
-                int((self.height - self.extra_space[2]) - self.extra_space[3]),
+                max(0, int((self.width - self.extra_space[0]) - self.extra_space[1])),
+                max(0, int((self.height - self.extra_space[2]) - self.extra_space[3])),
             )
         return (self.height, False)
 

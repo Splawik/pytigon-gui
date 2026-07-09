@@ -9,11 +9,14 @@ Also provides the handle_best_size decorator for auto-sizing widgets.
 """
 
 import wx
+import logging
 
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
 
 from urllib.parse import unquote
 from pytigon_lib.schparser.html_parsers import TreeParser
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -134,7 +137,7 @@ class SchBaseCtrl:
             try:
                 exec(self.onload, d)
             except Exception:
-                pass
+                logger.exception("Error executing onload script for %s", self.GetName())
 
         if hasattr(self, "__ext_init__"):
             self.__ext_init__()
@@ -317,18 +320,22 @@ def handle_best_size(base_class):
             if self.param and "width" in self.param:
                 try:
                     w = int(self.param["width"])
+                    if w < 0:
+                        w = 0
                 except (ValueError, TypeError):
                     pass
             if self.param and "height" in self.param:
                 try:
                     h = int(self.param["height"])
+                    if h < 0:
+                        h = 0
                 except (ValueError, TypeError):
                     pass
-            if w == 0 or h == 0:
+            if w <= 0 or h <= 0:
                 base_size = super().GetBestSize()
-                if w == 0:
+                if w <= 0:
                     w = base_size[0]
-                if h == 0:
+                if h <= 0:
                     h = base_size[1]
             return (w, h)
 

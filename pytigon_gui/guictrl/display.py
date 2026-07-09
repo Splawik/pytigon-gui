@@ -214,7 +214,7 @@ class TREELIST(TreeListCtrl, SchBaseCtrl):
             try:
                 self.SetItemData(child, None)
             except Exception:
-                pass
+                logger.debug("SetItemData failed for tree child", exc_info=True)
             for i in range(len(cols) - 1):
                 self.SetItemText(child, cols[i + 1], i + 1)
             if len(row[1]) > 0:

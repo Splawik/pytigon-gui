@@ -8,10 +8,13 @@ Classes:
 """
 
 import string
+import logging
 import wx
 
 from pytigon_lib.schtools import schjson
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+
+logger = logging.getLogger(__name__)
 
 _ = wx.GetTranslation
 
@@ -156,6 +159,7 @@ class Select2Popup(wx.MiniFrame):
             response = http.get(self, url)
             tab = schjson.loads(response.str())
         except Exception:
+            logger.warning("Failed to load select2 data from: %s", url, exc_info=True)
             return
 
         err = tab.get("err")

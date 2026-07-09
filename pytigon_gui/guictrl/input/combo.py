@@ -12,12 +12,15 @@ Classes:
 import os
 from pathlib import Path
 from base64 import b64encode
+import logging
 
 import wx
 from wx import ComboCtrl
 from wx.adv import BitmapComboBox
 
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+
+logger = logging.getLogger(__name__)
 from pytigon_gui.guictrl.display import POPUPHTML
 from pytigon_lib.schparser.html_parsers import Td
 
@@ -114,7 +117,7 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
                 else:
                     if ".png" in ff.lower():
                         try:
-                            path = dirname + "/" + ff
+                            path = str(dirname / ff)
                             image = wx.Image(path)
                             bmp = wx.Bitmap(image)
                             if subpath:
@@ -123,8 +126,8 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
                                 icon_id = prefix + ff
                             self.Append(icon_id.replace("\\", "/"), bmp, icon_id)
                         except Exception:
-                            pass
-                wx.Yield()
+                            logger.debug("Cannot append icon: %s", str(dirname / ff), exc_info=True)
+            wx.Yield()
 
     def GetValue(self):
         """Get the current combo box value.

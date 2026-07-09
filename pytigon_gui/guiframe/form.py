@@ -374,7 +374,7 @@ class SchForm(ScrolledPanel):
         try:
             setattr(self, ctrl.unique_name, ctrl)
         except Exception:
-            pass
+            logger.debug("setattr failed for %s", ctrl.unique_name, exc_info=True)
         self.GetParent().append_ctrl(ctrl)
 
     def enable_ctrls(self, ctrls):
@@ -680,14 +680,19 @@ class SchForm(ScrolledPanel):
                     self.init()
 
     def on_size(self, event):
-        if event.GetSize() == (0, 0) or event.GetSize() == (20, 20):
-            self._last_size = event.GetSize()
+        sz = event.GetSize()
+        if sz.width < 1 or sz.height < 1:
+            self._last_size = sz
             event.Skip()
             return
-        if self._last_size != event.GetSize():
-            self._last_size = event.GetSize()
+        if sz == (0, 0) or sz == (20, 20):
+            self._last_size = sz
+            event.Skip()
+            return
+        if self._last_size != sz:
+            self._last_size = sz
             self.wxdc = None
-            self.draw_background(True, event.GetSize())
+            self.draw_background(True, sz)
             event.Skip()
 
     def set_page(self, page_source):

@@ -7,6 +7,9 @@ wx.lib.agw.aui to add pane activation and hit-test refinements.
 
 import wx
 from wx.lib.agw import aui
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SChAuiBaseManager(aui.framemanager.AuiManager):
@@ -66,4 +69,5 @@ class SChAuiManager(SChAuiBaseManager):
         try:
             return aui.AuiManager.ActivatePane(self, window)
         except Exception:
+            logger.debug("ActivatePane failed for window: %s", window, exc_info=True)
             return None

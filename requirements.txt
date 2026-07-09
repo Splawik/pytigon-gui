@@ -1,8 +1,5 @@
-pytigon-batteries[all]
-wxpython
-PyDispatcher
-pyshortcuts
-libsass
-black
-pytest
-pytest-django
+pytigon-batteries[all]>=0.2600
+wxpython>=4.2.0
+PyDispatcher>=2.0.5
+pyshortcuts>=1.8
+libsass>=0.22

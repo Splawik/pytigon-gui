@@ -4,12 +4,15 @@ Verifies that each package's __init__.py correctly exports the expected
 symbols and that imports from all internal packages succeed.
 """
 
+import sys
+from unittest.mock import MagicMock
+
 import pytest
+
 import pytigon_gui
 import pytigon_gui.guilib
 import pytigon_gui.guictrl
 import pytigon_gui.guiframe
-import pytigon_gui.toolbar
 
 
 class TestGuilibInit:
@@ -117,6 +120,13 @@ class TestAllSubpackagesImportable:
         "pytigon_gui.guiframe.notebookpage",
         "pytigon_gui.guiframe.page",
         "pytigon_gui.toolbar",
+        "pytigon_gui.toolbar.basetoolbar",
+        "pytigon_gui.toolbar.standardtoolbar",
+        "pytigon_gui.toolbar.menubar",
+        "pytigon_gui.toolbar.generictoolbar",
+        "pytigon_gui.toolbar.moderntoolbar",
+        "pytigon_gui.toolbar.treetoolbar",
+        "pytigon_gui.toolbar.standardtoolbarbuttons",
     ]
 
     @pytest.mark.parametrize("package_name", PACKAGES)

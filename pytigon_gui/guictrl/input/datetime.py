@@ -88,7 +88,7 @@ class TIME(masked.TimeCtrl, SchBaseCtrl):
 
 if platform.system() == "Linux":
 
-    class DATEPICKER(SchBaseCtrl):
+    class DATEPICKER(SchBaseCtrl, wx.ComboCtrl):
         """Date picker control (Linux: popup-based).
 
         On Linux, uses a popup HTML dialog for date selection

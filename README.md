@@ -27,4 +27,4 @@ Full documentation is available in the [`docs/`](docs/index.md) directory, cover
 
 ## License
 
-LGPLv3 © Sławomir Chołaj
+LGPLv2.1 © Sławomir Chołaj
