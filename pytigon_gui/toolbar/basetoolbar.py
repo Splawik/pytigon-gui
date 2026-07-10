@@ -244,65 +244,21 @@ class ToolbarPanel:
         self.buttons.append(button)
         return button
 
-    def add_simple_tool(self, id, title, bitmaps):
-        """Append a simple push button to the panel.
-
-        Args:
-            id: An integer by which the tool may be identified.
-            title: Button title.
-            bitmaps: List of bitmaps; can contain 0, 1, or 2 bitmaps.
-                First bitmap is for the normal state, second for disabled.
-
-        Returns:
-            ToolbarButton: The newly created button.
-        """
+    def add_tool(self, id, title, bitmaps, kind):
         b = self._transform_bitmaps_parm(bitmaps)
-        return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_SIMPLE)
+        return self.append(id, title, b[0], b[1], kind=kind)
+
+    def add_simple_tool(self, id, title, bitmaps):
+        return self.add_tool(id, title, bitmaps, ToolbarButton.TYPE_SIMPLE)
 
     def add_dropdown_tool(self, id, title, bitmaps):
-        """Append a dropdown button to the panel.
-
-        Args:
-            id: An integer by which the tool may be identified.
-            title: Button title.
-            bitmaps: List of bitmaps; can contain 0, 1, or 2 bitmaps.
-                First bitmap is for the normal state, second for disabled.
-
-        Returns:
-            ToolbarButton: The newly created button.
-        """
-        b = self._transform_bitmaps_parm(bitmaps)
-        return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_DROPDOWN)
+        return self.add_tool(id, title, bitmaps, ToolbarButton.TYPE_DROPDOWN)
 
     def add_hybrid_tool(self, id, title, bitmaps):
-        """Append a hybrid button (button + dropdown) to the panel.
-
-        Args:
-            id: An integer by which the tool may be identified.
-            title: Button title.
-            bitmaps: List of bitmaps; can contain 0, 1, or 2 bitmaps.
-                First bitmap is for the normal state, second for disabled.
-
-        Returns:
-            ToolbarButton: The newly created button.
-        """
-        b = self._transform_bitmaps_parm(bitmaps)
-        return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_HYBRID)
+        return self.add_tool(id, title, bitmaps, ToolbarButton.TYPE_HYBRID)
 
     def add_toogle_tool(self, id, title, bitmaps):
-        """Append a toggle button to the panel.
-
-        Args:
-            id: An integer by which the tool may be identified.
-            title: Button title.
-            bitmaps: List of bitmaps; can contain 0, 1, or 2 bitmaps.
-                First bitmap is for the normal state, second for disabled.
-
-        Returns:
-            ToolbarButton: The newly created button.
-        """
-        b = self._transform_bitmaps_parm(bitmaps)
-        return self.append(id, title, b[0], b[1], kind=ToolbarButton.TYPE_TOOGLE)
+        return self.add_tool(id, title, bitmaps, ToolbarButton.TYPE_TOOGLE)
 
     def add_separator(self):
         """Append a visual separator to the panel.

@@ -77,8 +77,8 @@ class SchBrowserFrame(SchBaseFrame):
         self.Bind(wx.EVT_SIZE, self.on_size)
 
         env = get_environ()
-        username = env("USERNAME")
-        password = env("PASSWORD")
+        username = env("AUTOUSERNAME")
+        password = env("AUTOPASSWORD")
 
         init(os.environ["PRJ_NAME"], username, password, user_agent="webviewembeded")
         start_request = request("/", None, user_agent="webviewembeded")
@@ -86,9 +86,7 @@ class SchBrowserFrame(SchBaseFrame):
         size = self.GetClientSize()
         if size.width < 0 or size.height < 0:
             size = wx.Size(1024, 768)
-        self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(
-            self, name="schbrowser", size=size
-        )
+        self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(self, name="schbrowser", size=size)
         self.ctrl.load_str(start_request.str(), "http://127.0.0.5/")
 
         if sys.platform != "win32":
@@ -143,9 +141,7 @@ class SchBrowserFrame(SchBaseFrame):
                     for page in app.start_pages:
                         url_page = page.split(";")
                         if len(url_page) == 2:
-                            self._on_html(
-                                _(url_page[0]) + "," + app.base_address + url_page[1]
-                            )
+                            self._on_html(_(url_page[0]) + "," + app.base_address + url_page[1])
 
                 wx.CallAfter(start_pages)
 

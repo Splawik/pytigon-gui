@@ -53,14 +53,16 @@ if platform.system() == "Windows":
 else:
     sys.path.insert(0, str(SRC_PATH / "ext_lib_cli_lin"))
 
-_INSPECTION = False
-_DEBUG = False
-_TRACE = False
-_VIDEO = False
-_VIDEO_NAME = ""
-_APP_SIZE = (1024, 768)
-_RPC = False
-_WEBSOCKET = None
+_APP_CONFIG = {
+    "inspection": False,
+    "debug": False,
+    "trace": False,
+    "video": False,
+    "video_name": "",
+    "app_size": (1024, 768),
+    "rpc": False,
+    "websocket": None,
+}
 
 
 def usage():
@@ -183,21 +185,17 @@ def process_argv(argv):
         elif opt in ("--no_splash"):
             ret["no_splash"] = True
         elif opt in ("-d", "--debug"):
-            global _DEBUG
-            _DEBUG = True
+            _APP_CONFIG["debug"] = True
         elif opt in ("--inspection",):
-            global _INSPECTION
-            _INSPECTION = True
+            _APP_CONFIG["inspection"] = True
         elif opt in ("--trace",):
-            global _TRACE
-            _TRACE = True
+            _APP_CONFIG["trace"] = True
         elif opt in ("--video",):
-            global _VIDEO, _APP_SIZE, _VIDEO_NAME
-            _APP_SIZE = (1280, 720)
-            _VIDEO = True
-            _VIDEO_NAME = arg
-            if not _VIDEO_NAME:
-                _VIDEO_NAME = "video.avi"
+            _APP_CONFIG["app_size"] = (1280, 720)
+            _APP_CONFIG["video"] = True
+            _APP_CONFIG["video_name"] = arg
+            if not _APP_CONFIG["video_name"]:
+                _APP_CONFIG["video_name"] = "video.avi"
     return ret
 
 
@@ -344,12 +342,11 @@ if "rpc" in _PARAM or "websocket" in _PARAM:
     if "rpc" in _PARAM:
         from twisted.web import xmlrpc, server
 
-        _RPC = True
+        _APP_CONFIG["rpc"] = True
     if "websocket" in _PARAM:
-        # from autobahn.twisted.websocket import WebSocketClientFactory, WebSocketClientProtocol, connectWS
         from pytigon_lib.schhttptools.websocket import create_websocket_client
 
-        _WEBSOCKET = _PARAM["websocket"]
+        _APP_CONFIG["websocket"] = _PARAM["websocket"]
 
 if "channels" not in _PARAM:
     os.environ["PYTIGON_WITHOUT_CHANNELS"] = "1"
@@ -357,7 +354,7 @@ if "channels" not in _PARAM:
 wx.RegisterId(10000)
 wx.outputWindowClass = None
 
-if _INSPECTION:
+if _APP_CONFIG["inspection"]:
     os.environ["GTK_THEME"] = "Adwaita"
 
     import wx.lib.mixins.inspection
@@ -373,7 +370,7 @@ if _INSPECTION:
     else:
         App = wx.lib.mixins.inspection.InspectableApp
 
-    if _TRACE:
+    if _APP_CONFIG["trace"]:
 
         def trace_calls(frame, event, arg):
             if event != "call":
@@ -411,7 +408,7 @@ else:
     else:
         App = wx.App
 
-if _RPC:
+if _APP_CONFIG["rpc"]:
     _BASE_APP = xmlrpc.XMLRPC
 else:
 
@@ -430,14 +427,10 @@ class SchApp(App, _BASE_APP):
         """Construct an application."""
         global _PARAM
         App.__init__(self)
-        if _RPC:
+        if _APP_CONFIG["rpc"]:
             xmlrpc.XMLRPC.__init__(self)
 
-        if (
-            not "no_splash" in _PARAM
-            and not "nogui" in _PARAM
-            and not "server_only" in _PARAM
-        ):
+        if not "no_splash" in _PARAM and not "nogui" in _PARAM and not "server_only" in _PARAM:
             img = wx.svg.SVGimage.CreateFromFile(str(SRC_PATH / "pytigon.svg"))
             bitmap = img.ConvertToBitmap(
                 scale=2, width=int(img.width * 2), height=int(img.height * 2)
@@ -459,7 +452,7 @@ class SchApp(App, _BASE_APP):
         self.config = configparser.ConfigParser()
         self.config.read(config_name)
 
-        self.app_size = _APP_SIZE
+        self.app_size = _APP_CONFIG["app_size"]
 
         self.locale = None
         self.ext_app = []
@@ -498,28 +491,16 @@ class SchApp(App, _BASE_APP):
         self.websockets = {}
         self.websockets_callbacks = {}
 
-        self.gui_style = (
-            "app.gui_style = tree(toolbar(file(exit,open),clipboard, statusbar))"
-        )
+        self.gui_style = "app.gui_style = tree(toolbar(file(exit,open),clipboard, statusbar))"
 
-        self.COLOUR_HIGHLIGHT = colour_to_html(
-            wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
-        )
-        self.COLOUR_BACKGROUND = colour_to_html(
-            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
-        )
-        self.COLOUR_SHADOW = colour_to_html(
-            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
-        )
-        self.COLOUR_DKSHADOW = colour_to_html(
-            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW)
-        )
+        self.COLOUR_HIGHLIGHT = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
+        self.COLOUR_BACKGROUND = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
+        self.COLOUR_SHADOW = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
+        self.COLOUR_DKSHADOW = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW))
         self.COLOUR_ACTIVECATPION = colour_to_html(
             wx.SystemSettings.GetColour(wx.SYS_COLOUR_ACTIVECAPTION)
         )
-        self.COLOUR_INFOBK = colour_to_html(
-            wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK)
-        )
+        self.COLOUR_INFOBK = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK))
 
         self.ctrl_process = {}
 
@@ -756,7 +737,7 @@ class SchApp(App, _BASE_APP):
 
         if hasattr(frame, "statusbar") and frame.statusbar:
             self.thread_manager = SchThreadManager(self, frame.statusbar)
-        if _INSPECTION:
+        if _APP_CONFIG["inspection"]:
             self.ShowInspectionTool()
 
         if hasattr(self, "StartCoroutine"):
@@ -870,9 +851,7 @@ class SchApp(App, _BASE_APP):
         Returns:
             A comma-separated string of colour name:value pairs without '#' prefixes.
         """
-        return ",".join(f"{pos[0]}:{pos[1]}" for pos in standard_tab_colour()).replace(
-            "#", ""
-        )
+        return ",".join(f"{pos[0]}:{pos[1]}" for pos in standard_tab_colour()).replace("#", "")
 
     def _is_safe_zip_member(self, member_name, target_path):
         resolved = os.path.realpath(os.path.join(target_path, member_name))
@@ -923,9 +902,7 @@ class SchApp(App, _BASE_APP):
                                             os.path.join(str(plugin_dir), member.filename),
                                             exist_ok=True,
                                         )
-                                    elif self._is_safe_zip_member(
-                                        member.filename, str(plugin_dir)
-                                    ):
+                                    elif self._is_safe_zip_member(member.filename, str(plugin_dir)):
                                         zip_handle.extract(member, str(plugin_dir))
                                     else:
                                         logger.warning(
@@ -934,9 +911,7 @@ class SchApp(App, _BASE_APP):
                                         )
                                 zip_handle.close()
                             except (zipfile.BadZipFile, OSError) as e:
-                                logger.error(
-                                    "Error extracting plugin %s: %s", plugin, e
-                                )
+                                logger.error("Error extracting plugin %s: %s", plugin, e)
             except Exception as e:
                 logger.error("Error installing plugin %s: %s", plugin, e)
 
@@ -1022,15 +997,11 @@ class SchApp(App, _BASE_APP):
                     try:
                         getattr(callback, event_name)(**argv)
                     except Exception as e:
-                        logger.error(
-                            "Websocket callback error for %s: %s", event_name, e
-                        )
+                        logger.error("Websocket callback error for %s: %s", event_name, e)
 
     def on_websocket_connect(self, client, websocket_id, response):
         """Handle websocket connect event."""
-        return self.on_websocket_callback(
-            client, "on_websocket_connect", {"response": response}
-        )
+        return self.on_websocket_callback(client, "on_websocket_connect", {"response": response})
 
     def on_websocket_open(self, client, websocket_id):
         """Handle websocket open event."""
@@ -1097,9 +1068,7 @@ def login(base_href, auth_type=None, username=None):
                     return True
                 else:
                     ret_code = result.ret_code if result else "N/A"
-                    dlg.message.SetLabel(
-                        _(f"Failed login attempt! http error: {ret_code}")
-                    )
+                    dlg.message.SetLabel(_(f"Failed login attempt! http error: {ret_code}"))
         except Exception as e:
             dlg.message.SetLabel(_(f"Login error: {str(e)}"))
     dlg.Destroy()
@@ -1158,9 +1127,7 @@ def _process_args(args, address, app_name, extern_prj):
                     prj = x[-3]
                     CWD_PATH = Path(PATHS["PRJ_PATH"]) / prj.strip()
                     if not (Path(CWD_PATH) / "settings_app.py").exists():
-                        logger.error(
-                            _("Application pack: '%s' does not exists"), prj.strip()
-                        )
+                        logger.error(_("Application pack: '%s' does not exists"), prj.strip())
                         return None, None, None
                     wx.CallAfter(app.run_script, app_name2, args[0])
                 else:
@@ -1306,9 +1273,7 @@ def _start_task_queue():
         from django_q.management.commands.qcluster import Command as qcluster_command
 
         qcluster = qcluster_command()
-        app.task_manager = Process(
-            target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],)
-        )
+        app.task_manager = Process(target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],))
         app.task_manager.start()
         logger.info("Task manager started")
 
@@ -1331,9 +1296,7 @@ def _do_login_flow(app_name, address):
             elif row[0].data == "csrf_token":
                 app.csrf_token = row[1].data
             elif "start_page" in row[0].data:
-                app.start_pages.extend(
-                    [x for x in row[1].data.split(";") if x and x != "None"]
-                )
+                app.start_pages.extend([x for x in row[1].data.split(";") if x and x != "None"])
             elif row[0].data == "title":
                 app.title = row[1].data
             elif row[0].data == "plugins":
@@ -1345,16 +1308,15 @@ def _do_login_flow(app_name, address):
     ready_to_run = True
 
     if not app.authorized and (
-        (autologin and "username" not in _PARAM)
-        or ("username" in _PARAM and "password" in _PARAM)
+        (autologin and "username" not in _PARAM) or ("username" in _PARAM and "password" in _PARAM)
     ):
         if "username" in _PARAM:
             username2 = _PARAM["username"]
             password2 = _PARAM["password"]
         else:
             env = get_environ(ROOT_PATH)
-            username2 = env("USERNAME")
-            password2 = env("PASSWORD")
+            username2 = env("AUTOUSERNAME")
+            password2 = env("AUTOPASSWORD")
 
         ready_to_run = False
         response = app.http.post(
@@ -1443,15 +1405,15 @@ def _main_run():
             wx.ID_ANY,
             app.title,
             wx.DefaultPosition,
-            wx.Size(_APP_SIZE[0], _APP_SIZE[1]),
+            wx.Size(_APP_CONFIG["app_size"][0], _APP_CONFIG["app_size"][1]),
         )
     else:
         frame = appframe.SchAppFrame(
             app.gui_style,
             app.title,
             wx.DefaultPosition,
-            wx.Size(_APP_SIZE[0], _APP_SIZE[1]),
-            video_name=_VIDEO_NAME,
+            wx.Size(_APP_CONFIG["app_size"][0], _APP_CONFIG["app_size"][1]),
+            video_name=_APP_CONFIG["video_name"],
         )
 
     frame.CenterOnScreen()
@@ -1466,19 +1428,17 @@ def _main_run():
 
     httpclient.set_http_idle_func(idle_fun)
 
-    if _RPC:
+    if _APP_CONFIG["rpc"]:
         reactor.listenTCP(app.rpc, server.Site(app))
 
-    if _WEBSOCKET and app.base_address:
-        if ";" in _WEBSOCKET:
-            websockets = _WEBSOCKET.split(";")
+    if _APP_CONFIG["websocket"] and app.base_address:
+        if ";" in _APP_CONFIG["websocket"]:
+            websockets = _APP_CONFIG["websocket"].split(";")
         else:
-            websockets = [_WEBSOCKET]
+            websockets = [_APP_CONFIG["websocket"]]
 
         local = (
-            True
-            if app.base_address and app.base_address.startswith("http://127.0.0.2")
-            else False
+            True if app.base_address and app.base_address.startswith("http://127.0.0.2") else False
         )
 
         for websocket_id in websockets:
