@@ -681,16 +681,13 @@ class SchTableGrid(wx.grid.Grid):
             evt.Skip()
 
     def on_label_right_click(self, evt):
-        message = wx.MessageDialog(self, "x", "Komunikat")
-        message.ShowModal()
+        evt.Skip()
 
     def on_label_left_dclick(self, evt):
-        message = wx.MessageDialog(self, "y", "Komunikat")
-        message.ShowModal()
+        evt.Skip()
 
     def on_cell_right_click(self, evt):
-        message = wx.MessageDialog(self, "a", "Komunikat")
-        message.ShowModal()
+        evt.Skip()
 
     def action_exists(self, command):
         action = self.GetTable().get_actions(self.GetGridCursorRow())

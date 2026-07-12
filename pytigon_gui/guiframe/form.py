@@ -958,6 +958,8 @@ class SchForm(ScrolledPanel):
             if fields:
                 (typ, fields2) = fields.split(":")
                 adr = adr + "|" + fields2
+            else:
+                typ = "GET"
             if target == "refresh_frame":
                 self.any_parent_command("set_adr_and_param", adr, self.get_parm_obj())
                 self.any_parent_command("refresh_html")

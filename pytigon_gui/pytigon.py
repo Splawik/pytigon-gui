@@ -155,7 +155,7 @@ def process_argv(argv):
             ret["server_only"] = True
         elif opt in ("-u", "--username"):
             ret["username"] = arg
-        elif opt in ("-p", "--password"):
+        elif opt in ("--password",):
             ret["password"] = arg
         elif opt in ("--listen",):
             ret["listen"] = arg
@@ -627,20 +627,6 @@ class SchApp(App, _BASE_APP):
         self.mp = SimpleTabParser()
         self.mp.feed(ret)
         self.mp.close()
-
-    async def test_websockets(self):
-        logger.debug("-" * 65)
-        logger.debug("%s", self.websockets)
-        await self.websocket_send("/schtasks/show_task_events/channel/", {"id": "test"})
-        logger.debug("=" * 65)
-
-        count = 999
-        while True:
-            await asyncio.sleep(1)
-            await self.websocket_send(
-                "/schbuilder/clock/channel/", {"title": f"Hello world {count}"}
-            )
-            count -= 1
 
     async def init_websockets(self):
         from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer

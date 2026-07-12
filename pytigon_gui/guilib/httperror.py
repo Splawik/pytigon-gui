@@ -47,7 +47,7 @@ class HttpErrorDialog(wx.Dialog):
             pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
             pre.Create(parent, wx.ID_ANY, title, pos, size, style)
             self.PostCreate(pre)
-        except Exception:
+        except (AttributeError, TypeError):
             wx.Dialog.__init__(self, parent, wx.ID_ANY, title, pos, size, style)
 
         if "wxMac" in wx.PlatformInfo and use_metal:
@@ -112,7 +112,7 @@ def _http_error(parent, content):
         )
         dlg.CenterOnScreen()
         val = dlg.ShowModal()
-    except Exception as e:
+    except (AttributeError, TypeError, OSError) as e:
         logger.error("Error displaying HTTP error dialog: %s", e)
     finally:
         app.lock = False

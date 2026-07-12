@@ -175,7 +175,7 @@ class DataSource(SchGridTableBase):
         return self.rec_count + self.can_append + self.append_count
 
     def get_action_list(self, row, col=None):
-        return self.rec[row]
+        return self.get_rec(row)
 
     def get_actions(self, row, col=None):
         rowlen = len(self.GetColNames())

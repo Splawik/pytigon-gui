@@ -80,9 +80,11 @@ def save_video_frame(win):
 
 
 def finish_video():
+    global _RECORD_VIDEO_OUT, _RECORD_VIDEO_STRUCT
     if _RECORD_VIDEO_OUT:
         _RECORD_VIDEO_OUT.release()
-        _RECORD_VIDEO_STRUCT = None
+        _RECORD_VIDEO_OUT = None
+    _RECORD_VIDEO_STRUCT = None
 
 
 class _SChMainPanel(wx.Window):
@@ -665,7 +667,7 @@ class SchAppFrame(SchBaseFrame):
 
         # html: text/python
         if "text/python" in response.ret_content_type:
-            exec(http.str())
+            exec(response.str())
             return
 
         # pdf: "application/pdf"
