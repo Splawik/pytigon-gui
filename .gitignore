@@ -12,6 +12,7 @@ build
 dist
 
 .cache
+.*/
 .idea/
 */.gradle/
 migrations/
