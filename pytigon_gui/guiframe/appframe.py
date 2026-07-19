@@ -577,7 +577,7 @@ class SchAppFrame(SchBaseFrame):
         desktop = wx.GetApp().GetTopWindow().desktop
         id = desktop.GetPageIndex(desktop.GetCurrentPage())
         idn = 0
-        if id != None and id >= 0:
+        if id is not None and id >= 0:
             idn = id + 1
         if idn >= desktop.GetPageCount():
             idn = 0
@@ -742,7 +742,7 @@ class SchAppFrame(SchBaseFrame):
             created form :class:'~pytigon_gui.guiframe.htmlsash.SchPage'
         """
 
-        if type(address_or_parser) == str:
+        if isinstance(address_or_parser, str):
             address = address_or_parser
             if (
                 not address.startswith("^")
@@ -751,7 +751,7 @@ class SchAppFrame(SchBaseFrame):
             ):
                 return self.open_page(address_or_parser, title, parameters, view_in)
 
-        elif type(address_or_parser) == HttpResponse:
+        elif isinstance(address_or_parser, HttpResponse):
             address = address_or_parser.url
         else:
             address = address_or_parser.address
@@ -820,7 +820,7 @@ class SchAppFrame(SchBaseFrame):
                 ):
 
                     def _ret_fun():
-                        if type(address_or_parser) == str:
+                        if isinstance(address_or_parser, str):
                             ret.body.WEB.go(address)
                         else:
                             ret.body.WEB.load_str(address_or_parser.ptr())
@@ -829,7 +829,7 @@ class SchAppFrame(SchBaseFrame):
                 else:
 
                     def _ret_fun():
-                        if type(address_or_parser) == str:
+                        if isinstance(address_or_parser, str):
                             ret.body.WEB.go(wx.GetApp().base_path + address)
                         else:
                             ret.body.WEB.load_str(address_or_parser.ptr())
@@ -875,7 +875,7 @@ class SchAppFrame(SchBaseFrame):
         page = SchNotebookPage(n)
         if panel == "desktop2":
             if title is None:
-                if type(address_or_parser) == str:
+                if isinstance(address_or_parser, str):
                     n.add_and_split(page, "", wx.RIGHT)
                 else:
                     n.add_and_split(page, address_or_parser.title, wx.RIGHT)
@@ -883,16 +883,16 @@ class SchAppFrame(SchBaseFrame):
                 n.add_and_split(page, title2, wx.RIGHT)
         else:
             if title is None:
-                if type(address_or_parser) == str:
+                if isinstance(address_or_parser, str):
                     n.AddPage(page, "", True)
                 else:
                     n.AddPage(page, address_or_parser.title, True)
             else:
                 n.AddPage(page, title2, True)
 
-        if type(address_or_parser) == str:
+        if isinstance(address_or_parser, str):
             address = address_or_parser
-        elif type(address_or_parser) == HttpResponse:
+        elif isinstance(address_or_parser, HttpResponse):
             address = address_or_parser.url
 
         else:
@@ -1085,7 +1085,7 @@ class SchAppFrame(SchBaseFrame):
 
     def on_show_status_bar(self, event):
         if not self.statusbar:
-            self._create_status_bar()
+            self.statusbar = self._create_status_bar()
 
     def _on_html(self, command):
         l = command.split(",")
@@ -1096,9 +1096,9 @@ class SchAppFrame(SchBaseFrame):
         else:
             parm = None
 
-        if l[1] != None and l[1][0] == " ":
+        if l[1] is not None and l[1][0] == " ":
             l[1] = (l[1])[1:]
-        if parm != None and parm[0] == " ":
+        if parm is not None and parm[0] == " ":
             parm = parm[1:]
 
         if l[0]:
@@ -1155,15 +1155,13 @@ class SchAppFrame(SchBaseFrame):
         event.Skip()
 
     def on_about(self):
+        title = wx.GetApp().title
         msg = (
             "Pytigon runtime\nSławomir Chołaj\nslawomir.cholaj@gmail.com\n\n"
             + "The program uses wxpython library version:"
             + wx.VERSION_STRING
         )
-        dlg = (
-            wx.MessageDialog(self, msg, "Pytigon", wx.OK | wx.ICON_INFORMATION)
-            % wx.GetApp().title
-        )
+        dlg = wx.MessageDialog(self, msg, title, wx.OK | wx.ICON_INFORMATION)
         dlg.ShowModal()
         dlg.Destroy()
 

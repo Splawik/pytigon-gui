@@ -178,7 +178,7 @@ class SchGridPanel(wx.Panel):
                 dx = toolbar_size[0]
             self.spanel.SetRect(wx.Rect(0, 0, dx, panel_size[1]))
             self.grid.SetRect(
-                wx.Rect(dx + 2, 0, (panel_size[1] - dx) - 2, panel_size[1])
+                wx.Rect(dx + 2, 0, (panel_size[0] - dx) - 2, panel_size[1])
             )
         else:
             if toolbar_size[0] >= panel_size[0]:

@@ -52,6 +52,9 @@ class DataProxy:
                 }
             ),
         )
+        if response is None:
+            self.is_valid = False
+            raise RuntimeError(f"Failed to get table info from {self.tabaddress}")
         ret = schjson.loads(response.str())
 
         self.col_names = ret["col_names"]
@@ -185,7 +188,7 @@ class DataProxy:
 
         response = self.http.post(self.parent, self.tabaddress, process_post_parm(c))
         ret = schjson.loads(response.str())
-        if ret == None:
+        if ret is None:
             return rec
         else:
             return ret["rec"]

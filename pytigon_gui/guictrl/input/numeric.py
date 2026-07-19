@@ -58,13 +58,9 @@ class NUM(wx.SpinCtrl, SchBaseCtrl):
         """
         SchBaseCtrl.__init__(self, parent, kwds)
         if self.param and "process_enter" in self.param:
-            kwds["style"] = wx.TE_PROCESS_ENTER
+            kwds["style"] = kwds.get("style", 0) | wx.TE_PROCESS_ENTER
         if self.readonly:
-            style = 0
-            if "style" in kwds:
-                style = kwds["style"]
-            style = style | wx.TE_READONLY
-            kwds["style"] = style
+            kwds["style"] = kwds.get("style", 0) | wx.TE_READONLY
         wx.SpinCtrl.__init__(self, parent, **kwds)
 
 
@@ -92,13 +88,9 @@ class AMOUNT(wx.SpinCtrlDouble, SchBaseCtrl):
         """
         SchBaseCtrl.__init__(self, parent, kwds)
         if self.param and "process_enter" in self.param:
-            kwds["style"] = wx.TE_PROCESS_ENTER
+            kwds["style"] = kwds.get("style", 0) | wx.TE_PROCESS_ENTER
         if self.readonly:
-            style = 0
-            if "style" in kwds:
-                style = kwds["style"]
-            style = style | wx.TE_READONLY
-            kwds["style"] = style
+            kwds["style"] = kwds.get("style", 0) | wx.TE_READONLY
 
         kwds["inc"] = 1
 
@@ -111,7 +103,7 @@ class AMOUNT(wx.SpinCtrlDouble, SchBaseCtrl):
         else:
             kwds["max"] = 100000000
 
-        kwds["style"] = wx.SP_ARROW_KEYS | wx.ALIGN_RIGHT
+        kwds["style"] = kwds.get("style", 0) | wx.SP_ARROW_KEYS | wx.ALIGN_RIGHT
 
         wx.SpinCtrlDouble.__init__(self, parent, **kwds)
         self.SetDigits(2)

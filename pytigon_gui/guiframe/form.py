@@ -103,6 +103,8 @@ class SchForm(ScrolledPanel):
         self.hover_obj = None
         self.cursor_type = 0
         self.wxdc = None
+        self._motion_pending_pos = None
+        self._motion_timer = None
         self.after_init = False
         self.update_controls = False
         self.obj_action_dict = {}
@@ -432,7 +434,7 @@ class SchForm(ScrolledPanel):
 
     def on_left_down(self, evt):
         parent = self.GetParent()
-        while parent != None:
+        while parent is not None:
             if parent.__class__.__name__ == "HtmlPanel":
                 parent.SelectTab()
                 break
@@ -545,8 +547,30 @@ class SchForm(ScrolledPanel):
     def on_motion(self, evt):
         pos = evt.GetPosition()
         pos2 = (pos[0] + self._act_scroll_xy[0], pos[1] + self._act_scroll_xy[1])
-        self.redraw_html_elems(pos2)
+        self._motion_pending_pos = pos2
+        if self._motion_timer is None:
+            import time as _time
+            self._motion_last_time = getattr(self, "_motion_last_time", 0)
+            if _time.monotonic() - self._motion_last_time > 0.03:
+                self._motion_last_time = _time.monotonic()
+                self.redraw_html_elems(pos2)
+                self._motion_pending_pos = None
+            else:
+                self._motion_timer = wx.Timer(self)
+                self.Bind(wx.EVT_TIMER, self._on_motion_timer, self._motion_timer)
+                self._motion_timer.StartOnce(30)
         evt.Skip()
+
+    def _on_motion_timer(self, evt):
+        pos2 = self._motion_pending_pos
+        self._motion_pending_pos = None
+        if self._motion_timer is not None:
+            self._motion_timer.Stop()
+            self._motion_timer = None
+        if pos2 is not None:
+            import time as _time
+            self._motion_last_time = _time.monotonic()
+            self.redraw_html_elems(pos2)
 
     def redraw_html_elems(self, pos):
         obj = self._get_obj_for_redraw(pos)
@@ -898,8 +922,8 @@ class SchForm(ScrolledPanel):
 
             if href and hasattr(self, "filter_url"):
                 f = self.filter_url(target, href)
-                if f != None:
-                    if type(f) == str:
+                if f is not None:
+                    if isinstance(f, str):
                         href = clean_href(f)
                     else:
                         return f
@@ -1029,7 +1053,7 @@ class SchForm(ScrolledPanel):
 
                 if href and hasattr(self, "filter_http_result"):
                     f = self.filter_http_result(target, href, mp)
-                    if f != None:
+                    if f is not None:
                         return f
                 if target == "_self":
                     update_controls = self.update_controls

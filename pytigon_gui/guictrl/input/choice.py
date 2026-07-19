@@ -372,9 +372,9 @@ class LIST(wx.ListCtrl, SchBaseCtrl):
                     for i in range(num_cols):
                         self.InsertColumn(i, row[i].data)
                 else:
-                    index = self.InsertStringItem(0, row[0].data)
+                    index = self.InsertItem(0, row[0].data)
                     for i in range(1, num_cols):
-                        self.SetStringItem(index, i, row[i].data)
+                        self.SetItem(index, i, row[i].data)
 
 
 class CHECKLIST(LIST):

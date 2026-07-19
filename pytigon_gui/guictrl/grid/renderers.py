@@ -102,6 +102,8 @@ class IconAndStringRenderer(MultiLineStringRenderer):
 
     def get_image_from_cache(self, image):
         if image not in self.cache:
+            if len(self.cache) > 256:
+                self.cache.pop(next(iter(self.cache), None), None)
             self.cache[image] = SchImage(image)
         return self.cache[image].bmp
 
@@ -204,12 +206,12 @@ class DateTimeRenderer(wx.grid.GridCellRenderer):
     def GetBestSize(self, grid, attr, dc, row, col):
         text = grid.GetCellValue(row, col)
         dc.SetFont(attr.GetFont())
-        if not self.best_size:
-            if text:
-                self.best_size = dc.GetTextExtent(text[:16])
-            else:
-                return wx.Size(0, 0)
-        return wx.Size(self.best_size[0], self.best_size[1])
+        if text:
+            size = dc.GetTextExtent(text[:16])
+            if not self.best_size or size[0] > self.best_size[0]:
+                self.best_size = size
+            return wx.Size(self.best_size[0], self.best_size[1])
+        return wx.Size(0, 0)
 
     def Clone(self):
-        return ExtStringRenderer()
+        return DateTimeRenderer()

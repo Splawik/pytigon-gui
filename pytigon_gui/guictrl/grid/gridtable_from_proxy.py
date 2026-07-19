@@ -78,7 +78,7 @@ class DataSource(SchGridTableBase):
         if nr_rec < self.rec_count or self.rec_count == self.max_count:
             strona = nr_rec // 256
             if strona == self.last_page_id:
-                if self.last_page != None and nr_rec % 256 < len(self.last_page):
+                if self.last_page is not None and nr_rec % 256 < len(self.last_page):
                     return (self.last_page)[nr_rec % 256]
                 else:
                     return None
@@ -210,9 +210,9 @@ class DataSource(SchGridTableBase):
         return self.proxy.auto_update(col_name, col_names, rec)
 
     def filter_cmp(self, pos, key):
-        if self.filter_id >= 0:
+        if self.filter_id is not None and self.filter_id >= 0:
             elem = pos[self.filter_id]
-            if elem.__class__ == tuple:
+            if isinstance(elem, tuple):
                 elem = elem[0]
             if str(elem).upper().startswith(key.upper()):
                 return True
@@ -362,9 +362,9 @@ class DataSource(SchGridTableBase):
                     return ""
                 else:
                     ret = rec[col + 1]
-                    if ret.__class__ == tuple or ret.__class__ == list:
+                    if isinstance(ret, (tuple, list)):
                         ret = ret[0]
-                    if type(ret) == str:
+                    if isinstance(ret, str):
                         return ret
                     else:
                         return str(ret)
@@ -431,6 +431,7 @@ class DataSource(SchGridTableBase):
             return self.GetColTypes()[col + 1]
         except (IndexError, AttributeError):
             logger.debug("GetTypeName: col=%s types=%s", col, self.GetColTypes())
+            return ""
 
     def DeleteRows(self, row, il):
         if self.read_only:

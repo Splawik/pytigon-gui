@@ -384,7 +384,7 @@ class SchTableGrid(wx.grid.Grid):
         # elif not evt.ControlDown() and not evt.ShiftDown():
         else:
             s = self.GetTable().GetValue(evt.GetRow(), evt.GetCol())
-            if type(s) == str and s.strip() == "+":
+            if isinstance(s, str) and s.strip() == "+":
                 attr = self.GetTable().get_ext_attr(evt.GetRow(), evt.GetCol())
                 td = self.GetTable().data[evt.GetRow()][evt.GetCol()]
                 children = self.GetTable().get_children(evt.GetRow(), evt.GetCol())

@@ -397,7 +397,7 @@ def _make_menu_button_class(base_class):
             """
             e_obj = evt.GetEventObject()
             mitem = e_obj.FindItemById(evt.GetId())
-            if mitem != wx.NOT_FOUND:
+            if mitem is not None:
                 label = mitem.GetItemLabel()
                 item = self._href_dict[label]
                 self.GetParent().href_clicked(self, item)

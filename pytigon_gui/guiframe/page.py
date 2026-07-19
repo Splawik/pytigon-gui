@@ -5,6 +5,14 @@ created on demand from the HTML response."""
 import wx
 import logging
 
+try:
+    from pydispatch import dispatcher
+except ImportError:
+    try:
+        from dispatch import dispatcher
+    except ImportError:
+        dispatcher = None
+
 logger = logging.getLogger(__name__)
 
 try:

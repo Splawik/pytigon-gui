@@ -13,12 +13,16 @@ Server API:
         Response format: (element id, string representation of element).
 """
 
+import logging
+
 import wx
 from wx import ComboCtrl
 from wx.lib import masked
 
 from pytigon_lib.schtools import schjson
 from pytigon_lib.schtools.tools import bencode, bdecode
+
+logger = logging.getLogger(__name__)
 
 
 class DataPopup(wx.ComboPopup):
@@ -374,17 +378,21 @@ class DataPopupControl(ComboCtrl):
             self.html.body.Hide()
 
             def _after():
-                self.html.refresh_html()
-                self.html.SetFocus()
-                self.html.on_size(None)
-                self.html.body.init()
+                try:
+                    self.html.refresh_html()
+                    self.html.SetFocus()
+                    self.html.on_size(None)
+                    self.html.body.init()
 
-                def _after2():
-                    self.html.body.refr(self.start_value)
-                    self.html.body.Show()
+                    def _after2():
+                        self.html.body.refr(self.start_value)
+                        self.html.body.Show()
 
-                wx.CallAfter(_after2)
-                wx.EndBusyCursor()
+                    wx.CallAfter(_after2)
+                except Exception:
+                    logger.exception("Error in popup on_popoup")
+                finally:
+                    wx.EndBusyCursor()
 
             wx.CallAfter(_after)
 

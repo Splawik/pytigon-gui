@@ -146,11 +146,15 @@ class COLLAPSIBLE_PANEL(wx.CollapsiblePane, SchBaseCtrl):
         """Parse and display HTML content in the pane.
 
         Args:
-            html_txt: HTML string to render.
+            html_txt: HTML string or bytes to render.
         """
+        if html_txt is None:
+            html_txt = self.param.get("data", "")
+        if isinstance(html_txt, bytes):
+            html_txt = html_txt.decode("utf-8")
         mp = ShtmlParser()
         mp.process(
-            "<html><body>" + self.param["data"].decode("utf-8") + "</body></html>"
+            "<html><body>" + html_txt + "</body></html>"
         )
         mp.address = None
         if not self.html:

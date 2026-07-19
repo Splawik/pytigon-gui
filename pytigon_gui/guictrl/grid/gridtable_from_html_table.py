@@ -97,10 +97,12 @@ class PageData:
 
             old_y = wx.GetApp().Yield
             wx.GetApp().Yield = y
-            data = self.get_page(page)
-            self.pages[page] = data
-            wx.GetApp().Yield = old_y
-            wx.EndBusyCursor()
+            try:
+                data = self.get_page(page)
+                self.pages[page] = data
+            finally:
+                wx.GetApp().Yield = old_y
+                wx.EndBusyCursor()
             return self.__getitem__(id)
 
     def sort(self, key):
@@ -264,7 +266,7 @@ class SimpleDataTable(SchGridTableBase):
 
     def get_action_list(self, row, col=None):
         try:
-            if col == None:
+            if col is None:
                 col2 = self.GetNumberCols()
             else:
                 col2 = col

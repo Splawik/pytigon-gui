@@ -264,7 +264,7 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
         """
         if bitmap is not None and bitmap.IsOk():
             if bitmap.GetWidth() < 32 or bitmap.GetHeight() < 32:
-                b = wx.BitmapFromImage(bitmap.ConvertToImage().Rescale(32, 32))
+                b = wx.Bitmap(bitmap.ConvertToImage().Rescale(32, 32))
             else:
                 b = bitmap
             self.images.Add(b)
@@ -304,7 +304,7 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
             event: wx.CloseEvent.
         """
         if self in wx.GetApp().GetTopWindow().idle_objects:
-            del wx.GetApp().GetTopWindow().idle_objects[self]
+            wx.GetApp().GetTopWindow().idle_objects.remove(self)
         event.Skip()
 
     def get_max_width(self, respect_expansion_state=True):

@@ -40,7 +40,7 @@ class TEXT(SchBaseCtrl, wx.TextCtrl):
         """
         SchBaseCtrl.__init__(self, parent, kwds)
         if self.param and "process_enter" in self.param:
-            kwds["style"] = wx.TE_PROCESS_ENTER
+            kwds["style"] = kwds.get("style", 0) | wx.TE_PROCESS_ENTER
         wx.TextCtrl.__init__(self, parent, **kwds)
         if self.hidden:
             self.Enable(False)
@@ -179,14 +179,13 @@ class STYLEDTEXT(wx.TextCtrl, SchBaseCtrl):
             value: String or bytes value to set. A single leading
                 newline is stripped for cleaner display.
         """
+        if isinstance(value, bytes):
+            value = value.decode("utf-8")
         if value.startswith("\n"):
             value2 = value[1:]
         else:
             value2 = value
-        if isinstance(value2, str):
-            return wx.TextCtrl.SetValue(self, value2)
-        else:
-            return wx.TextCtrl.SetValue(self, value2.decode("utf-8"))
+        return wx.TextCtrl.SetValue(self, value2)
 
 
 # Aliases for backward compatibility

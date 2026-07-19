@@ -1464,8 +1464,13 @@ def main():
     ready_to_run, nogui = _main_init()
     if ready_to_run:
         if nogui:
-            while True:
-                time.sleep(100)
+            import threading
+
+            stop_event = threading.Event()
+            try:
+                stop_event.wait()
+            except KeyboardInterrupt:
+                pass
         else:
             _main_run()
     os._exit(0)

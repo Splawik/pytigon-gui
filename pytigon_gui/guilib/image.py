@@ -291,7 +291,7 @@ class ArtProviderFromIcon(wx.ArtProvider):
         Returns:
             wx.Bitmap or wx.NullBitmap.
         """
-        artid = artid2.encode("utf-8")
+        artid = artid2 if isinstance(artid2, str) else str(artid2)
         if size not in (16, 22, 32):
             size = 32
         path = None
