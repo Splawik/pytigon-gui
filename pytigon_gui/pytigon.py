@@ -430,7 +430,11 @@ class SchApp(App, _BASE_APP):
         if _APP_CONFIG["rpc"]:
             xmlrpc.XMLRPC.__init__(self)
 
-        if not "no_splash" in _PARAM and not "nogui" in _PARAM and not "server_only" in _PARAM:
+        if (
+            not "no_splash" in _PARAM
+            and not "nogui" in _PARAM
+            and not "server_only" in _PARAM
+        ):
             img = wx.svg.SVGimage.CreateFromFile(str(SRC_PATH / "pytigon.svg"))
             bitmap = img.ConvertToBitmap(
                 scale=2, width=int(img.width * 2), height=int(img.height * 2)
@@ -491,16 +495,28 @@ class SchApp(App, _BASE_APP):
         self.websockets = {}
         self.websockets_callbacks = {}
 
-        self.gui_style = "app.gui_style = tree(toolbar(file(exit,open),clipboard, statusbar))"
+        self.gui_style = (
+            "app.gui_style = tree(toolbar(file(exit,open),clipboard, statusbar))"
+        )
 
-        self.COLOUR_HIGHLIGHT = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT))
-        self.COLOUR_BACKGROUND = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
-        self.COLOUR_SHADOW = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW))
-        self.COLOUR_DKSHADOW = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW))
+        self.COLOUR_HIGHLIGHT = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_HIGHLIGHT)
+        )
+        self.COLOUR_BACKGROUND = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
+        )
+        self.COLOUR_SHADOW = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DSHADOW)
+        )
+        self.COLOUR_DKSHADOW = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DDKSHADOW)
+        )
         self.COLOUR_ACTIVECATPION = colour_to_html(
             wx.SystemSettings.GetColour(wx.SYS_COLOUR_ACTIVECAPTION)
         )
-        self.COLOUR_INFOBK = colour_to_html(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK))
+        self.COLOUR_INFOBK = colour_to_html(
+            wx.SystemSettings.GetColour(wx.SYS_COLOUR_INFOBK)
+        )
 
         self.ctrl_process = {}
 
@@ -837,7 +853,9 @@ class SchApp(App, _BASE_APP):
         Returns:
             A comma-separated string of colour name:value pairs without '#' prefixes.
         """
-        return ",".join(f"{pos[0]}:{pos[1]}" for pos in standard_tab_colour()).replace("#", "")
+        return ",".join(f"{pos[0]}:{pos[1]}" for pos in standard_tab_colour()).replace(
+            "#", ""
+        )
 
     def _is_safe_zip_member(self, member_name, target_path):
         resolved = os.path.realpath(os.path.join(target_path, member_name))
@@ -885,10 +903,14 @@ class SchApp(App, _BASE_APP):
                                 for member in zip_handle.infolist():
                                     if member.filename.endswith(("/", "\\")):
                                         os.makedirs(
-                                            os.path.join(str(plugin_dir), member.filename),
+                                            os.path.join(
+                                                str(plugin_dir), member.filename
+                                            ),
                                             exist_ok=True,
                                         )
-                                    elif self._is_safe_zip_member(member.filename, str(plugin_dir)):
+                                    elif self._is_safe_zip_member(
+                                        member.filename, str(plugin_dir)
+                                    ):
                                         zip_handle.extract(member, str(plugin_dir))
                                     else:
                                         logger.warning(
@@ -897,7 +919,9 @@ class SchApp(App, _BASE_APP):
                                         )
                                 zip_handle.close()
                             except (zipfile.BadZipFile, OSError) as e:
-                                logger.error("Error extracting plugin %s: %s", plugin, e)
+                                logger.error(
+                                    "Error extracting plugin %s: %s", plugin, e
+                                )
             except Exception as e:
                 logger.error("Error installing plugin %s: %s", plugin, e)
 
@@ -983,11 +1007,15 @@ class SchApp(App, _BASE_APP):
                     try:
                         getattr(callback, event_name)(**argv)
                     except Exception as e:
-                        logger.error("Websocket callback error for %s: %s", event_name, e)
+                        logger.error(
+                            "Websocket callback error for %s: %s", event_name, e
+                        )
 
     def on_websocket_connect(self, client, websocket_id, response):
         """Handle websocket connect event."""
-        return self.on_websocket_callback(client, "on_websocket_connect", {"response": response})
+        return self.on_websocket_callback(
+            client, "on_websocket_connect", {"response": response}
+        )
 
     def on_websocket_open(self, client, websocket_id):
         """Handle websocket open event."""
@@ -1054,7 +1082,9 @@ def login(base_href, auth_type=None, username=None):
                     return True
                 else:
                     ret_code = result.ret_code if result else "N/A"
-                    dlg.message.SetLabel(_(f"Failed login attempt! http error: {ret_code}"))
+                    dlg.message.SetLabel(
+                        _(f"Failed login attempt! http error: {ret_code}")
+                    )
         except Exception as e:
             dlg.message.SetLabel(_(f"Login error: {str(e)}"))
     dlg.Destroy()
@@ -1113,7 +1143,9 @@ def _process_args(args, address, app_name, extern_prj):
                     prj = x[-3]
                     CWD_PATH = Path(PATHS["PRJ_PATH"]) / prj.strip()
                     if not (Path(CWD_PATH) / "settings_app.py").exists():
-                        logger.error(_("Application pack: '%s' does not exists"), prj.strip())
+                        logger.error(
+                            _("Application pack: '%s' does not exists"), prj.strip()
+                        )
                         return None, None, None
                     wx.CallAfter(app.run_script, app_name2, args[0])
                 else:
@@ -1259,7 +1291,9 @@ def _start_task_queue():
         from django_q.management.commands.qcluster import Command as qcluster_command
 
         qcluster = qcluster_command()
-        app.task_manager = Process(target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],))
+        app.task_manager = Process(
+            target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],)
+        )
         app.task_manager.start()
         logger.info("Task manager started")
 
@@ -1282,7 +1316,9 @@ def _do_login_flow(app_name, address):
             elif row[0].data == "csrf_token":
                 app.csrf_token = row[1].data
             elif "start_page" in row[0].data:
-                app.start_pages.extend([x for x in row[1].data.split(";") if x and x != "None"])
+                app.start_pages.extend(
+                    [x for x in row[1].data.split(";") if x and x != "None"]
+                )
             elif row[0].data == "title":
                 app.title = row[1].data
             elif row[0].data == "plugins":
@@ -1294,7 +1330,8 @@ def _do_login_flow(app_name, address):
     ready_to_run = True
 
     if not app.authorized and (
-        (autologin and "username" not in _PARAM) or ("username" in _PARAM and "password" in _PARAM)
+        (autologin and "username" not in _PARAM)
+        or ("username" in _PARAM and "password" in _PARAM)
     ):
         if "username" in _PARAM:
             username2 = _PARAM["username"]
@@ -1424,7 +1461,9 @@ def _main_run():
             websockets = [_APP_CONFIG["websocket"]]
 
         local = (
-            True if app.base_address and app.base_address.startswith("http://127.0.0.2") else False
+            True
+            if app.base_address and app.base_address.startswith("http://127.0.0.2")
+            else False
         )
 
         for websocket_id in websockets:
@@ -1462,6 +1501,7 @@ def _main_run():
 
 def main():
     ready_to_run, nogui = _main_init()
+
     if ready_to_run:
         if nogui:
             import threading
