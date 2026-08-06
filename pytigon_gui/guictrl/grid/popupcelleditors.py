@@ -212,7 +212,7 @@ class PopupDataCellEditor(GridCellEditor):
             A new PopupDataCellEditor instance.
         """
         ret = PopupDataCellEditor()
-        ret.SetParameters(self.param)
+        ret.set_parameters(self.param)
         return ret
 
     def set_parameters(self, params):
@@ -255,7 +255,7 @@ class DatePopupDataCellEditor(PopupDataCellEditor):
         """
         ret = DatePopupDataCellEditor()
         ret.address = self.address
-        ret.SetParameters(self.param)
+        ret.set_parameters(self.param)
         return ret
 
 
@@ -290,7 +290,7 @@ class ListPopupCellEditor(PopupDataCellEditor):
         """
         ret = ListPopupCellEditor()
         ret.address = self.address
-        ret.SetParameters(self.param)
+        ret.set_parameters(self.param)
         return ret
 
     def BeginEdit(self, row, col, grid):
@@ -353,7 +353,7 @@ class GenericPopupCellEditor(PopupDataCellEditor):
             A new GenericPopupCellEditor instance.
         """
         ret = GenericPopupCellEditor()
-        ret.SetParameters(self.address)
+        ret.set_parameters(self.address)
         return ret
 
     def set_parameters(self, params):

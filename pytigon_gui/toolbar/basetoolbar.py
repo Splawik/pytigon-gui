@@ -413,7 +413,6 @@ class ToolbarBar:
             panel = self.user_panels[key]
             if panel.page.title == title:
                 del self.user_panels[key]
-                return
 
     def append(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
         """Append a page to the toolbar, or return an existing one.

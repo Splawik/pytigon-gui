@@ -33,6 +33,68 @@ def _extract_kwarg(kwds, key, default=None):
     return default
 
 
+def to_int(value, default=None):
+    """Safely convert *value* to int, returning *default* on failure.
+
+    Args:
+        value: Value to convert.
+        default: Value returned when conversion fails (default None).
+
+    Returns:
+        int or *default*.
+    """
+    try:
+        return int(value)
+    except (ValueError, TypeError):
+        return default
+
+
+def to_float(value, default=None):
+    """Safely convert *value* to float, returning *default* on failure.
+
+    Args:
+        value: Value to convert.
+        default: Value returned when conversion fails (default None).
+
+    Returns:
+        float or *default*.
+    """
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return default
+
+
+def to_bool(value, default=None):
+    """Safely convert *value* to bool.
+
+    Recognises booleans, numbers (0/1) and common string forms
+    ('true'/'false', '1'/'0', 'yes'/'no', 'on'/'off'). Returns *default*
+    when the value cannot be interpreted as a boolean.
+
+    Args:
+        value: Value to convert.
+        default: Value returned when conversion fails (default None).
+
+    Returns:
+        bool or *default*.
+    """
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    if isinstance(value, (int, float)):
+        return value != 0
+    if isinstance(value, bytes):
+        value = value.decode("utf-8", "ignore")
+    text = str(value).strip().lower()
+    if text in ("1", "true", "yes", "on", "y", "t"):
+        return True
+    if text in ("0", "false", "no", "off", "n", "f", ""):
+        return False
+    return default
+
+
 # ---------------------------------------------------------------------------
 # SchBaseCtrl
 # ---------------------------------------------------------------------------
@@ -297,6 +359,46 @@ class SchBaseCtrl:
         if form:
             return form.get_parent_page()
         return None
+
+    # ------------------------------------------------------------------
+    # Unified value protocol
+    # These hooks provide a single way to read/write a widget's value.
+    # Subclasses may override them; the defaults delegate to the wx
+    # GetValue()/SetValue() methods when available.
+    # ------------------------------------------------------------------
+
+    def get_form_value(self):
+        """Return the current form value.
+
+        The default reads via GetValue() when available, otherwise
+        returns the stored 'value' attribute.
+
+        Returns:
+            The widget value.
+        """
+        if hasattr(self, "GetValue"):
+            try:
+                return self.GetValue()
+            except Exception:
+                pass
+        return self.value
+
+    def set_form_value(self, value):
+        """Set the widget value from form data.
+
+        The default delegates to SetValue() when available, otherwise
+        stores the 'value' attribute.
+
+        Args:
+            value: Value to set.
+        """
+        if hasattr(self, "SetValue"):
+            try:
+                self.SetValue(value)
+                return
+            except Exception:
+                pass
+        self.value = value
 
 
 def handle_best_size(base_class):

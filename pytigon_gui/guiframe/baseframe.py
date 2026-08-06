@@ -103,7 +103,7 @@ class SchBaseFrame(wx.Frame):
                     mod_name = ff + "." + f
                     # Skip internal modules
                     if ".__" in mod_name:
-                        break
+                        continue
 
                     x = mod_name.replace(".", "/")
                     if not (

@@ -10,16 +10,22 @@ continues to work unchanged. The actual implementations now live in:
 
     guictrl/button/base.py     - Button classes and factories
     guictrl/input/text.py      - TEXT, PASSWORD, SEARCH, STYLEDTEXT, MASKTEXT
-    guictrl/input/numeric.py   - NUM, AMOUNT, FLOAT, SPIN, SLIDER, GAUGE, TICKER
+    guictrl/input/numeric.py   - NUM, AMOUNT, FLOAT, SPIN, SLIDER, GAUGE, TICKER,
+                                 PROGRESSDIALOG
     guictrl/input/choice.py    - CHECKBOX, CHECKLISTBOX, LISTBOX, LIST, CHECKLIST,
                                  RADIOBOX, RADIOBUTTON
-    guictrl/input/combo.py     - BITMAPCOMBOBOX, CHOICE, DBCHOICE, DBCHOICE_EXT
+    guictrl/input/combo.py     - BITMAPCOMBOBOX, CHOICE, DBCHOICE, DBCHOICE_EXT,
+                                 COMBOBOX, OWNERDRAWNCOMBOBOX
     guictrl/input/datetime.py  - CALENDAR, DATEPICKER, DATETIMEPICKER, TIME
+    guictrl/input/toggle.py    - TOGGLEBUTTON, BITMAPTOGGLEBUTTON
+    guictrl/input/richtext.py  - RICHTEXT
     guictrl/display.py         - STATICTEXT, ERRORLIST, TREE, TREELIST,
                                  COLOURSELECT, GENERICDIR, EDITABLELISTBOX,
                                  FILEBROWSEBUTTON, IMAGEBROWSEBUTTON,
-                                 HTMLLISTBOX, POPUPHTML
-    guictrl/panels.py          - HTML, NOTEBOOK, COLLAPSIBLE_PANEL, CompositePanel
+                                 HTMLLISTBOX, POPUPHTML, STATICBITMAP,
+                                 STATICLINE, HYPERLINK
+    guictrl/panels.py          - HTML, NOTEBOOK, COLLAPSIBLE_PANEL, STATICBOX,
+                                 CompositePanel
     guictrl/grids.py           - TABLE, GRID, UPDATEGRIDBUTTON
     guictrl/factory.py         - SELECT, BUTTON, TEXTAREA, SELECT2,
                                  COMPOSITE, COMPONENT
@@ -73,6 +79,7 @@ from pytigon_gui.guictrl.input.numeric import (
     SLIDER,
     GAUGE,
     TICKER,
+    PROGRESSDIALOG,
 )
 
 # Choice / selection widgets
@@ -92,7 +99,18 @@ from pytigon_gui.guictrl.input.combo import (
     CHOICE,
     DBCHOICE,
     DBCHOICE_EXT,
+    COMBOBOX,
+    OWNERDRAWNCOMBOBOX,
 )
+
+# Toggle button widgets
+from pytigon_gui.guictrl.input.toggle import (
+    TOGGLEBUTTON,
+    BITMAPTOGGLEBUTTON,
+)
+
+# Rich text widgets
+from pytigon_gui.guictrl.input.richtext import RICHTEXT
 
 # Date / time widgets
 from pytigon_gui.guictrl.input.datetime import (
@@ -115,6 +133,9 @@ from pytigon_gui.guictrl.display import (
     IMAGEBROWSEBUTTON,
     HTMLLISTBOX,
     POPUPHTML,
+    STATICBITMAP,
+    STATICLINE,
+    HYPERLINK,
 )
 
 # Panel / container widgets
@@ -122,6 +143,7 @@ from pytigon_gui.guictrl.panels import (
     HTML,
     NOTEBOOK,
     COLLAPSIBLE_PANEL,
+    STATICBOX,
     CompositePanel,
 )
 

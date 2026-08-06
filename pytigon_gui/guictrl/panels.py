@@ -2,11 +2,11 @@
 Panel and container widget classes for the SchForm GUI framework.
 
 Provides wxPython container controls integrated with SchBaseCtrl:
-HTML panel, notebook (tab control), collapsible pane, and
+HTML panel, notebook (tab control), collapsible pane, static box, and
 composite panel.
 
 Classes:
-    HTML, NOTEBOOK, COLLAPSIBLE_PANEL, CompositePanel
+    HTML, NOTEBOOK, COLLAPSIBLE_PANEL, STATICBOX, CompositePanel
 """
 
 import wx
@@ -218,6 +218,33 @@ class COLLAPSIBLE_PANEL(wx.CollapsiblePane, SchBaseCtrl):
             if "data" in self.param and self.param["data"].strip():
                 self.Show(True)
                 self.set_html(self.param["data"])
+
+
+class STATICBOX(wx.StaticBox, SchBaseCtrl):
+    """Static box used to visually group related controls.
+
+    Handles ctrlstaticbox tag. Draws a labelled frame around a group
+    of child controls.
+
+    Tag arguments:
+        label: Box header/title text.
+    """
+
+    def __init__(self, parent, **kwds):
+        """Initialize the static box.
+
+        Args:
+            parent: Parent window.
+            **kwds: Forwarded to wx.StaticBox with the label.
+        """
+        SchBaseCtrl.__init__(self, parent, kwds)
+        if self.label:
+            kwds["label"] = self.label
+        wx.StaticBox.__init__(self, parent, **kwds)
+
+    def CanAcceptFocus(self):
+        """Static boxes do not accept keyboard focus."""
+        return False
 
 
 class CompositePanel(wx.Panel, SchBaseCtrl):

@@ -58,6 +58,31 @@ class CALENDAR(CalendarCtrl, SchBaseCtrl):
                 **kwds,
             )
 
+        if self.value:
+            self.SetValue(self.value)
+
+    def SetValue(self, value):
+        """Set the selected date from an ISO date string.
+
+        Args:
+            value: Date string parseable by wx.DateTime (e.g. YYYY-MM-DD),
+                or None to keep current value.
+        """
+        if value:
+            wxdt = wx.DateTime()
+            if not wxdt.ParseISODate(str(value)):
+                wxdt.ParseDate(str(value))
+            CalendarCtrl.SetValue(self, wxdt)
+
+    def GetValue(self):
+        """Get the selected date in ISO format.
+
+        Returns:
+            Date string in YYYY-MM-DD format.
+        """
+        wxdt = CalendarCtrl.GetValue(self)
+        return wxdt.FormatISODate() if wxdt else None
+
 
 class TIME(masked.TimeCtrl, SchBaseCtrl):
     """Time input control with mask validation.
@@ -78,6 +103,8 @@ class TIME(masked.TimeCtrl, SchBaseCtrl):
         """
         SchBaseCtrl.__init__(self, parent, kwds)
         masked.TimeCtrl.__init__(self, parent, **kwds)
+        if self.value:
+            self.SetValue(str(self.value))
 
 
 # -----------------------------------------------------------------------

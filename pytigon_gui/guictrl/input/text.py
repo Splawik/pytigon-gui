@@ -41,11 +41,15 @@ class TEXT(SchBaseCtrl, wx.TextCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
         if self.param and "process_enter" in self.param:
             kwds["style"] = kwds.get("style", 0) | wx.TE_PROCESS_ENTER
+        if self.readonly:
+            kwds["style"] = kwds.get("style", 0) | wx.TE_READONLY
         wx.TextCtrl.__init__(self, parent, **kwds)
         if self.hidden:
             self.Enable(False)
         if self.maxlength:
             self.SetMaxLength(int(self.maxlength))
+        if self.param and "placeholder" in self.param:
+            self.SetHint(self.param["placeholder"])
 
     def SetValue(self, value):
         """Set the text value, converting bytes to str if needed.
@@ -135,12 +139,14 @@ class SEARCH(wx.SearchCtrl, SchBaseCtrl):
 
         wx.SearchCtrl.__init__(self, parent, **kwds)
 
-        # Bind key-down on the internal TextCtrl child for GTK/MSW
-        if wx.Platform in ("__WXGTK__", "__WXMSW__"):
-            for child in list(self.GetChildren()):
-                if isinstance(child, wx.TextCtrl):
-                    child.Bind(wx.EVT_KEY_DOWN, self.on_key_down_base)
-                    break
+        # Bind key-down on the internal TextCtrl child so that
+        # Escape/Tab navigation works on every platform.
+        for child in list(self.GetChildren()):
+            if isinstance(child, wx.TextCtrl):
+                child.Bind(wx.EVT_KEY_DOWN, self.on_key_down_base)
+                break
+        if self.param and "placeholder" in self.param:
+            self.SetDescriptiveText(self.param["placeholder"])
 
 
 class STYLEDTEXT(wx.TextCtrl, SchBaseCtrl):

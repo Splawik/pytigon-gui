@@ -10,7 +10,7 @@ Classes:
 
 import wx
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl, handle_best_size
+from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 
 
 class CHECKBOX(wx.CheckBox, SchBaseCtrl):
@@ -113,7 +113,6 @@ class CHECKBOX(wx.CheckBox, SchBaseCtrl):
             self.value = value
 
 
-@handle_best_size
 class CHECKLISTBOX(wx.CheckListBox, SchBaseCtrl):
     """Check list box allowing multiple selections with checkboxes.
 
@@ -314,8 +313,13 @@ class LIST(wx.ListCtrl, SchBaseCtrl):
     with auto-sized columns. First row of tdata provides column
     headers.
 
+    When the 'virtual' parameter is present, the list uses
+    wx.LC_VIRTUAL mode, which is more memory-efficient for large
+    data sets.
+
     Tag arguments:
         value: Not directly used; data comes from tdata.
+        virtual: If set in param, uses wx.LC_VIRTUAL mode.
     """
 
     def __init__(self, parent, **kwds):
@@ -327,15 +331,29 @@ class LIST(wx.ListCtrl, SchBaseCtrl):
         """
         SchBaseCtrl.__init__(self, parent, kwds)
 
-        if "style" in kwds:
-            kwds["style"] = kwds["style"] | wx.LC_REPORT
-        else:
-            kwds["style"] = wx.LC_REPORT
+        self._virtual = bool(self.param and "virtual" in self.param)
+
+        style = kwds.get("style", 0) | wx.LC_REPORT
+        if self._virtual:
+            style |= wx.LC_VIRTUAL
+        kwds["style"] = style
         kwds["size"] = wx.Size(-1, -1)
 
         wx.ListCtrl.__init__(self, parent, **kwds)
 
-        tdata = self.get_tdata()
+        self._rows = []
+        self._values = []
+        self._load_data(self.get_tdata())
+
+    def _load_data(self, tdata):
+        """Parse tdata into headers and rows, then populate the control.
+
+        Args:
+            tdata: Optional list of rows from tdata.
+        """
+        self._rows = []
+        self._values = []
+        headers = []
         if tdata:
             first_row = True
             num_cols = 0
@@ -343,15 +361,59 @@ class LIST(wx.ListCtrl, SchBaseCtrl):
                 if first_row:
                     first_row = False
                     num_cols = len(row)
+                    headers = [row[i].data for i in range(num_cols)]
                     for i in range(num_cols):
-                        self.InsertColumn(i, row[i].data)
+                        self.InsertColumn(i, headers[i])
                 else:
-                    index = self.InsertItem(0, row[0].data)
-                    for i in range(1, num_cols):
-                        self.SetItem(index, i, row[i].data)
+                    values = []
+                    for i in range(num_cols):
+                        cell = row[i].data if i < len(row) else ""
+                        values.append(cell)
+                    if hasattr(row[0], "attrs") and "value" in row[0].attrs:
+                        self._values.append(row[0].attrs["value"])
+                    else:
+                        self._values.append(row[0].data)
+                    if self._virtual:
+                        self._rows.append(values)
+                    else:
+                        index = self.InsertItem(0, values[0])
+                        for i in range(1, num_cols):
+                            self.SetItem(index, i, values[i])
 
+            if self._virtual:
+                self.SetItemCount(len(self._rows))
             for i in range(num_cols):
                 self.SetColumnWidth(i, -1)
+
+    def OnGetItemText(self, row, col):
+        """Return the text for a given row/column in virtual mode.
+
+        Args:
+            row: Row index.
+            col: Column index.
+
+        Returns:
+            The cell text or an empty string.
+        """
+        if 0 <= row < len(self._rows):
+            values = self._rows[row]
+            if 0 <= col < len(values):
+                return values[col]
+        return ""
+
+    def GetValue(self):
+        """Get the value of the currently selected item.
+
+        Returns:
+            The 'value' attribute of the selected row if present,
+            otherwise the first-column text, or None.
+        """
+        index = self.GetFirstSelected()
+        if index == wx.NOT_FOUND:
+            return None
+        if index < len(self._values):
+            return self._values[index]
+        return None
 
     def process_refr_data(self, **kwds):
         """Refresh the list with new data.
@@ -361,20 +423,7 @@ class LIST(wx.ListCtrl, SchBaseCtrl):
         """
         self.init_base(kwds)
         self.ClearAll()
-        tdata = self.get_tdata()
-        if tdata:
-            first_row = True
-            num_cols = 0
-            for row in tdata:
-                if first_row:
-                    first_row = False
-                    num_cols = len(row)
-                    for i in range(num_cols):
-                        self.InsertColumn(i, row[i].data)
-                else:
-                    index = self.InsertItem(0, row[0].data)
-                    for i in range(1, num_cols):
-                        self.SetItem(index, i, row[i].data)
+        self._load_data(self.get_tdata())
 
 
 class CHECKLIST(LIST):
@@ -395,6 +444,10 @@ class CHECKLIST(LIST):
             **kwds: Forwarded to LIST. Enables checkboxes and
                 binds item activation for toggling.
         """
+        # Checkboxes require real (non-virtual) items.
+        if "param" in kwds and kwds["param"] and "virtual" in kwds["param"]:
+            kwds["param"] = dict(kwds["param"])
+            kwds["param"].pop("virtual", None)
         super().__init__(parent, **kwds)
         self.EnableCheckBoxes()
         self.Bind(wx.EVT_LIST_ITEM_ACTIVATED, self._on_item_activated)

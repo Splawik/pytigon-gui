@@ -3,10 +3,12 @@ Combo box and choice widget classes for the SchForm GUI framework.
 
 Provides wxPython combo/choice controls integrated with SchBaseCtrl:
 bitmap combo box, choice (popup-based), database choice, and
-extended database choice.
+extended database choice, plus an editable combo box and an
+owner-drawn combo box.
 
 Classes:
-    BITMAPCOMBOBOX, CHOICE, DBCHOICE, DBCHOICE_EXT
+    BITMAPCOMBOBOX, CHOICE, DBCHOICE, DBCHOICE_EXT, COMBOBOX,
+    OWNERDRAWNCOMBOBOX
 """
 
 import os
@@ -400,3 +402,149 @@ class DBCHOICE_EXT(POPUPHTML):
             return None
         else:
             return None
+
+
+class COMBOBOX(wx.ComboBox, SchBaseCtrl):
+    """Editable combo box.
+
+    Handles ctrlcombobox tag. A text field combined with a dropdown
+    list populated from tdata. Users may type an arbitrary value or
+    pick one from the list.
+
+    Tag arguments:
+        value: Initial text value.
+        multiple: If set in param, uses CB_SORT style.
+        readonly: If set, uses CB_READONLY style.
+    """
+
+    def __init__(self, parent, **kwds):
+        """Initialize the editable combo box.
+
+        Args:
+            parent: Parent window.
+            **kwds: Forwarded to wx.ComboBox. Choices are populated
+                from tdata before construction.
+        """
+        SchBaseCtrl.__init__(self, parent, kwds)
+
+        style = kwds.get("style", 0)
+        if self.param and "multiple" in self.param:
+            style |= wx.CB_SORT
+        if self.readonly:
+            style |= wx.CB_READONLY
+        kwds["style"] = style
+
+        choices = []
+        tdata = self.get_tdata()
+        if tdata:
+            for row in tdata:
+                choices.append(row[0].data)
+        kwds["choices"] = choices
+
+        if "size" not in kwds:
+            kwds["size"] = wx.Size(250, -1)
+
+        wx.ComboBox.__init__(self, parent, **kwds)
+
+        self.choices = choices
+        self.choice_values = []
+        if tdata:
+            for row in tdata:
+                if hasattr(row[0], "attrs") and "value" in row[0].attrs:
+                    self.choice_values.append(row[0].attrs["value"])
+                else:
+                    self.choice_values.append(row[0].data)
+            value = self.GetValue()
+            if value and value in self.choice_values:
+                pass
+            elif self.value and self.value in choices:
+                self.SetValue(self.value)
+
+    def GetValue(self):
+        """Get the current combo box value.
+
+        Returns:
+            The selected/typed value. If it matches an item with an
+            explicit 'value' attribute, returns that value; otherwise
+            returns the text.
+        """
+        value = wx.ComboBox.GetValue(self)
+        try:
+            index = self.FindString(value)
+        except Exception:
+            return value
+        if index != wx.NOT_FOUND and index < len(self.choice_values):
+            return self.choice_values[index]
+        return value
+
+    def process_refr_data(self, **kwds):
+        """Refresh the combo box with new data.
+
+        Args:
+            **kwds: New keyword arguments.
+        """
+        self.init_base(kwds)
+        self.Clear()
+        self.choices = []
+        self.choice_values = []
+        tdata = self.get_tdata()
+        if tdata:
+            for row in tdata:
+                self.choices.append(row[0].data)
+                if hasattr(row[0], "attrs") and "value" in row[0].attrs:
+                    self.choice_values.append(row[0].attrs["value"])
+                else:
+                    self.choice_values.append(row[0].data)
+            self.AppendItems(self.choices)
+
+
+class OWNERDRAWNCOMBOBOX(wx.adv.OwnerDrawnComboBox, SchBaseCtrl):
+    """Owner-drawn combo box.
+
+    Handles ctrlownerdrawncombobox tag. Like BITMAPCOMBOBOX but based
+    on wx.adv.OwnerDrawnComboBox, allowing items to be drawn manually
+    (icons, colours, variable height).
+
+    Tag arguments:
+        value: Initial value.
+    """
+
+    def __init__(self, parent, **kwds):
+        """Initialize the owner-drawn combo box.
+
+        Args:
+            parent: Parent window.
+            **kwds: Forwarded to wx.adv.OwnerDrawnComboBox. Choices
+                are populated from tdata.
+        """
+        SchBaseCtrl.__init__(self, parent, kwds)
+
+        choices = []
+        self.choice_values = []
+        tdata = self.get_tdata()
+        if tdata:
+            for row in tdata:
+                choices.append(row[0].data)
+                if hasattr(row[0], "attrs") and "value" in row[0].attrs:
+                    self.choice_values.append(row[0].attrs["value"])
+                else:
+                    self.choice_values.append(row[0].data)
+        kwds["choices"] = choices
+
+        if "size" not in kwds:
+            kwds["size"] = wx.Size(250, -1)
+
+        wx.adv.OwnerDrawnComboBox.__init__(self, parent, **kwds)
+
+    def GetValue(self):
+        """Get the current value.
+
+        Returns:
+            The 'value' attribute of the selected item if present,
+            otherwise the selected text.
+        """
+        index = self.GetSelection()
+        if index != wx.NOT_FOUND and index < len(self.choice_values):
+            return self.choice_values[index]
+        return wx.adv.OwnerDrawnComboBox.GetValue(self)
+

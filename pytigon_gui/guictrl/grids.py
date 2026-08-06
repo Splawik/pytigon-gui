@@ -51,7 +51,11 @@ class TABLE(SchGridPanel, SchBaseCtrl):
 
         tdata = self.get_tdata()
         if not tdata:
-            logger.warning("no tdata: href=%s src=%s", self.href, self.src)
+            logger.debug(
+                "no tdata for table: href=%s src=%s (empty table)",
+                self.href,
+                self.src,
+            )
         if tdata:
             table = SimpleDataTable(self, tdata)
             if self.param and "no_actions" in self.param:

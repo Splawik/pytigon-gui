@@ -11,6 +11,7 @@ Functions:
 """
 
 import wx
+import logging
 
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 from pytigon_gui.guictrl.button.base import (
@@ -34,6 +35,8 @@ from pytigon_gui.guictrl.panels import CompositePanel
 from pytigon_gui.guictrl.popup.select2 import Select2Base
 from pytigon_gui.guilib.image import bitmap_from_href
 from pytigon_lib.schtools.tools import is_null
+
+logger = logging.getLogger(__name__)
 
 
 def SELECT(parent, **kwds):
@@ -285,6 +288,7 @@ def COMPOSITE(parent, **kwds):
     cls_name = kwds["param"]["class"].upper()
     if cls_name in globals():
         return globals()[cls_name](parent, **kwds)
+    logger.warning("COMPOSITE: unknown widget class '%s'", cls_name)
     return None
 
 
@@ -323,4 +327,5 @@ def COMPONENT(parent, **kwds):
         obj.load_str(buf, "http://127.0.0.2")
         return obj
     else:
+        logger.warning("COMPONENT: HTML2 viewer not available")
         return None

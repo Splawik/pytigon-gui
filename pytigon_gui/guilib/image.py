@@ -108,9 +108,8 @@ def pil_to_image(pil, alpha=True):
 
 def image_to_pil(image):
     """Convert wx.Image to PIL Image."""
-    pil = Image.new("RGB", (image.GetWidth(), image.GetHeight()))
-    pil.frombytes(image.GetData())
-    return pil
+    w, h = image.GetWidth(), image.GetHeight()
+    return Image.frombytes("RGB", (w, h), image.GetData())
 
 
 def image_to_bitmap(image):

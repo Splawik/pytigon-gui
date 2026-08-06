@@ -323,6 +323,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
             self.Unbind(e, id=id)
         else:
             self.Unbind(RB.EVT_RIBBONBUTTONBAR_CLICKED, id=id)
+            self.Unbind(RB.EVT_RIBBONTOOLBAR_CLICKED, id=id)
 
     def get_bar_height(self):
         """Return the preferred height of the ribbon bar.

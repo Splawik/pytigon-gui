@@ -411,7 +411,12 @@ def _make_menu_button_class(base_class):
             self._menu = menu
 
         def ShowMenu(self):
-            """Display the popup menu below the button."""
+            """Display the popup menu below the button.
+
+            Does nothing if no menu has been configured.
+            """
+            if self._menu is None:
+                return
             self.PopupMenu(self._menu, 1, self.GetSize()[1] - 1)
 
     return _MenuButton

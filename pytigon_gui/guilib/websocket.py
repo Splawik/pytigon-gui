@@ -39,14 +39,19 @@ class MyClientProtocol(WebSocketClientProtocol):
     def onOpen(self):
         """Called when the WebSocket connection is fully open.
 
-        Starts a periodic message send loop.
+        Starts a periodic message send loop. The loop is cancelled
+        automatically when the connection closes.
         """
+        self._keepalive = None
+        self._closed = False
 
         def send_hello():
             """Send a text and binary keep-alive message."""
+            if self._closed:
+                return
             self.sendMessage("Hello, world!".encode("utf8"))
             self.sendMessage(b"\x00\x01\x03\x04", isBinary=True)
-            self.factory.reactor.callLater(1, send_hello)
+            self._keepalive = self.factory.reactor.callLater(1, send_hello)
 
         logger.info("WebSocket connection open.")
         send_hello()
@@ -66,9 +71,18 @@ class MyClientProtocol(WebSocketClientProtocol):
     def onClose(self, wasClean, code, reason):
         """Called when the WebSocket connection is closed.
 
+        Stops the periodic keep-alive loop.
+
         Args:
             wasClean: True if the close was clean.
             code: Close status code.
             reason: Close reason string.
         """
+        self._closed = True
+        if getattr(self, "_keepalive", None) is not None:
+            try:
+                self._keepalive.cancel()
+            except Exception:
+                pass
+            self._keepalive = None
         logger.info("WebSocket connection closed: %s", reason)

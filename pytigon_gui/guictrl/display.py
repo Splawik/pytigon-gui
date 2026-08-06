@@ -9,7 +9,8 @@ and popup HTML control.
 Classes:
     STATICTEXT, ERRORLIST, TREE, TREELIST, COLOURSELECT,
     GENERICDIR, EDITABLELISTBOX, FILEBROWSEBUTTON,
-    IMAGEBROWSEBUTTON, HTMLLISTBOX, POPUPHTML
+    IMAGEBROWSEBUTTON, HTMLLISTBOX, POPUPHTML, STATICBITMAP,
+    STATICLINE, HYPERLINK
 """
 
 import os
@@ -53,6 +54,87 @@ class STATICTEXT(wx.StaticText, SchBaseCtrl):
         wx.StaticText.__init__(self, parent, **kwds)
         if self.label:
             self.SetLabel(self.label)
+
+
+class STATICBITMAP(wx.StaticBitmap, SchBaseCtrl):
+    """Static bitmap / image display.
+
+    Handles ctrlstaticbitmap tag. Displays an image loaded from the
+    'src' attribute (see bitmap_from_href for supported formats).
+
+    Tag arguments:
+        src: Resource identifier for the image.
+    """
+
+    def __init__(self, parent, **kwds):
+        SchBaseCtrl.__init__(self, parent, kwds)
+        if self.src:
+            kwds["bitmap"] = bitmap_from_href(self.src, 1)
+        else:
+            kwds["bitmap"] = wx.NullBitmap
+        wx.StaticBitmap.__init__(self, parent, **kwds)
+
+    def SetValue(self, value):
+        """Set the displayed image from a resource identifier.
+
+        Args:
+            value: Resource identifier (see bitmap_from_href).
+        """
+        if value:
+            self.SetBitmap(bitmap_from_href(value, 1))
+
+
+class STATICLINE(wx.StaticLine, SchBaseCtrl):
+    """Static horizontal or vertical separator line.
+
+    Handles ctrlstaticline tag. Draws a line used to separate
+    groups of controls.
+
+    Tag arguments:
+        style: Optional wx.StaticLine style (LI_HORIZONTAL/LI_VERTICAL).
+    """
+
+    def __init__(self, parent, **kwds):
+        SchBaseCtrl.__init__(self, parent, kwds)
+        wx.StaticLine.__init__(self, parent, **kwds)
+
+    def CanAcceptFocus(self):
+        """Separator lines do not accept keyboard focus."""
+        return False
+
+
+class HYPERLINK(wx.adv.HyperlinkCtrl, SchBaseCtrl):
+    """Hyperlink control.
+
+    Handles ctrlhyperlink tag. Displays a clickable web link that
+    navigates to the configured 'href' when activated.
+
+    Tag arguments:
+        label: Link text.
+        value / href: Target URL.
+    """
+
+    def __init__(self, parent, **kwds):
+        SchBaseCtrl.__init__(self, parent, kwds)
+        url = kwds.get("value") or self.href or ""
+        if self.label:
+            kwds["label"] = self.label
+        else:
+            kwds.setdefault("label", url)
+        try:
+            wx.adv.HyperlinkCtrl.__init__(self, parent, url=url, **kwds)
+        except TypeError:
+            wx.adv.HyperlinkCtrl.__init__(self, parent, **kwds)
+            self.SetURL(url)
+        self.Bind(wx.adv.EVT_HYPERLINK, self._on_link)
+
+    def _on_link(self, event):
+        """Handle link activation by navigating to the href."""
+        parent = self.GetParent()
+        if hasattr(parent, "href_clicked"):
+            parent.href_clicked(self, {"href": self.href, "target": "_blank"})
+        event.Skip()
+
 
 
 class ERRORLIST(BitmapTextButton, SchBaseCtrl):
@@ -119,6 +201,18 @@ class TREE(wx.TreeCtrl, SchBaseCtrl):
         if ldata:
             self._append_list(self.root, ldata)
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self._on_activated)
+        self.Expand(self.root)
+
+    def GetValue(self):
+        """Return the data (attrs dict) of the currently selected item.
+
+        Returns:
+            The item's attrs dict, or None if nothing is selected.
+        """
+        item = self.GetSelection()
+        if item.IsOk():
+            return self.GetPyData(item)
+        return None
 
     def _append_list(self, parent_item, items):
         """Recursively append items from ldata to the tree.
@@ -287,6 +381,16 @@ class FILEBROWSEBUTTON(filebrowsebutton.FileBrowseButton, SchBaseCtrl):
         kwds["labelText"] = ""
         kwds["buttonText"] = str(_("Browse"))
         kwds["size"] = (400, -1)
+        if self.param and "dialogtype" in self.param:
+            kwds["dialogType"] = getattr(
+                wx, self.param["dialogtype"].upper(), wx.OPEN
+            )
+        if self.param and "wildcard" in self.param:
+            kwds["wildcard"] = self.param["wildcard"]
+        elif self.param and "fileMask" in self.param:
+            kwds["fileMask"] = self.param["fileMask"]
+        if self.param and "startDirectory" in self.param:
+            kwds["startDirectory"] = self.param["startDirectory"]
         filebrowsebutton.FileBrowseButton.__init__(self, parent, **kwds)
 
     def GetValue(self):

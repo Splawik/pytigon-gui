@@ -6,13 +6,13 @@ integer spin, float spin, currency amount, slider, gauge (progress bar),
 and ticker (scrolling text).
 
 Classes:
-    NUM, AMOUNT, FLOAT, SPIN, SLIDER, GAUGE, TICKER
+    NUM, AMOUNT, FLOAT, SPIN, SLIDER, GAUGE, TICKER, PROGRESSDIALOG
 """
 
 import wx
 from wx.lib import ticker as wx_ticker
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SchBaseCtrl, to_int
 
 
 class SPIN(wx.SpinCtrl, SchBaseCtrl):
@@ -30,10 +30,21 @@ class SPIN(wx.SpinCtrl, SchBaseCtrl):
 
         Args:
             parent: Parent window.
-            **kwds: Forwarded to wx.SpinCtrl.
+            **kwds: Forwarded to wx.SpinCtrl. Integer bounds read
+                from param['min'] / param['max'].
         """
         SchBaseCtrl.__init__(self, parent, kwds)
+        minv = to_int(self.param.get("min"), None) if self.param else None
+        maxv = to_int(self.param.get("max"), None) if self.param else None
+        if minv is not None:
+            kwds["min"] = minv
+        if maxv is not None:
+            kwds["max"] = maxv
         wx.SpinCtrl.__init__(self, parent, **kwds)
+        if self.param and "inc" in self.param:
+            inc = to_int(self.param["inc"], None)
+            if inc is not None:
+                self.SetIncrement(inc)
 
 
 class NUM(wx.SpinCtrl, SchBaseCtrl):
@@ -152,7 +163,7 @@ class FLOAT(wx.SpinCtrlDouble, SchBaseCtrl):
         else:
             kwds["max"] = 100000000
 
-        kwds["style"] = wx.SP_ARROW_KEYS | wx.ALIGN_RIGHT
+        kwds["style"] = kwds.get("style", 0) | wx.SP_ARROW_KEYS | wx.ALIGN_RIGHT
 
         wx.SpinCtrlDouble.__init__(self, parent, **kwds)
         self.SetDigits(6)
@@ -172,10 +183,21 @@ class SLIDER(wx.Slider, SchBaseCtrl):
 
         Args:
             parent: Parent window.
-            **kwds: Forwarded to wx.Slider.
+            **kwds: Forwarded to wx.Slider. Range read from
+                param['min'] / param['max'].
         """
         SchBaseCtrl.__init__(self, parent, kwds)
+        if self.param:
+            minv = to_int(self.param.get("min"), None)
+            maxv = to_int(self.param.get("max"), None)
+            if minv is not None:
+                kwds["minValue"] = minv
+            if maxv is not None:
+                kwds["maxValue"] = maxv
         wx.Slider.__init__(self, parent, **kwds)
+        val = to_int(self.value, None)
+        if val is not None:
+            self.SetValue(val)
 
 
 class GAUGE(wx.Gauge, SchBaseCtrl):
@@ -186,6 +208,8 @@ class GAUGE(wx.Gauge, SchBaseCtrl):
 
     Tag arguments:
         value: Current gauge value (integer).
+        min: Minimum range value (from param).
+        max: Maximum range value (from param, default 100).
     """
 
     def __init__(self, parent, **kwds):
@@ -193,10 +217,17 @@ class GAUGE(wx.Gauge, SchBaseCtrl):
 
         Args:
             parent: Parent window.
-            **kwds: Forwarded to wx.Gauge.
+            **kwds: Forwarded to wx.Gauge with range from param.
         """
         SchBaseCtrl.__init__(self, parent, kwds)
+        maxv = to_int(self.param.get("max"), None) if self.param else None
+        if maxv is not None:
+            kwds["range"] = maxv
+        kwds.setdefault("range", 100)
         wx.Gauge.__init__(self, parent, **kwds)
+        val = to_int(self.value, None)
+        if val is not None:
+            self.SetValue(val)
 
     def process_refr_data(self, **kwds):
         """Refresh the gauge with new data.
@@ -206,8 +237,9 @@ class GAUGE(wx.Gauge, SchBaseCtrl):
                 in the underlying self.value, updates the gauge.
         """
         self.init_base(kwds)
-        if self.value:
-            self.SetValue(self.value)
+        val = to_int(self.value, None)
+        if val is not None:
+            self.SetValue(val)
 
 
 class TICKER(wx_ticker.Ticker, SchBaseCtrl):
@@ -246,3 +278,66 @@ class TICKER(wx_ticker.Ticker, SchBaseCtrl):
         """
         self.Stop()
         return True
+
+
+class PROGRESSDIALOG(wx.ProgressDialog, SchBaseCtrl):
+    """Indeterminate/determinate progress dialog.
+
+    Handles ctrlprogressdialog tag. A modal progress window driven
+    by a server task. The dialog is shown when created and updated
+    via refresh_value/process_refr_data.
+
+    Tag arguments:
+        label: Dialog title/message.
+        value: Current progress value.
+        length: Total progress length (default 100).
+    """
+
+    def __init__(self, parent, **kwds):
+        """Initialize the progress dialog.
+
+        Args:
+            parent: Parent window.
+            **kwds: Forwarded to wx.ProgressDialog. 'length' gives
+                the maximum value.
+        """
+        SchBaseCtrl.__init__(self, parent, kwds)
+        message = kwds.get("message", self.label or "")
+        maximum = to_int(self.length, None) or 100
+        kwds["message"] = message
+        kwds["maximum"] = maximum
+        wx.ProgressDialog.__init__(self, parent, **kwds)
+        self.max = maximum
+        val = to_int(self.value, None)
+        if val is not None:
+            self.Refresh(val, "Progress")
+
+    def refresh_value(self, value, message=None):
+        """Update the progress dialog value and message.
+
+        Args:
+            value: New progress value (0..maximum).
+            message: Optional new message text.
+
+        Returns:
+            The continue flag (True if the dialog is still open).
+        """
+        cont, _skip = self.Update(to_int(value, 0), message)
+        return cont
+
+    def process_refr_data(self, **kwds):
+        """Refresh the progress dialog from new data.
+
+        Args:
+            **kwds: New keyword arguments with 'value' and optional
+                'label'/'message'.
+        """
+        self.init_base(kwds)
+        val = to_int(self.value, None)
+        if val is not None:
+            self.Refresh(val, self.label or "")
+
+    def CanAcceptFocus(self):
+        """Progress dialogs do not accept keyboard focus."""
+        return False
+

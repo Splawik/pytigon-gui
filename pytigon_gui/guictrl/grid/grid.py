@@ -77,13 +77,14 @@ class SchTableGrid(wx.grid.Grid):
             self.SetTable(table, True)
             sizes = table.proxy.GetColSize()
             names = table.GetColNames()
-            for i in range(len(sizes)):
-                if 7 * len(str(names[i + 1])) > 7 * int(sizes[i]):
-                    l = len(str(names[i + 1]))
-                    self.SetColSize(i, 7 * l)
+            ncols = max(0, len(names) - 1)
+            for i in range(min(len(sizes), ncols)):
+                name_len = len(str(names[i + 1]))
+                size_val = int(sizes[i])
+                if 7 * name_len > 7 * size_val:
+                    self.SetColSize(i, 7 * name_len)
                 else:
-                    l = int(sizes[i])
-                    self.SetColSize(i, 7 * l)
+                    self.SetColSize(i, 7 * size_val)
         else:
             if table.auto_size == "short":
                 self.SetTable(table, False)

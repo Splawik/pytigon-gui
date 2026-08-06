@@ -471,7 +471,7 @@ class CtrlTag(TableTag):
                     if hasattr(obj, "process_refr_data"):
                         obj.process_refr_data(**self.kwargs)
                     elif not (hasattr(obj, "is_ctrl_block") and obj.is_ctrl_block()):
-                        obj.SetValue(value)
+                        obj.set_form_value(value)
                 parent.append_ctrl(obj)
             else:
                 obj = self.classObj(parent, **self.kwargs)
@@ -479,7 +479,7 @@ class CtrlTag(TableTag):
                     logger.error("ERROR: %s", self.classObj)
                 obj.set_unique_name(name)
                 if value is not None and valuetype in ("data", "str"):
-                    obj.SetValue(value)
+                    obj.set_form_value(value)
                 obj.after_create()
                 parent.append_ctrl(obj)
             self.obj = obj

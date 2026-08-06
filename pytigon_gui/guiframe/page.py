@@ -386,20 +386,16 @@ class SchPage(wx.Window, Signal):
         self.title = mp.title
 
         if self.header:
-            if not self.header.show_form(
-                '<html encoding="utf-8">' + header + "</html>"
-            ):
+            if not self.header.show_form(header, self.parameters):
                 return False
         if self.body:
             if not self.body.show_form(body, self.parameters):
                 return False
         if self.footer:
-            if not self.footer.show_form(
-                '<html encoding="utf-8">' + footer + "</html>"
-            ):
+            if not self.footer.show_form(footer, self.parameters):
                 return False
         if self.panel:
-            if not self.panel.show_form('<html encoding="utf-8">' + panel + "</html>"):
+            if not self.panel.show_form(panel, self.parameters):
                 return False
 
         if self.header:

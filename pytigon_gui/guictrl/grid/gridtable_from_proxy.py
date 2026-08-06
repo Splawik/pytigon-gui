@@ -180,8 +180,8 @@ class DataSource(SchGridTableBase):
     def get_actions(self, row, col=None):
         rowlen = len(self.GetColNames())
         rec = self.get_rec(row)
-        if rec and len(rec) > rowlen + 1:
-            return rec[rowlen + 1]
+        if rec and len(rec) > rowlen:
+            return rec[rowlen]
         else:
             return dict()
 

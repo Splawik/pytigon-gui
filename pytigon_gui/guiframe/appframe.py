@@ -728,7 +728,13 @@ class SchAppFrame(SchBaseFrame):
         return self._open_page(response, title, parameters, view_in)
 
     def new_main_page(
-        self, address_or_parser, title="", parameters=None, view_in="desktop", http=None
+        self,
+        address_or_parser,
+        title="",
+        parameters=None,
+        view_in="desktop",
+        http=None,
+        panel=None,
     ):
         """Open a new page in main
 
@@ -738,6 +744,7 @@ class SchAppFrame(SchBaseFrame):
             title - new tab title
             parameters - parameters of http request
             view_in - options are: 'desktop', 'panel', 'header', 'footer'
+            panel - optional explicit panel override (e.g. 'pscript')
         Returns:
             created form :class:'~pytigon_gui.guiframe.htmlsash.SchPage'
         """
@@ -779,19 +786,20 @@ class SchAppFrame(SchBaseFrame):
         ):
             return self.open_page(address, title, parameters, view_in)
 
-        if view_in:
-            panel = view_in
-        else:
-            parm = split2(address, "?")
-            if len(parm) == 2:
+        if panel is None:
+            if view_in:
+                panel = view_in
+            else:
                 panel = "desktop"
-                parm2 = parm[1].split(",")
-                parm3 = [pos.split("=") for pos in parm2]
-                for pos in parm3:
-                    if len(pos) == 2:
-                        if pos[0] == "show_in":
-                            panel = pos[1]
-                            break
+                parm = split2(address, "?")
+                if len(parm) == 2:
+                    parm2 = parm[1].split(",")
+                    parm3 = [pos.split("=") for pos in parm2]
+                    for pos in parm3:
+                        if len(pos) == 2:
+                            if pos[0] == "show_in":
+                                panel = pos[1]
+                                break
 
         if panel == "pscript":
             if not http:
@@ -969,10 +977,17 @@ class SchAppFrame(SchBaseFrame):
 
         x = dispatcher.getReceivers(signal="PROCESS_INFO")
         if len(x) > 0:
-            if not self._proc_mannager:
-                self._proc_mannager = get_process_manager()
-            x = self._proc_mannager.list_threads(all=False)
-            dispatcher.send("PROCESS_INFO", self, x)
+            try:
+                if not self._proc_mannager:
+                    from pytigon_lib.schtasks.task import get_process_manager
+
+                    self._proc_mannager = get_process_manager()
+                x = self._proc_mannager.list_threads(all=False)
+                dispatcher.send("PROCESS_INFO", self, x)
+            except Exception:
+                logger.debug(
+                    "process manager unavailable", exc_info=True
+                )
 
     def _append_command(self, typ, command):
         id = wx.Window.NewControlId()
