@@ -56,7 +56,6 @@ class DataProxy:
             self.is_valid = False
             raise RuntimeError(f"Failed to get table info from {self.tabaddress}")
         ret = schjson.loads(response.str())
-
         self.col_names = ret["col_names"]
         self.col_types = ret["col_types"]
         self.default_rec = ret["default_rec"]

@@ -18,7 +18,7 @@ This package is part of the [Pytigon](https://github.com/Splawik/pytigon) ecosys
 
 - Python 3.12+
 - [wxPython](https://wxpython.org/) 4.x+
-- [Django](https://www.djangoproject.com/)
+- [Django](https://www.djangoproject.com/) >= 6.0
 - [pytigon](https://github.com/Splawik/pytigon)
 
 ## Documentation

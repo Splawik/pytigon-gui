@@ -42,36 +42,20 @@ class SchTableGrid(wx.grid.Grid):
         self.address = address
         wx.grid.Grid.__init__(self, parent, wx.ID_ANY, pos, size, style, name)
 
-        self.RegisterDataType(
-            "s", IconAndStringRenderer(), wx.grid.GridCellTextEditor()
-        )
-        self.RegisterDataType(
-            "x", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor()
-        )
-        self.RegisterDataType(
-            "y", ExtStringRenderer(), popupcelleditors.ListPopupCellEditor()
-        )
-        self.RegisterDataType(
-            "f", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor()
-        )
-        self.RegisterDataType(
-            "str", wx.grid.GridCellStringRenderer(), wx.grid.GridCellTextEditor()
-        )
+        self.RegisterDataType("s", IconAndStringRenderer(), wx.grid.GridCellTextEditor())
+        self.RegisterDataType("x", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor())
+        self.RegisterDataType("y", ExtStringRenderer(), popupcelleditors.ListPopupCellEditor())
+        self.RegisterDataType("f", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor())
+        self.RegisterDataType("str", wx.grid.GridCellStringRenderer(), wx.grid.GridCellTextEditor())
         self.RegisterDataType(
             "string", wx.grid.GridCellStringRenderer(), wx.grid.GridCellTextEditor()
         )
-        self.RegisterDataType(
-            "datetime", DateTimeRenderer(), wx.grid.GridCellTextEditor()
-        )
+        self.RegisterDataType("datetime", DateTimeRenderer(), wx.grid.GridCellTextEditor())
         self.RegisterDataType(
             "date", DateTimeRenderer(), popupcelleditors.DatePopupDataCellEditor()
         )
-        self.RegisterDataType(
-            "int", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor()
-        )
-        self.RegisterDataType(
-            "bool", wx.grid.GridCellBoolRenderer(), wx.grid.GridCellBoolEditor()
-        )
+        self.RegisterDataType("int", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor())
+        self.RegisterDataType("bool", wx.grid.GridCellBoolRenderer(), wx.grid.GridCellBoolEditor())
 
         if hasattr(table, "proxy"):
             self.SetTable(table, True)
@@ -81,10 +65,12 @@ class SchTableGrid(wx.grid.Grid):
             for i in range(min(len(sizes), ncols)):
                 name_len = len(str(names[i + 1]))
                 size_val = int(sizes[i])
+                print("size: ", i, name_len, size_val)
                 if 7 * name_len > 7 * size_val:
                     self.SetColSize(i, 7 * name_len)
                 else:
                     self.SetColSize(i, 7 * size_val)
+
         else:
             if table.auto_size == "short":
                 self.SetTable(table, False)
@@ -325,9 +311,7 @@ class SchTableGrid(wx.grid.Grid):
                 if srt > 0:
                     dc.DrawPolygon([(left, top), (left + 6, top), (left + 3, top + 4)])
                 else:
-                    dc.DrawPolygon(
-                        [(left + 3, top), (left + 6, top + 4), (left, top + 4)]
-                    )
+                    dc.DrawPolygon([(left + 3, top), (left + 6, top + 4), (left, top + 4)])
                 if srt < 0:
                     srt = srt * -1
                 dc.SetFont(wx.SMALL_FONT)
@@ -339,16 +323,12 @@ class SchTableGrid(wx.grid.Grid):
                 else:
                     font.SetPointSize(fs)
                 dc.SetFont(font)
-                dc.DrawLabel(
-                    f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER
-                )
+                dc.DrawLabel(f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER)
             else:
                 font.SetWeight(wx.NORMAL)
                 font.SetPointSize(fs)
                 dc.SetFont(font)
-                dc.DrawLabel(
-                    f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER
-                )
+                dc.DrawLabel(f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER)
 
     def on_select_cell(self, evt):
         newrow = evt.GetRow()
@@ -630,18 +610,14 @@ class SchTableGrid(wx.grid.Grid):
         dy = old_count - count
         if dy != 0:
             if dy > 0:
-                msg = GridTableMessage(
-                    self.GetTable(), GRIDTABLE_NOTIFY_ROWS_DELETED, count, dy
-                )
+                msg = GridTableMessage(self.GetTable(), GRIDTABLE_NOTIFY_ROWS_DELETED, count, dy)
                 self.ProcessTableMessage(msg)
             else:
                 if old_count == 0 and not autosize:
                     dyy = -1 * dy
                     if dyy > 128:
                         dyy = 128
-                    msg = GridTableMessage(
-                        self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy
-                    )
+                    msg = GridTableMessage(self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy)
                     self.ProcessTableMessage(msg)
                     # self.AutoSizeColumns(True)
                     dyy = -1 * dy
@@ -652,9 +628,7 @@ class SchTableGrid(wx.grid.Grid):
                         self.ProcessTableMessage(msg)
                 else:
                     dyy = -1 * dy
-                    msg = GridTableMessage(
-                        self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy
-                    )
+                    msg = GridTableMessage(self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy)
                     self.ProcessTableMessage(msg)
 
             if count > 0:
@@ -712,11 +686,7 @@ class SchTableGrid(wx.grid.Grid):
                         wx.CallAfter(self.GetParent().get_parent_form().cancel)
                     return 1
                 else:
-                    ret = (
-                        self.GetParent()
-                        .GetParent()
-                        .href_clicked(self, action[command][3])
-                    )
+                    ret = self.GetParent().GetParent().href_clicked(self, action[command][3])
                     ret = 1
                     return ret
 

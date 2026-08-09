@@ -201,7 +201,10 @@ class TREE(wx.TreeCtrl, SchBaseCtrl):
         if ldata:
             self._append_list(self.root, ldata)
         self.Bind(wx.EVT_TREE_ITEM_ACTIVATED, self._on_activated)
-        self.Expand(self.root)
+        child, cookie = self.GetFirstChild(self.root)
+        while child.IsOk():
+            self.Expand(child)
+            child, cookie = self.GetNextChild(self.root, cookie)
 
     def GetValue(self):
         """Return the data (attrs dict) of the currently selected item.
