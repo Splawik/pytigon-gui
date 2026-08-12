@@ -316,13 +316,13 @@ class SchForm(ScrolledPanel):
                         w2 = w2 + wx.SystemSettings.GetMetric(wx.SYS_VSCROLL_X)
                     if self.hscroll:
                         h2 = h2 + wx.SystemSettings.GetMetric(wx.SYS_HSCROLL_Y)
-                    self._best_virtual_size = (int(w2), int(h2))
+                    self._best_virtual_size = (max(int(w2), 0), max(int(h2), 0))
                     self.EnableScrolling(self.hscroll, self.vscroll)
                     self._SetupAfter(False)
-                self.SetVirtualSize((w2, h2))
+                self.SetVirtualSize((max(int(w2), 0), max(int(h2), 0)))
             else:
                 self.EnableScrolling(False, False)
-                self.SetVirtualSize((w, h))
+                self.SetVirtualSize((max(int(w), 0), max(int(h), 0)))
             p.close()
             self.update_controls = False
             wx.CallAfter(self.SetupScrolling, self.hscroll, self.vscroll, rate_y=1)
@@ -831,7 +831,7 @@ class SchForm(ScrolledPanel):
             self.vscroll = True
             self.no_vscrollbar = False
             self.EnableScrolling(self.hscroll, self.vscroll)
-            self.SetVirtualSize(size[0], max_y)
+            self.SetVirtualSize(size[0], max(int(max_y), 0))
             wx.CallAfter(self.SetupScrolling, self.hscroll, self.vscroll, rate_y=1)
             self.wxdc = None
             self.draw_background(True, size)

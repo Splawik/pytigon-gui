@@ -1157,7 +1157,10 @@ class SchAppFrame(SchBaseFrame):
                 self.toolbar_interface.get_bar().SetSize(
                     old_toolbar.get_bar().GetSize()
                 )
-                wx.CallAfter(old_toolbar.get_bar().Destroy)
+                old_bar = old_toolbar.get_bar()
+                old_bar.Enable(False)
+                old_bar.Show(False)
+                wx.CallAfter(old_bar.Destroy)
                 return
             elif id == ID_WEB_NEW_WINDOW:
                 win = (

@@ -77,11 +77,23 @@ class BitmapTextButton(wx.lib.buttons.GenBitmapButton):
     def on_enter(self, event):
         if not self.enter_state:
             self.enter_state = True
-            wx.CallAfter(self.Refresh)
+
+            def _refresh():
+                if not self:
+                    return
+                self.Refresh()
+
+            wx.CallAfter(_refresh)
         event.Skip()
 
     def on_leave(self, event):
         if self.enter_state:
             self.enter_state = False
-            wx.CallAfter(self.Refresh)
+
+            def _refresh():
+                if not self:
+                    return
+                self.Refresh()
+
+            wx.CallAfter(_refresh)
         event.Skip()

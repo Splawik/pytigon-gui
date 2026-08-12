@@ -169,6 +169,8 @@ def _make_button_class(
                 event: The key event (unused; a synthetic button event
                     is posted instead).
             """
+            if not self:
+                return
             evt = wx.PyCommandEvent(wx.EVT_BUTTON.typeId, self.GetId())
             wx.PostEvent(self, evt)
 
@@ -260,6 +262,8 @@ def _make_button_class(
                 """
 
                 def _cancel_form():
+                    if not self or self.IsBeingDeleted():
+                        return
                     self.GetParent().any_parent_command("on_child_form_cancel")
 
                 wx.CallAfter(_cancel_form)
@@ -276,6 +280,8 @@ def _make_button_class(
                 Args:
                     event: The button click event.
                 """
+                if not self or self.IsBeingDeleted():
+                    return
                 upload = self.valuetype == "upload"
                 href = getattr(self, "href", "")
                 self.get_parent_form().href_clicked(
@@ -387,6 +393,8 @@ def _make_menu_button_class(base_class):
             Args:
                 evt: The button click event.
             """
+            if not self:
+                return
             self.ShowMenu()
 
         def _on_menu(self, evt):
@@ -395,6 +403,8 @@ def _make_menu_button_class(base_class):
             Args:
                 evt: The menu selection event.
             """
+            if not self or self.IsBeingDeleted():
+                return
             e_obj = evt.GetEventObject()
             mitem = e_obj.FindItemById(evt.GetId())
             if mitem is not None:
