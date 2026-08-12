@@ -5,7 +5,7 @@ custom wxDC backend, and manages interactive widgets defined by
 the HTML markup.
 """
 
-# import gc
+import gc
 import sys
 import traceback
 import types
@@ -550,6 +550,7 @@ class SchForm(ScrolledPanel):
         self._motion_pending_pos = pos2
         if self._motion_timer is None:
             import time as _time
+
             self._motion_last_time = getattr(self, "_motion_last_time", 0)
             if _time.monotonic() - self._motion_last_time > 0.03:
                 self._motion_last_time = _time.monotonic()
@@ -569,6 +570,7 @@ class SchForm(ScrolledPanel):
             self._motion_timer = None
         if pos2 is not None:
             import time as _time
+
             self._motion_last_time = _time.monotonic()
             self.redraw_html_elems(pos2)
 
@@ -632,7 +634,7 @@ class SchForm(ScrolledPanel):
             self.on_close()
         for x in self.websockets:
             app.remove_websocket_callback(x[0], x[1])
-        # gc.collect()
+        gc.collect()
 
     def any_parent_command(self, command, *args, **kwds):
         """Walk up the parent hierarchy to find and call *command*.

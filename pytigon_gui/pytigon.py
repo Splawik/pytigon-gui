@@ -30,6 +30,11 @@ if platform.system() == "Windows":
     myappid = "slawomir_cholaj.pytigon.main.01"
     ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
+
+import faulthandler
+
+faulthandler.enable()
+
 CWD_PATH = Path.cwd().parent
 SRC_PATH = Path(pytigon.__file__).parent
 

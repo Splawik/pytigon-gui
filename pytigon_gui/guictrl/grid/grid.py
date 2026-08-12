@@ -332,6 +332,9 @@ class SchTableGrid(wx.grid.Grid):
 
     def on_select_cell(self, evt):
         newrow = evt.GetRow()
+        if newrow < 0 or newrow >= self.GetNumberRows():
+            evt.Skip()
+            return
         if self.oldrow != newrow:
             if self.panel:
                 self.panel.refresh(newrow)
@@ -339,18 +342,46 @@ class SchTableGrid(wx.grid.Grid):
         evt.Skip()
 
     def on_range_selected(self, evt):
-        if evt.Selecting():
-            if evt.GetTopRow() != evt.GetBottomRow():
-                self.ClearSelection()
-                for row in range(evt.GetTopRow(), evt.GetBottomRow() + 1):
-                    self.GetTable().sel_row(row)
-                if self.GetGridCursorRow() == evt.GetTopRow():
-                    self.SelectRow(evt.GetBottomRow())
-                    self.SetGridCursor(evt.GetBottomRow(), self.GetGridCursorCol())
-                else:
-                    self.SelectRow(evt.GetTopRow())
-                    self.SetGridCursor(evt.GetTopRow(), self.GetGridCursorCol())
+        try:
+            self._safe_range_selected(evt)
+        finally:
+            self._in_range_selected = False
         evt.Skip()
+
+    def _safe_range_selected(self, evt):
+        try:
+            if not evt.Selecting():
+                return
+        except Exception:
+            return
+        if getattr(self, "_in_range_selected", False):
+            return
+        self._in_range_selected = True
+        try:
+            self.ClearSelection()
+            table = self.GetTable()
+            nrows = self.GetNumberRows() - 1
+            try:
+                top = evt.GetTopRow()
+                bottom = evt.GetBottomRow()
+            except Exception:
+                return
+            if nrows < 0:
+                return
+            top = max(0, min(top, nrows))
+            bottom = max(0, min(bottom, nrows))
+            try:
+                cursor = bottom if self.GetGridCursorRow() == top else top
+            except Exception:
+                cursor = top
+            cursor = max(0, min(cursor, nrows))
+            if top != bottom:
+                for row in range(top, bottom + 1):
+                    table.sel_row(row)
+                self.SelectRow(cursor)
+                self.SetGridCursor(cursor, self.GetGridCursorCol())
+        except Exception:
+            return
 
     def on_cell_left_click(self, evt):
         row1 = self.GetGridCursorRow()
@@ -607,6 +638,13 @@ class SchTableGrid(wx.grid.Grid):
         return True
 
     def refr_count(self, old_count, count, store_pos=0, autosize=True):
+        try:
+            table = self.GetTable()
+            if table.rec_selected:
+                table.rec_selected = [r for r in table.rec_selected if r < count]
+        except Exception:
+            pass
+        self.ClearSelection()
         dy = old_count - count
         if dy != 0:
             if dy > 0:
