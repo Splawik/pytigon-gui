@@ -11,6 +11,7 @@ import logging
 
 import wx
 import pytigon_lib.schtools.createparm as createparm
+from pytigon_lib.schhttptools import httpclient
 
 from .gridtable_base import SchGridTableBase
 
@@ -100,7 +101,11 @@ class DataSource(SchGridTableBase):
                             self.proxy.set_address_parm(parm[2])
 
                     if self.proxy.is_valid:
-                        nowaStrona = self.proxy.get_page(strona)
+                        httpclient.IN_PAINT += 1
+                        try:
+                            nowaStrona = self.proxy.get_page(strona)
+                        finally:
+                            httpclient.IN_PAINT -= 1
                     else:
                         self.is_valid = False
                         nowaStrona = None
@@ -115,13 +120,23 @@ class DataSource(SchGridTableBase):
                         if len(nowaStrona) < 256 and self.rec_count != strona * 256 + len(
                             nowaStrona
                         ):
-                            self.refr_count(
-                                self.proxy.get_count() + self.can_append + self.append_count,
-                                2,
-                            )
+                            httpclient.IN_PAINT += 1
+                            try:
+                                self.refr_count(
+                                    self.proxy.get_count()
+                                    + self.can_append
+                                    + self.append_count,
+                                    2,
+                                )
+                            finally:
+                                httpclient.IN_PAINT -= 1
                         return self.get_rec(nr_rec)
                     else:
-                        self.refr_count(self.proxy.get_count(), 2)
+                        httpclient.IN_PAINT += 1
+                        try:
+                            self.refr_count(self.proxy.get_count(), 2)
+                        finally:
+                            httpclient.IN_PAINT -= 1
                         return None
         else:
             return None

@@ -42,20 +42,36 @@ class SchTableGrid(wx.grid.Grid):
         self.address = address
         wx.grid.Grid.__init__(self, parent, wx.ID_ANY, pos, size, style, name)
 
-        self.RegisterDataType("s", IconAndStringRenderer(), wx.grid.GridCellTextEditor())
-        self.RegisterDataType("x", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor())
-        self.RegisterDataType("y", ExtStringRenderer(), popupcelleditors.ListPopupCellEditor())
-        self.RegisterDataType("f", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor())
-        self.RegisterDataType("str", wx.grid.GridCellStringRenderer(), wx.grid.GridCellTextEditor())
+        self.RegisterDataType(
+            "s", IconAndStringRenderer(), wx.grid.GridCellTextEditor()
+        )
+        self.RegisterDataType(
+            "x", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor()
+        )
+        self.RegisterDataType(
+            "y", ExtStringRenderer(), popupcelleditors.ListPopupCellEditor()
+        )
+        self.RegisterDataType(
+            "f", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor()
+        )
+        self.RegisterDataType(
+            "str", wx.grid.GridCellStringRenderer(), wx.grid.GridCellTextEditor()
+        )
         self.RegisterDataType(
             "string", wx.grid.GridCellStringRenderer(), wx.grid.GridCellTextEditor()
         )
-        self.RegisterDataType("datetime", DateTimeRenderer(), wx.grid.GridCellTextEditor())
+        self.RegisterDataType(
+            "datetime", DateTimeRenderer(), wx.grid.GridCellTextEditor()
+        )
         self.RegisterDataType(
             "date", DateTimeRenderer(), popupcelleditors.DatePopupDataCellEditor()
         )
-        self.RegisterDataType("int", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor())
-        self.RegisterDataType("bool", wx.grid.GridCellBoolRenderer(), wx.grid.GridCellBoolEditor())
+        self.RegisterDataType(
+            "int", ExtStringRenderer(), popupcelleditors.GenericPopupCellEditor()
+        )
+        self.RegisterDataType(
+            "bool", wx.grid.GridCellBoolRenderer(), wx.grid.GridCellBoolEditor()
+        )
 
         if hasattr(table, "proxy"):
             self.SetTable(table, True)
@@ -106,11 +122,6 @@ class SchTableGrid(wx.grid.Grid):
                 # for col in range(0, self.GetNumberCols()):
                 #    width.append(self.GetColSize(col))
                 # self.SetDefaultRowSize(height, True)
-
-        try:
-            self.SetSelectionMode(wx.grid.Grid.SelectRows)
-        except AttributeError:
-            self.SetSelectionMode(wx.grid.Grid.GridSelectRows)
 
         self.typ = typ
         self.readonly = False
@@ -311,7 +322,9 @@ class SchTableGrid(wx.grid.Grid):
                 if srt > 0:
                     dc.DrawPolygon([(left, top), (left + 6, top), (left + 3, top + 4)])
                 else:
-                    dc.DrawPolygon([(left + 3, top), (left + 6, top + 4), (left, top + 4)])
+                    dc.DrawPolygon(
+                        [(left + 3, top), (left + 6, top + 4), (left, top + 4)]
+                    )
                 if srt < 0:
                     srt = srt * -1
                 dc.SetFont(wx.SMALL_FONT)
@@ -323,12 +336,16 @@ class SchTableGrid(wx.grid.Grid):
                 else:
                     font.SetPointSize(fs)
                 dc.SetFont(font)
-                dc.DrawLabel(f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER)
+                dc.DrawLabel(
+                    f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER
+                )
             else:
                 font.SetWeight(wx.NORMAL)
                 font.SetPointSize(fs)
                 dc.SetFont(font)
-                dc.DrawLabel(f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER)
+                dc.DrawLabel(
+                    f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER
+                )
 
     def on_select_cell(self, evt):
         newrow = evt.GetRow()
@@ -338,7 +355,8 @@ class SchTableGrid(wx.grid.Grid):
         if self.oldrow != newrow:
             if self.panel:
                 self.panel.refresh(newrow)
-            self.SelectRow(evt.GetRow())
+            self.SelectRow(newrow)
+            self.oldrow = newrow
         evt.Skip()
 
     def on_range_selected(self, evt):
@@ -358,7 +376,6 @@ class SchTableGrid(wx.grid.Grid):
             return
         self._in_range_selected = True
         try:
-            self.ClearSelection()
             table = self.GetTable()
             nrows = self.GetNumberRows() - 1
             try:
@@ -370,16 +387,18 @@ class SchTableGrid(wx.grid.Grid):
                 return
             top = max(0, min(top, nrows))
             bottom = max(0, min(bottom, nrows))
+            if top == bottom:
+                return
+            self.ClearSelection()
             try:
                 cursor = bottom if self.GetGridCursorRow() == top else top
             except Exception:
                 cursor = top
             cursor = max(0, min(cursor, nrows))
-            if top != bottom:
-                for row in range(top, bottom + 1):
-                    table.sel_row(row)
-                self.SelectRow(cursor)
-                self.SetGridCursor(cursor, self.GetGridCursorCol())
+            for row in range(top, bottom + 1):
+                table.sel_row(row)
+            self.SelectRow(cursor)
+            self.SetGridCursor(cursor, self.GetGridCursorCol())
         except Exception:
             return
 
@@ -648,14 +667,18 @@ class SchTableGrid(wx.grid.Grid):
         dy = old_count - count
         if dy != 0:
             if dy > 0:
-                msg = GridTableMessage(self.GetTable(), GRIDTABLE_NOTIFY_ROWS_DELETED, count, dy)
+                msg = GridTableMessage(
+                    self.GetTable(), GRIDTABLE_NOTIFY_ROWS_DELETED, count, dy
+                )
                 self.ProcessTableMessage(msg)
             else:
                 if old_count == 0 and not autosize:
                     dyy = -1 * dy
                     if dyy > 128:
                         dyy = 128
-                    msg = GridTableMessage(self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy)
+                    msg = GridTableMessage(
+                        self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy
+                    )
                     self.ProcessTableMessage(msg)
                     # self.AutoSizeColumns(True)
                     dyy = -1 * dy
@@ -666,7 +689,9 @@ class SchTableGrid(wx.grid.Grid):
                         self.ProcessTableMessage(msg)
                 else:
                     dyy = -1 * dy
-                    msg = GridTableMessage(self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy)
+                    msg = GridTableMessage(
+                        self.GetTable(), GRIDTABLE_NOTIFY_ROWS_APPENDED, dyy
+                    )
                     self.ProcessTableMessage(msg)
 
             if count > 0:
@@ -724,7 +749,11 @@ class SchTableGrid(wx.grid.Grid):
                         wx.CallAfter(self.GetParent().get_parent_form().cancel)
                     return 1
                 else:
-                    ret = self.GetParent().GetParent().href_clicked(self, action[command][3])
+                    ret = (
+                        self.GetParent()
+                        .GetParent()
+                        .href_clicked(self, action[command][3])
+                    )
                     ret = 1
                     return ret
 

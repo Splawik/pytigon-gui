@@ -3,9 +3,9 @@
 Provides a ribbon-style toolbar based on wx.lib.agw.ribbon.
 """
 
-import wx
 from functools import cmp_to_key
 
+import wx
 import wx.lib.agw.ribbon as RB
 from wx.lib.agw.ribbon import art
 from wx.lib.agw.ribbon.art import *
@@ -14,16 +14,16 @@ from pytigon_gui.guilib.events import *
 from pytigon_gui.toolbar.basetoolbar import (
     BaseHtmlPanel,
     ToolbarBar,
+    ToolbarButton,
     ToolbarPage,
     ToolbarPanel,
-    ToolbarButton,
 )
 
 _ = wx.GetTranslation
 
 
 MSW_STYLE = True
-ORG_LIKE_PRIMARY = None
+ORG_LIKE_PRIMARY = False
 
 
 def like_primary(primary_hsl, h, s, l, x=None):
@@ -68,7 +68,10 @@ class ModernHtmlPanel(BaseHtmlPanel):
 
     def get_width(self):
         """Return panel width from the parent ribbon bar."""
-        return self.page.parent_bar.get_bar_width()
+        if self.width:
+            return self.width
+        else:
+            return self.page.parent_bar.get_bar_width() / 4
 
     def get_height(self):
         """Return panel height from the parent ribbon bar."""

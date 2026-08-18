@@ -94,7 +94,7 @@ class BaseHtmlPanel:
             self.sizer.Replace(self.html_page, html_page)
             self.html_page.Destroy()
         else:
-            self.sizer.Add(html_page, 0, wx.LEFT | wx.TOP | wx.EXPAND | wx.RIGHT, 2)
+            self.sizer.Add(html_page, 0, wx.LEFT | wx.TOP | wx.EXPAND | wx.RIGHT, 1)
 
         self.html_page = html_page
 
@@ -533,14 +533,14 @@ class ToolbarBar:
             panel = page.create_html_panel(panel_name)
 
         if panel:
-            dx = panel.get_width() + 3
-            dy = panel.get_height() + 5
+            # dx = panel.get_width() + 3
+            dy = panel.get_height() - 15  # + 5
 
             page2 = SchPage(
                 panel.get_window(),
                 address_or_parser,
                 parameters,
-                size=wx.Size(dx, dy),
+                size=wx.Size(-1, dy),
                 pos=wx.Point(2, 2),
             )
             best = page2.body.calculate_best_size()

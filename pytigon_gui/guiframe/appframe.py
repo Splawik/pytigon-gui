@@ -796,10 +796,9 @@ class SchAppFrame(SchBaseFrame):
                     parm2 = parm[1].split(",")
                     parm3 = [pos.split("=") for pos in parm2]
                     for pos in parm3:
-                        if len(pos) == 2:
-                            if pos[0] == "show_in":
-                                panel = pos[1]
-                                break
+                        if len(pos) == 2 and pos[0] == "show_in":
+                            panel = pos[1]
+                            break
 
         if panel == "pscript":
             if not http:
@@ -809,41 +808,39 @@ class SchAppFrame(SchBaseFrame):
             exec(ptr)
             return
 
-        if not address.startswith("^"):
-            if (not view_in or view_in.startswith("browser")) or (
+        if not address.startswith("^") and (
+            (not view_in or view_in.startswith("browser"))
+            or (
                 address.startswith("http")
                 and not address.startswith(wx.GetApp().base_address)
-            ):
-                if view_in and "_" in view_in:
-                    panel = view_in.split("_")[1]
-                else:
-                    panel = "desktop"
-                ret = self.new_main_page(
-                    "^standard/webview/widget_web.html", "Empty page", view_in=panel
-                )
-                if (
-                    address.startswith("http://")
-                    or address.startswith("https://")
-                    or address.startswith("file://")
-                ):
+            )
+        ):
+            if view_in and "_" in view_in:
+                panel = view_in.split("_")[1]
+            else:
+                panel = "desktop"
+            ret = self.new_main_page(
+                "^standard/webview/widget_web.html", "Empty page", view_in=panel
+            )
+            if address.startswith(("http://", "https://", "file://")):
 
-                    def _ret_fun():
-                        if isinstance(address_or_parser, str):
-                            ret.body.WEB.go(address)
-                        else:
-                            ret.body.WEB.load_str(address_or_parser.ptr())
+                def _ret_fun():
+                    if isinstance(address_or_parser, str):
+                        ret.body.WEB.go(address)
+                    else:
+                        ret.body.WEB.load_str(address_or_parser.ptr())
 
-                    wx.CallAfter(_ret_fun)
-                else:
+                wx.CallAfter(_ret_fun)
+            else:
 
-                    def _ret_fun():
-                        if isinstance(address_or_parser, str):
-                            ret.body.WEB.go(wx.GetApp().base_path + address)
-                        else:
-                            ret.body.WEB.load_str(address_or_parser.ptr())
+                def _ret_fun():
+                    if isinstance(address_or_parser, str):
+                        ret.body.WEB.go(wx.GetApp().base_path + address)
+                    else:
+                        ret.body.WEB.load_str(address_or_parser.ptr())
 
-                    wx.CallAfter(_ret_fun)
-                return ret
+                wx.CallAfter(_ret_fun)
+            return ret
 
         if len(title) < 32:
             title2 = title
@@ -985,9 +982,7 @@ class SchAppFrame(SchBaseFrame):
                 x = self._proc_mannager.list_threads(all=False)
                 dispatcher.send("PROCESS_INFO", self, x)
             except Exception:
-                logger.debug(
-                    "process manager unavailable", exc_info=True
-                )
+                logger.debug("process manager unavailable", exc_info=True)
 
     def _append_command(self, typ, command):
         id = wx.Window.NewControlId()
