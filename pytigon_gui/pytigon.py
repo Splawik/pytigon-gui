@@ -713,10 +713,12 @@ class SchApp(App, _BASE_APP):
                     if value.status == 1:
                         value.status = 2
                         tasks.append(
-                            httpclient.local_websocket(
-                                self.base_address.replace("http://", "ws://") + key,
-                                value.input_queue,
-                                value,
+                            asyncio.create_task(
+                                httpclient.local_websocket(
+                                    self.base_address.replace("http://", "ws://") + key,
+                                    value.input_queue,
+                                    value,
+                                )
                             )
                         )
                 if tasks:
@@ -937,7 +939,8 @@ class SchApp(App, _BASE_APP):
         """
         if self.task_manager:
             with contextlib.suppress(Exception):
-                self.task_manager.terminate()
+                # self.task_manager.terminate()
+                self.task_manager.stop()
 
     def run_script(self, app_name, script_path):
         """Run a script file and send its content to the server.
@@ -1292,13 +1295,9 @@ def _setup_server(address):
 
 def _start_task_queue():
     if "embeded_taskqueue" in _PARAM:
-        from multiprocessing import Process
-        from django_q.management.commands.qcluster import Command as qcluster_command
+        from django_q.cluster import Cluster
 
-        qcluster = qcluster_command()
-        app.task_manager = Process(
-            target=qcluster.run_from_argv, args=(["manage.py", "qcluster"],)
-        )
+        app.task_manager = Cluster()
         app.task_manager.start()
         logger.info("Task manager started")
 

@@ -63,8 +63,12 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
         if self.init_default_icons:
 
             def _load_icons():
-                self.init_embeded_icons()
-                self.init_fa_icons()
+                self.Freeze()
+                try:
+                    self.init_embeded_icons()
+                    self.init_fa_icons()
+                finally:
+                    self.Thaw()
 
             wx.CallAfter(_load_icons)
 
@@ -128,7 +132,11 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
                                 icon_id = prefix + ff
                             self.Append(icon_id.replace("\\", "/"), bmp, icon_id)
                         except Exception:
-                            logger.debug("Cannot append icon: %s", str(dirname / ff), exc_info=True)
+                            logger.debug(
+                                "Cannot append icon: %s",
+                                str(dirname / ff),
+                                exc_info=True,
+                            )
             wx.Yield()
 
     def GetValue(self):
@@ -547,4 +555,3 @@ class OWNERDRAWNCOMBOBOX(wx.adv.OwnerDrawnComboBox, SchBaseCtrl):
         if index != wx.NOT_FOUND and index < len(self.choice_values):
             return self.choice_values[index]
         return wx.adv.OwnerDrawnComboBox.GetValue(self)
-

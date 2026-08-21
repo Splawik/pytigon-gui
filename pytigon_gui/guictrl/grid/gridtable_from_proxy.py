@@ -68,7 +68,9 @@ class DataSource(SchGridTableBase):
         self.rec_to_update = dict()
         self.rec_to_instert = dict()
         self.rec_to_delete = []
-        self.refr_count(self.proxy.get_count() + self.can_append + self.append_count, storePos)
+        self.refr_count(
+            self.proxy.get_count() + self.can_append + self.append_count, storePos
+        )
         self.GetView().ForceRefresh()
 
     def get_rec(self, nr_rec):
@@ -117,9 +119,9 @@ class DataSource(SchGridTableBase):
                         self.last_page = (self.pages)[0]
                         self.last_page_id = strona
 
-                        if len(nowaStrona) < 256 and self.rec_count != strona * 256 + len(
+                        if len(
                             nowaStrona
-                        ):
+                        ) < 256 and self.rec_count != strona * 256 + len(nowaStrona):
                             httpclient.IN_PAINT += 1
                             try:
                                 self.refr_count(
@@ -399,7 +401,9 @@ class DataSource(SchGridTableBase):
 
             if row == self.GetNumberRows() - 1:
                 self.append_count = self.append_count + 1
-                msg = wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, 1)
+                msg = wx.grid.GridTableMessage(
+                    self, wx.grid.GRIDTABLE_NOTIFY_ROWS_APPENDED, 1
+                )
                 self.GetView().ProcessTableMessage(msg)
         else:
             if row not in self.rec_to_update:
@@ -456,7 +460,9 @@ class DataSource(SchGridTableBase):
             return True
         else:
             if row in self.rec_to_instert:
-                msg = wx.grid.GridTableMessage(self, wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, row, il)
+                msg = wx.grid.GridTableMessage(
+                    self, wx.grid.GRIDTABLE_NOTIFY_ROWS_DELETED, row, il
+                )
                 del (self.rec_to_instert)[row]
                 self.append_count = self.append_count - 1
                 self.GetView().ProcessTableMessage(msg)
