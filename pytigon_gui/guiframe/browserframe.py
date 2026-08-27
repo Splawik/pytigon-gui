@@ -6,10 +6,8 @@ area instead of the standard AUI-managed desktop. It is used when the
 application runs in a webview-embedded mode.
 """
 
-import os
-import sys
-import time
 import logging
+import os
 
 import wx
 
@@ -66,6 +64,7 @@ class SchBrowserFrame(SchBaseFrame):
         self.toolbar_interface = None
         self.aTable = None
         self.ctrl = None
+        self._start_html = None
 
         SchBaseFrame.__init__(
             self, parent, id, gui_style, title, pos, size, style | wx.WANTS_CHARS, name
@@ -73,7 +72,6 @@ class SchBrowserFrame(SchBaseFrame):
         wx.GetApp().SetTopWindow(self)
 
         self.init_plugins()
-        self.Bind(wx.EVT_IDLE, self.on_idle)
         self.Bind(wx.EVT_SIZE, self.on_size)
 
         env = get_environ()
@@ -83,23 +81,29 @@ class SchBrowserFrame(SchBaseFrame):
         init(os.environ["PRJ_NAME"], username, password, user_agent="webviewembeded")
         start_request = request("/", None, user_agent="webviewembeded")
 
-        size = self.GetClientSize()
-        if size.width < 0 or size.height < 0:
-            size = wx.Size(1024, 768)
-        self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(self, name="schbrowser", size=size)
-        self.ctrl.load_str(start_request.str(), "http://127.0.0.5/")
-
-        if sys.platform != "win32":
-            start = time.time()
-            while not self.ctrl.page_loaded:
-                if time.time() - start > 10:
-                    logger.warning("Page load timed out")
-                    break
-                wx.Yield()
+        self._start_html = (start_request.str(), "http://127.0.0.5/")
 
         size = wx.GetApp().app_size
         wx.CallAfter(self.SetSize, (size[0], size[1]))
         wx.CallAfter(self.Show)
+        wx.CallAfter(self.Bind, wx.EVT_IDLE, self.on_idle)
+        wx.CallAfter(self._create_browser_ctrl)
+
+    def _create_browser_ctrl(self):
+        """Create the embedded browser control and load the start page.
+
+        The control must be created only after the top level window is
+        shown - creating or loading a WebKit view in a hidden toplevel
+        window breaks GTK coordinate conversions and can lead to a
+        segmentation fault in WebKit.
+        """
+        size = self.GetClientSize()
+        if size.width < 0 or size.height < 0:
+            size = wx.Size(1024, 768)
+        self.ctrl = pytigon_gui.guictrl.ctrl.HTML2(self, name="schbrowser", size=size)
+        if self._start_html:
+            self.ctrl.load_str(*self._start_html)
+            self._start_html = None
 
     def on_size(self, event):
         if self.ctrl:
@@ -126,13 +130,17 @@ class SchBrowserFrame(SchBaseFrame):
         Args:
             event: wx.IdleEvent.
         """
+        if not self.IsShown():
+            event.Skip()
+            return
+
         for obj in self.idle_objects:
             try:
                 obj.on_idle()
             except Exception:
                 logger.debug("Error in idle object %s", type(obj).__name__, exc_info=True)
 
-        if not self.after_init:
+        if not self.after_init and self.ctrl:
             self.after_init = True
             app = wx.GetApp()
             if len(app.start_pages) > 0:
