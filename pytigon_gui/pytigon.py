@@ -610,10 +610,12 @@ class SchApp(App, _BASE_APP):
             return response if response else 0
 
         if app and app != "":
-            self.images = image.SchImage("/" + app + "/site_media/app.png")
+            # self.images = image.SchImage("/" + app + "/site_media/app.png")
+            self.images = image.SchImage("/" + app + "/static/images/app.png")
             response = self.http.get(self, "/" + app + "/")
         else:
-            self.images = image.SchImage("/site_media/app.png")
+            # self.images = image.SchImage("/site_media/app.png")
+            self.images = image.SchImage("/static/images/app.png")
             response = self.http.get(self, "/")
 
         ret_str = response.str()

@@ -483,7 +483,9 @@ class SimpleDataTable(SchGridTableBase):
         href_base = self._parent.GetParent().get_parm_obj().address
         href = urllib.parse.urljoin(href_base, "../table_action/")
         if self.rec_selected:
-            href += "?pk=" + ",".join([str(pos.data) for pos in self.get_sel_rows()[0]])
+            href += "?pk=" + ",".join(
+                [str(pos.data).strip() for pos in self.get_sel_rows()[0]]
+            )
         data = {
             "action": "copy",
         }
