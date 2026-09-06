@@ -162,9 +162,6 @@ class TABLE(SchGridPanel, SchBaseCtrl):
     def GetMinSize(self):
         return SchGridPanel.GetMinSize(self)
 
-    def GetBestSize(self):
-        return (600, 300)
-
     def process_refr_data(self, **kwds):
         """Refresh the table with new data.
 
@@ -270,9 +267,6 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
             if parm:
                 if self.proxy.set_address_parm(parm[2]):
                     self.GetTable().refresh(False)
-
-    def GetBestSize(self):
-        return (600, 300)
 
     def OnSize(self, event=None):
         """Handle resize event, adjusting height for toolbar.
