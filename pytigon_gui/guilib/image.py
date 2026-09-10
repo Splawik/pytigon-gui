@@ -62,7 +62,10 @@ def _resolve_art_id(art_id_str):
         wxPython art id constant, or None if not found.
     """
     if art_id_str in _WX_ART_MAP:
-        return _WX_ART_MAP[art_id_str]
+        ret = _WX_ART_MAP[art_id_str]
+        if type(ret) is bytes:
+            ret = ret.decode("utf-8")
+        return ret
     try:
         return getattr(wx, art_id_str.split(".")[1], None)
     except (IndexError, AttributeError):
@@ -187,25 +190,19 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
 
     if href2[:3] == "wx.":
         if (art_id := _resolve_art_id(href2)) is not None:
-            bmp = wx.ArtProvider.GetBitmap(
-                art_id, wx.ART_TOOLBAR, (icon_size, icon_size)
-            )
+            bmp = wx.ArtProvider.GetBitmap(art_id, wx.ART_TOOLBAR, (icon_size, icon_size))
         else:
             bmp = wx.ArtProvider.GetBitmap(
                 wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (icon_size, icon_size)
             )
     elif href.startswith("client://"):
         image = wx.Image(
-            str(wx.GetApp().src_path)
-            + f"/static/icons/{icon_size}x{icon_size}/"
-            + href2[9:]
+            str(wx.GetApp().src_path) + f"/static/icons/{icon_size}x{icon_size}/" + href2[9:]
         )
         bmp = wx.Bitmap(image)
     elif href.startswith("png://"):
         image = wx.Image(
-            str(wx.GetApp().src_path)
-            + f"/static/icons/{icon_size}x{icon_size}/"
-            + href2[6:]
+            str(wx.GetApp().src_path) + f"/static/icons/{icon_size}x{icon_size}/" + href2[6:]
         )
         bmp = wx.Bitmap(image)
     elif href.startswith("fa://"):
@@ -236,13 +233,9 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
                 stream = BytesIO(s)
                 bmp = wx.Bitmap(wx.Image(stream))
             else:
-                bmp = wx.ArtProvider.GetBitmap(
-                    wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32)
-                )
+                bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32))
         else:
-            bmp = wx.ArtProvider.GetBitmap(
-                wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32)
-            )
+            bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32))
     return bmp
 
 
@@ -261,7 +254,7 @@ class ArtProviderFromIcon(wx.ArtProvider):
 
         ids_path = str(wx.GetApp().src_path) + "/static/icons/ids.txt"
         try:
-            with open(ids_path) as ids:
+            with open(ids_path, "rt") as ids:
                 for line in ids:
                     line = line.strip()
                     if not line:
@@ -295,7 +288,6 @@ class ArtProviderFromIcon(wx.ArtProvider):
             size = 32
         path = None
         cached_table = None
-
         if size == 16:
             cached_table = self.tab_16
             if artid in self.tab_16:
@@ -355,18 +347,14 @@ class SchImage:
             response = http.get(self, address)
             if response.ret_code != 200:
                 logger.warning("Cannot load image from: %s", address)
-                self.bmp = wx.ArtProvider.GetBitmap(
-                    wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32)
-                )
+                self.bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32))
             else:
                 data = response.ptr()
                 stream = io.BytesIO(data)
                 self.bmp = wx.Bitmap(wx.Image(stream))
         except Exception:
             logger.exception("Exception while loading image from: %s", address)
-            self.bmp = wx.ArtProvider.GetBitmap(
-                wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32)
-            )
+            self.bmp = wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32))
 
     def __getitem__(self, key):
         """Extract the sub-bitmap at the given index.
@@ -386,6 +374,4 @@ class SchImage:
         try:
             return self.bmp.GetSubBitmap(rect)
         except Exception:
-            return wx.ArtProvider.GetBitmap(
-                wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32)
-            )
+            return wx.ArtProvider.GetBitmap(wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (32, 32))
