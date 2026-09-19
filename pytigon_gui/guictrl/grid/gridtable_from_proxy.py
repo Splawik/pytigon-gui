@@ -12,6 +12,7 @@ import logging
 import wx
 import pytigon_lib.schtools.createparm as createparm
 from pytigon_lib.schhttptools import httpclient
+from pytigon_gui.guilib.threads import block_http_pumping
 
 from .gridtable_base import SchGridTableBase
 
@@ -58,20 +59,24 @@ class DataSource(SchGridTableBase):
         # 0 - no store, cursor - pos 1
         # 1 - store, if out of range - pos 1
         # 2 - store, if out of range - pos = max
-        self.commit()
-        self.append_count = 0
-        self.last_page_id = -1
-        self.pages_nr = [-1, -1, -1, -1, -1]
-        self.pages = [None, None, None, None, None]
-        self.last_page = None
-        self.max_count = self.proxy.get_max_count()
-        self.rec_to_update = dict()
-        self.rec_to_instert = dict()
-        self.rec_to_delete = []
-        self.refr_count(
-            self.proxy.get_count() + self.can_append + self.append_count, storePos
-        )
-        self.GetView().ForceRefresh()
+        # This is called from cell/sort/filter event handlers and performs
+        # several synchronous HTTP requests; block loop pumping so the grid
+        # cannot be re-entered and destroyed mid-refresh.
+        with block_http_pumping():
+            self.commit()
+            self.append_count = 0
+            self.last_page_id = -1
+            self.pages_nr = [-1, -1, -1, -1, -1]
+            self.pages = [None, None, None, None, None]
+            self.last_page = None
+            self.max_count = self.proxy.get_max_count()
+            self.rec_to_update = dict()
+            self.rec_to_instert = dict()
+            self.rec_to_delete = []
+            self.refr_count(
+                self.proxy.get_count() + self.can_append + self.append_count, storePos
+            )
+            self.GetView().ForceRefresh()
 
     def get_rec(self, nr_rec):
         if not self.is_valid:
@@ -163,7 +168,8 @@ class DataSource(SchGridTableBase):
             delete = []
             for rec in self.rec_to_delete:
                 delete.append(self.get_rec(rec)[0])
-            self.proxy.sync_data(update, insert, delete)
+            with block_http_pumping():
+                self.proxy.sync_data(update, insert, delete)
 
             self.rec_to_update = dict()
             self.rec_to_instert = dict()
@@ -220,7 +226,8 @@ class DataSource(SchGridTableBase):
 
     def auto_update(self, col_name, col_names, rec):
         """Return transformed row after current row is changed"""
-        return self.proxy.auto_update(col_name, col_names, rec)
+        with block_http_pumping():
+            return self.proxy.auto_update(col_name, col_names, rec)
 
     def filter_cmp(self, pos, key):
         if self.filter_id is not None and self.filter_id >= 0:

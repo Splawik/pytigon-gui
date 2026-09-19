@@ -10,6 +10,7 @@ import wx.html
 import logging
 
 from pytigon_lib.schtools import schjson
+from pytigon_gui.guilib.threads import block_http_pumping
 
 logger = logging.getLogger(__name__)
 
@@ -107,21 +108,31 @@ class SchThreadWindow(wx.Panel):
         """Periodic update - polls server for thread progress and status."""
         try:
             http = wx.GetApp().http
-            response = http.get(
-                self,
-                "http://local.net/schsys/thread_short_info/" + self.thread_name,
-            )
+            # Runs from a wx.Timer (main thread); block loop pumping so the
+            # status bar cannot be re-entered during the request.
+            with block_http_pumping():
+                response = http.get(
+                    self,
+                    "http://local.net/schsys/thread_short_info/" + self.thread_name,
+                )
+            if response is None:
+                return
             info_json = response.str()
             info = schjson.loads(info_json)
         except Exception:
             logger.exception("Failed to poll thread info for %s", self.thread_name)
             return
 
+        if not self:
+            return
         if isinstance(info, str) and info == "$$$":
             self.closed = True
             evt = ThreadEvent(schEVT_THREAD_INFO, -1)
             evt.set_info(self.thread_name)
-            wx.GetApp().GetTopWindow().GetEventHandler().ProcessEvent(evt)
+            top = wx.GetApp().GetTopWindow()
+            if top:
+                # QueueEvent is safe and asynchronous, unlike ProcessEvent.
+                top.GetEventHandler().QueueEvent(evt)
         elif info:
             if "progress" in info:
                 try:
@@ -136,7 +147,9 @@ class SchThreadWindow(wx.Panel):
     def on_expand(self, event):
         """Open a detailed view of the thread."""
         address = "http://local.net/schsys/thread_long_info/" + self.thread_name
-        wx.GetApp().GetTopWindow().new_main_page(address, "aplikacja")
+        top = wx.GetApp().GetTopWindow()
+        if top:
+            top.new_main_page(address, "aplikacja")
 
     def on_kill(self, event):
         """Request termination of the background thread."""
@@ -166,6 +179,26 @@ class SchThreadManager:
         self.windows = []
         statusbar.Bind(wx.EVT_SIZE, self.on_size)
         statusbar.Bind(wx.EVT_IDLE, self.on_idle)
+        # Drive polling from a wx.Timer so all GUI access happens on the
+        # main thread. Previously timer() had no caller at all.
+        self._poll_timer = None
+        if isinstance(statusbar, wx.EvtHandler):
+            self._poll_timer = wx.Timer(statusbar)
+            statusbar.Bind(wx.EVT_TIMER, self.on_poll_timer, self._poll_timer)
+            self._poll_timer.Start(1000)
+
+    def on_poll_timer(self, evt):
+        """wx.Timer callback: update all thread windows on the main thread."""
+        if not self.statusbar:
+            self.stop()
+            return
+        self.timer()
+
+    def stop(self):
+        """Stop periodic polling."""
+        if self._poll_timer is not None:
+            self._poll_timer.Stop()
+            self._poll_timer = None
 
     def append(self, thread_address):
         """Add a new thread window for the given thread address.
@@ -216,8 +249,9 @@ class SchThreadManager:
 
         # Iterate over a copy to safely remove while iterating
         for win in self.windows[:]:
-            if win.is_closed():
-                win.Destroy()
+            if not win or win.is_closed():
+                if win:
+                    win.Destroy()
                 self.windows.remove(win)
                 self.sizeChanged = True
             else:

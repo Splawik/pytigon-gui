@@ -21,6 +21,7 @@ from wx.lib import masked
 
 from pytigon_lib.schtools import schjson
 from pytigon_lib.schtools.tools import bencode, bdecode
+from pytigon_gui.guilib.threads import block_http_pumping
 
 logger = logging.getLogger(__name__)
 
@@ -166,8 +167,11 @@ class DataPopupControl(ComboCtrl):
         self.href2 = href_parts[1] if len(href_parts) > 1 else None
 
         self.http = wx.GetApp().get_http(self)
-        response = self.http.get(self, str(self.href) + "size/")
-        self.size = schjson.loads(response.str())
+        # The control is only half constructed here; block loop pumping so
+        # re-entrant events cannot reach it before setup is complete.
+        with block_http_pumping():
+            response = self.http.get(self, str(self.href) + "size/")
+            self.size = schjson.loads(response.str())
 
         self.simpleDialog = True
         if self.GetTextCtrl():
@@ -280,8 +284,9 @@ class DataPopupControl(ComboCtrl):
         if str(value) != self.start_value and str(value) != "":
             self.http = wx.GetApp().get_http(self)
             x = bencode(value)
-            response = self.http.post(self, str(self.href) + "test/", {"value": x})
-            tab = schjson.loads(response.str())
+            with block_http_pumping():
+                response = self.http.post(self, str(self.href) + "test/", {"value": x})
+                tab = schjson.loads(response.str())
             ret = tab[0]
 
             if ret != 1:
@@ -378,6 +383,9 @@ class DataPopupControl(ComboCtrl):
             self.html.body.Hide()
 
             def _after():
+                if not self.html or not self.html.body:
+                    wx.EndBusyCursor()
+                    return
                 try:
                     self.html.refresh_html()
                     self.html.SetFocus()
@@ -385,6 +393,8 @@ class DataPopupControl(ComboCtrl):
                     self.html.body.init()
 
                     def _after2():
+                        if not self.html or not self.html.body:
+                            return
                         self.html.body.refr(self.start_value)
                         self.html.body.Show()
 
@@ -399,7 +409,9 @@ class DataPopupControl(ComboCtrl):
     def Dismiss(self):
         """Dismiss the popup or extended dialog page."""
         if self.page:
-            self.page.body.old_any_parent_command("on_cancel", None)
+            body = getattr(self.page, "body", None)
+            if body is not None:
+                body.old_any_parent_command("on_cancel", None)
             self.page = None
         else:
             super().Dismiss()

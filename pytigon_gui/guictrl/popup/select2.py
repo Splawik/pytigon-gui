@@ -13,6 +13,7 @@ import wx
 
 from pytigon_lib.schtools import schjson
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guilib.threads import block_http_pumping, is_alive
 
 logger = logging.getLogger(__name__)
 
@@ -83,6 +84,7 @@ class Select2Popup(wx.MiniFrame):
 
         self.Bind(wx.EVT_ACTIVATE, self.on_activate)
         self.Bind(wx.EVT_TEXT, self.on_text)
+        self.Bind(wx.EVT_CLOSE, self.on_close)
 
         box = wx.BoxSizer(wx.VERTICAL)
         box.Add(self.edit_ctrl)
@@ -90,6 +92,13 @@ class Select2Popup(wx.MiniFrame):
         self.SetSizer(box)
         self.SetAutoLayout(True)
         self.Fit()
+
+    def on_close(self, event):
+        """Clear the owner's popup reference when the frame is closed."""
+        if self.combo and getattr(self.combo, "popup", None) is self:
+            self.combo.popup = None
+            self.combo._popup_shown = False
+        event.Skip()
 
     def on_enter(self, event):
         """Handle Enter/DoubleClick on a list item: dismiss and set value.
@@ -156,12 +165,18 @@ class Select2Popup(wx.MiniFrame):
 
         try:
             http = wx.GetApp().get_http(self.combo)
-            response = http.get(self, url)
-            tab = schjson.loads(response.str())
+            # Block event-loop pumping while the request is in flight: the
+            # text control and popup must not be re-entered/destroyed before
+            # the results below are applied.
+            with block_http_pumping():
+                response = http.get(self, url)
+                tab = schjson.loads(response.str())
         except Exception:
             logger.warning("Failed to load select2 data from: %s", url, exc_info=True)
             return
 
+        if not self.list_ctrl:
+            return
         err = tab.get("err")
         if err is None or err == "nil":
             self.list_ctrl.Clear()
@@ -311,6 +326,8 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
             self.SetValue(item_str)
 
         def _finish():
+            if not self:
+                return
             self.SelectNone()
             self.SetInsertionPointEnd()
 
@@ -402,8 +419,16 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
     def OnButtonClick(self):
         """Handle the dropdown button click: open popup and clear search."""
         ret = self._on_button_click()
-        self.popup.edit_ctrl.SetValue("")
-        wx.CallAfter(self.popup.edit_ctrl.SetFocus)
+        if not self.popup:
+            return ret
+        edit_ctrl = self.popup.edit_ctrl
+        edit_ctrl.SetValue("")
+
+        def _focus_edit():
+            if is_alive(edit_ctrl):
+                edit_ctrl.SetFocus()
+
+        wx.CallAfter(_focus_edit)
         return ret
 
     def DoSetPopupControl(self, popup):

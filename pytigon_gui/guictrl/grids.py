@@ -17,6 +17,7 @@ from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 from pytigon_gui.guictrl.grid import grid, gridtable_from_proxy, tabproxy
 from pytigon_gui.guictrl.grid.gridtable_from_html_table import SimpleDataTable
 from pytigon_gui.guictrl.grid.gridpanel import SchGridPanel
+from pytigon_gui.guilib.threads import block_http_pumping
 from pytigon_lib.schtools import createparm
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
 
@@ -138,7 +139,8 @@ class TABLE(SchGridPanel, SchBaseCtrl):
         else:
             url += "?pk=" + str(pk)
         http = wx.GetApp().get_http(self)
-        response = http.get(self, url)
+        with block_http_pumping():
+            response = http.get(self, url)
         if response.ret_code == 404:
             return None
         data = response.str()
@@ -254,7 +256,7 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
         parm = createparm.create_parm(self.src, self.GetParent().get_parm_obj())
         if parm:
             self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(self), str(parm[0]))
-            self.proxy.SetAddressParm(parm[2])
+            self.proxy.set_address_parm(parm[2])
         else:
             self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(self), str(self.src))
         table = gridtable_from_proxy.DataSource(self.proxy)

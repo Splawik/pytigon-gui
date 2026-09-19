@@ -23,6 +23,7 @@ from pytigon_lib.schparser.html_parsers import ShtmlParser
 from pytigon_lib.schtools.tools import clean_href, is_null
 from pytigon_lib.schhtml.wxdc import DcDc
 from pytigon_lib.schhtml.htmlviewer import HtmlViewerParser
+from pytigon_gui.guilib.threads import call_after_if_alive, block_http_pumping
 
 _ = wx.GetTranslation
 
@@ -145,11 +146,15 @@ class SchForm(ScrolledPanel):
 
         self.EnableScrolling(False, False)
 
+    def _defer(self, fun, *args, **kwargs):
+        """Run *fun* on the main thread, skipping it if the form is gone."""
+        call_after_if_alive(self, fun, *args, **kwargs)
+
     def SetFocus(self):
         if self.last_control_with_focus:
             self.last_control_with_focus.SetFocus()
         else:
-            wx.CallAfter(self.Navigate, None)
+            self._defer(self.Navigate, None)
 
     def Navigate(self, ctrl, back=False):
         next = False
@@ -179,7 +184,7 @@ class SchForm(ScrolledPanel):
         if self.last_control_with_focus:
             self.last_control_with_focus.SetFocus()
         else:
-            wx.CallAfter(self.Navigate, None)
+            self._defer(self.Navigate, None)
 
     def bind_to_ctrl(self, ctrl, id, fun, fun2=None):
         """bind function callback to command event from ctrl
@@ -325,7 +330,7 @@ class SchForm(ScrolledPanel):
                 self.SetVirtualSize((max(int(w), 0), max(int(h), 0)))
             p.close()
             self.update_controls = False
-            wx.CallAfter(self.SetupScrolling, self.hscroll, self.vscroll, rate_y=1)
+            self._defer(self.SetupScrolling, self.hscroll, self.vscroll, rate_y=1)
 
     def draw_background(self, refresh_all=False, size=None):
         """drawn a rendered html page as a background"""
@@ -404,7 +409,7 @@ class SchForm(ScrolledPanel):
         """enable od disable the form"""
         ret = super().Enable(enable)
         if enable:
-            wx.CallAfter(self.restore_scroll_pos)
+            self._defer(self.restore_scroll_pos)
         return ret
 
     def set_best_size(self, bestsize):
@@ -461,9 +466,13 @@ class SchForm(ScrolledPanel):
     #    wx.CallAfter(self.cancel, True)
 
     def on_timer(self, event):
+        if self.closing:
+            self._stop_timers()
+            return
         if self.page:
             if not self.page.exists:
-                self.t1.Stop()
+                if self.t1:
+                    self.t1.Stop()
                 return
         self.GetParent().refresh_html()
 
@@ -471,16 +480,14 @@ class SchForm(ScrolledPanel):
         """Close this form without saving its content"""
         if self.page:
             self.page.exists = False
-        if self.t1:
-            self.t1.Stop()
+        self._stop_timers()
         if self.page:
             self.page.GetParent().on_child_form_cancel()
 
     def ok(self):
         if self.page:
             self.page.exists = False
-        if self.t1:
-            self.t1.Stop()
+        self._stop_timers()
         if self.page:
             self.page.GetParent().on_child_form_ok()
 
@@ -514,10 +521,15 @@ class SchForm(ScrolledPanel):
         )
 
         def init_ctrl():
-            okno.body.EDITOR.SetValue(self.page_source.tostream().getvalue())
-            okno.body.EDITOR.GotoPos(0)
+            if not okno or not getattr(okno, "body", None):
+                return
+            editor = getattr(okno.body, "EDITOR", None)
+            if editor is None:
+                return
+            editor.SetValue(self.page_source.tostream().getvalue())
+            editor.GotoPos(0)
 
-        wx.CallAfter(init_ctrl)
+        call_after_if_alive(okno, init_ctrl)
 
     def _get_obj_for_redraw(self, pos, type=0):
         if "href" in self.obj_action_dict:
@@ -545,6 +557,9 @@ class SchForm(ScrolledPanel):
         return None
 
     def on_motion(self, evt):
+        if self.closing:
+            evt.Skip()
+            return
         pos = evt.GetPosition()
         pos2 = (pos[0] + self._act_scroll_xy[0], pos[1] + self._act_scroll_xy[1])
         self._motion_pending_pos = pos2
@@ -567,8 +582,9 @@ class SchForm(ScrolledPanel):
         self._motion_pending_pos = None
         if self._motion_timer is not None:
             self._motion_timer.Stop()
+            self._motion_timer.Destroy()
             self._motion_timer = None
-        if pos2 is not None:
+        if pos2 is not None and not self.closing:
             import time as _time
 
             self._motion_last_time = _time.monotonic()
@@ -627,9 +643,23 @@ class SchForm(ScrolledPanel):
                         ret = False
         return ret
 
+    def _stop_timers(self):
+        """Stop and destroy periodic timers owned by this form."""
+        if self.t1:
+            self.t1.Stop()
+            self.t1.Destroy()
+            self.t1 = None
+        if self._motion_timer is not None:
+            self._motion_timer.Stop()
+            self._motion_timer.Destroy()
+            self._motion_timer = None
+
     def _on_close(self):
         app = wx.GetApp()
         self.closing = True
+        # Stop timers before the page/children are destroyed, otherwise a
+        # pending timer can fire on a dead window.
+        self._stop_timers()
         if hasattr(self, "on_close"):
             self.on_close()
         for x in self.websockets:
@@ -685,10 +715,13 @@ class SchForm(ScrolledPanel):
             if self.address:
                 parm = createparm.create_parm(self.address, self.get_parm_obj())
                 http = wx.GetApp().get_http(self)
-                if parm:
-                    response = http.get(self, str(parm[0] + parm[1] + parm[2]))
-                else:
-                    response = http.get(self, self.address)
+                # Do not pump the event loop while refreshing: re-entrant
+                # events could destroy this form mid-refresh.
+                with block_http_pumping():
+                    if parm:
+                        response = http.get(self, str(parm[0] + parm[1] + parm[2]))
+                    else:
+                        response = http.get(self, self.address)
                 if response.ret_code == 404:
                     return
 
@@ -799,7 +832,8 @@ class SchForm(ScrolledPanel):
             if hasattr(self, "init_form"):
 
                 def _init():
-                    nonlocal self
+                    if not self:
+                        return
                     self.init_form()
                     if callback:
                         callback(self)
@@ -813,8 +847,8 @@ class SchForm(ScrolledPanel):
                 self.init_form()
             if callback:
                 callback(self)
-        wx.CallAfter(self._build_acc_tab)
-        wx.CallAfter(self._check_scroll_bar)
+        self._defer(self._build_acc_tab)
+        self._defer(self._check_scroll_bar)
 
     def _check_scroll_bar(self):
         size = self.GetSize()
@@ -1002,13 +1036,14 @@ class SchForm(ScrolledPanel):
 
             http = wx.GetApp().get_http(ctrl)
 
-            if upload:
-                response = http.post(self, adr, post, upload=True)
-            else:
-                if post:
-                    response = http.post(self, adr, post)
+            with block_http_pumping():
+                if upload:
+                    response = http.post(self, adr, post, upload=True)
                 else:
-                    response = http.get(self, adr)
+                    if post:
+                        response = http.post(self, adr, post)
+                    else:
+                        response = http.get(self, adr)
 
             if "500" in response.ret_content_type:
                 return

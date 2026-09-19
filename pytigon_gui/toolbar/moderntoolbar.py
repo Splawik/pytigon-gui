@@ -11,6 +11,7 @@ from wx.lib.agw.ribbon import art
 from wx.lib.agw.ribbon.art import *
 
 from pytigon_gui.guilib.events import *
+from pytigon_gui.guilib.threads import call_after_if_alive
 from pytigon_gui.toolbar.basetoolbar import (
     BaseHtmlPanel,
     ToolbarBar,
@@ -264,10 +265,12 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
         self.Realize()
 
         def _realize():
+            if not self:
+                return
             for child in self.Children:
                 child.Realize()
 
-        wx.CallAfter(_realize)
+        call_after_if_alive(self, _realize)
 
     def close(self):
         """Close/destroy the ribbon bar."""

@@ -14,6 +14,7 @@ import wx
 import pytigon_gui.guictrl.ctrl
 
 from pytigon_gui.guiframe.baseframe import SchBaseFrame
+from pytigon_gui.guilib.threads import call_after_if_alive
 
 from django.conf import settings
 
@@ -87,7 +88,7 @@ class SchBrowserFrame(SchBaseFrame):
         wx.CallAfter(self.SetSize, (size[0], size[1]))
         wx.CallAfter(self.Show)
         wx.CallAfter(self.Bind, wx.EVT_IDLE, self.on_idle)
-        wx.CallAfter(self._create_browser_ctrl)
+        call_after_if_alive(self, self._create_browser_ctrl)
 
     def _create_browser_ctrl(self):
         """Create the embedded browser control and load the start page.
@@ -97,6 +98,8 @@ class SchBrowserFrame(SchBaseFrame):
         window breaks GTK coordinate conversions and can lead to a
         segmentation fault in WebKit.
         """
+        if not self:
+            return
         size = self.GetClientSize()
         if size.width < 0 or size.height < 0:
             size = wx.Size(1024, 768)
@@ -146,6 +149,8 @@ class SchBrowserFrame(SchBaseFrame):
             if len(app.start_pages) > 0:
 
                 def start_pages():
+                    if not self.ctrl:
+                        return
                     for page in app.start_pages:
                         url_page = page.split(";")
                         if len(url_page) == 2:

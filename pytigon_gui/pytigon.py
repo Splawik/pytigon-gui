@@ -247,7 +247,11 @@ _ = wx.GetTranslation
 def process_adv_argv():
     global _PARAM
     if not ("args" in _PARAM and len(_PARAM["args"]) > 0):
-        _app = wx.App()
+        # Reuse an already existing application if there is one; otherwise
+        # create a throwaway one for the selection dialog and drop it before
+        # the real SchApp is constructed (only one wx.App should be alive).
+        own_app = wx.GetApp() is None
+        _app = wx.App() if own_app else wx.GetApp()
 
         choices = [
             ff
@@ -271,8 +275,13 @@ def process_adv_argv():
             dlg.Destroy()
             sys.exit(0)
 
-        _app.MainLoop()
-        _app = None
+        # ShowModal() ran its own nested event loop; starting MainLoop() with
+        # no top-level window is unnecessary and can hang.
+        if own_app:
+            import gc
+
+            del _app
+            gc.collect()
 
     else:
         arg = _PARAM["args"][0].strip()
@@ -296,7 +305,18 @@ def process_adv_argv():
 
 process_adv_argv()
 
-if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
+# A single, explicitly owned asyncio loop is shared by wxasync, the
+# Twisted asyncio reactor and local websocket tasks. Using asyncio.run()
+# here would create a different loop than the one captured by
+# asyncioreactor.install(), leaving RPC/websocket transports without a
+# running loop.
+_ASYNC_APP = "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM
+_ASYNC_LOOP = None
+if _ASYNC_APP:
+    _ASYNC_LOOP = asyncio.new_event_loop()
+    asyncio.set_event_loop(_ASYNC_LOOP)
+
+if _ASYNC_APP:
     try:
         from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
     except ImportError:
@@ -308,11 +328,11 @@ if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
             evtloop = wx.GUIEventLoop()
             with wx.EventLoopActivator(evtloop):
                 while not self.exiting:
+                    while self.HasPendingEvents():
+                        self.ProcessPendingEvents()
                     if platform.system() == "Darwin":
                         evtloop.DispatchTimeout(0)
                     else:
-                        while self.HasPendingEvents():
-                            self.ProcessPendingEvents()
                         while evtloop.Pending():
                             evtloop.Dispatch()
                     await asyncio.sleep(0.005)
@@ -339,7 +359,9 @@ import pytigon_gui.guictrl.tag
 if "rpc" in _PARAM or "websocket" in _PARAM:
     import twisted.internet.asyncioreactor
 
-    twisted.internet.asyncioreactor.install()
+    # Bind the Twisted reactor to the same loop that MainLoop drives,
+    # otherwise reactor callbacks (RPC, remote websockets) never run.
+    twisted.internet.asyncioreactor.install(_ASYNC_LOOP)
 
     from twisted.internet import reactor
     import twisted
@@ -435,6 +457,7 @@ class SchApp(App, _BASE_APP):
         if _APP_CONFIG["rpc"]:
             xmlrpc.XMLRPC.__init__(self)
 
+        self.splash = None
         if (
             not "no_splash" in _PARAM
             and not "nogui" in _PARAM
@@ -444,7 +467,9 @@ class SchApp(App, _BASE_APP):
             bitmap = img.ConvertToBitmap(
                 scale=2, width=int(img.width * 2), height=int(img.height * 2)
             )
-            splash = wx.adv.SplashScreen(
+            # Keep a reference: a parentless wx.adv.SplashScreen would be
+            # garbage collected (and destroyed) as soon as __init__ returns.
+            self.splash = wx.adv.SplashScreen(
                 bitmap,
                 wx.adv.SPLASH_CENTRE_ON_SCREEN | wx.adv.SPLASH_TIMEOUT,
                 1000,
@@ -454,8 +479,9 @@ class SchApp(App, _BASE_APP):
                 wx.DefaultSize,
                 wx.BORDER_SIMPLE | wx.STAY_ON_TOP,
             )
-            splash.Update()
-            wx.Yield()
+            self.splash.Update()
+            # No wx.Yield() here: pumping the event loop from inside
+            # wx.App.__init__ can dispatch events to half-built objects.
 
         config_name = SRC_PATH / "pytigon.ini"
         self.config = configparser.ConfigParser()
@@ -555,10 +581,18 @@ class SchApp(App, _BASE_APP):
 
     # some XML-RPC function calls for twisted server
     def xmlrpc_stop(self):
-        """Closes the wx application."""
-        top_window = self.GetTopWindow()
-        if top_window:
-            top_window.Close()
+        """Closes the wx application.
+
+        XML-RPC methods run on the Twisted reactor thread, so the actual
+        wx call has to be marshalled to the GUI thread.
+        """
+
+        def _stop():
+            top_window = self.GetTopWindow()
+            if top_window:
+                top_window.Close()
+
+        wx.CallAfter(_stop)
         return "Shutdown initiated"
 
     def xmlrpc_title(self, title):
@@ -570,9 +604,13 @@ class SchApp(App, _BASE_APP):
         Returns:
             The title that was set, or None if no top window exists.
         """
-        top_window = self.GetTopWindow()
-        if top_window:
-            top_window.SetTitle(title)
+
+        def _set_title():
+            top_window = self.GetTopWindow()
+            if top_window:
+                top_window.SetTitle(title)
+
+        wx.CallAfter(_set_title)
         return title
 
     def get_locale_object(self):
@@ -700,10 +738,10 @@ class SchApp(App, _BASE_APP):
                         )
                     )
             if tasks:
-                done, pending = await asyncio.wait(tasks)
-                assert not pending
-                (future,) = done  # unpack a set of length one
-                logger.debug("Websocket init result: %s", future.result())
+                # local_websocket runs for the lifetime of the connection,
+                # so this waits until shutdown; gather keeps result handling
+                # simple and avoids the unreachable "pending" assertion.
+                await asyncio.gather(*tasks, return_exceptions=True)
 
     def create_websocket(self, websocket_id, callback):
         local = True if self.base_address.startswith("http://127.0.0.2") else False
@@ -727,11 +765,7 @@ class SchApp(App, _BASE_APP):
 
                     async def reinit_websockets():
                         nonlocal tasks
-                        done, pending = await asyncio.wait(tasks)
-                        # done, pending = yield from asyncio.wait([raise_exception()], timeout=1)
-                        assert not pending
-                        (future,) = done  # unpack a set of length one
-                        logger.debug("Websocket reinit result: %s", future.result())
+                        await asyncio.gather(*tasks, return_exceptions=True)
 
                     self.StartCoroutine(reinit_websockets, self.GetTopWindow())
 
@@ -937,8 +971,11 @@ class SchApp(App, _BASE_APP):
     def on_exit(self):
         """Clean up resources when the application exits.
 
-        Terminates the task manager if it is running.
+        Terminates the task manager and stops the thread status polling.
         """
+        if self.thread_manager:
+            with contextlib.suppress(Exception):
+                self.thread_manager.stop()
         if self.task_manager:
             with contextlib.suppress(Exception):
                 # self.task_manager.terminate()
@@ -1007,19 +1044,27 @@ class SchApp(App, _BASE_APP):
             event_name: name of the event (e.g. 'on_websocket_message').
             argv: event arguments dictionary.
         """
-        if client.websocket_id in self.websockets_callbacks:
-            for callback in self.websockets_callbacks[client.websocket_id]:
-                if hasattr(callback, event_name):
-                    if "channel" in argv:
-                        if hasattr(callback, "accept_channel"):
-                            if not getattr(callback, "accept_channel")(argv["channel"]):
-                                continue
-                    try:
-                        getattr(callback, event_name)(**argv)
-                    except Exception as e:
-                        logger.error(
-                            "Websocket callback error for %s: %s", event_name, e
-                        )
+        if not wx.IsMainThread():
+            # Remote websockets are delivered by the Twisted reactor thread;
+            # callbacks are allowed to touch wx widgets, so marshal them.
+            wx.CallAfter(self.on_websocket_callback, client, event_name, dict(argv))
+            return
+
+        callbacks = self.websockets_callbacks.get(client.websocket_id)
+        if not callbacks:
+            return
+        for callback in list(callbacks):
+            if hasattr(callback, event_name):
+                if "channel" in argv:
+                    if hasattr(callback, "accept_channel"):
+                        if not getattr(callback, "accept_channel")(argv["channel"]):
+                            continue
+                try:
+                    getattr(callback, event_name)(**argv)
+                except Exception as e:
+                    logger.error(
+                        "Websocket callback error for %s: %s", event_name, e
+                    )
 
     def on_websocket_connect(self, client, websocket_id, response):
         """Handle websocket connect event."""
@@ -1192,8 +1237,8 @@ def _setup_django(apps):
     sys.path.insert(0, str(CWD_PATH))
     httpclient.init_embeded_django()
 
-    if not ("channels" in _PARAM or "rpc" in _PARAM):
-        wx.Yield()
+    # Do not pump the wx event loop here: no frame exists yet, so events
+    # dispatched during Django setup could reach half-initialised objects.
     import settings_app
 
     os.environ["DJANGO_SETTINGS_MODULE"] = "settings_app"
@@ -1453,7 +1498,16 @@ def _main_run():
     httpclient.set_http_error_func(http_error)
 
     def idle_fun():
-        wx.GetApp().web_ctrl.OnIdle(None)
+        app2 = wx.GetApp()
+        if app2 is None:
+            return
+        ctrl = getattr(app2, "web_ctrl", None)
+        if ctrl is None:
+            return
+        if wx.IsMainThread():
+            ctrl.OnIdle(None)
+        else:
+            wx.CallAfter(ctrl.OnIdle, None)
 
     httpclient.set_http_idle_func(idle_fun)
 
@@ -1493,16 +1547,21 @@ def _main_run():
 
         wx.CallAfter(s)
 
-    if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
-        asyncio.run(app.MainLoop())
+    if _ASYNC_LOOP is not None:
+        _ASYNC_LOOP.run_until_complete(app.MainLoop())
     else:
         app.MainLoop()
 
     if app.server:
         app.server.stop()
-    del app
-    for pos in destroy_fun_tab:
-        pos()
+    # Frame::_exit normally runs destroy_fun_tab before the frame is
+    # destroyed; run any handlers left over (e.g. server-only mode) while
+    # the application object is still alive.
+    for pos in list(destroy_fun_tab):
+        try:
+            pos()
+        except Exception:
+            logger.exception("Error in destroy function")
 
 
 def main():

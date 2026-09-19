@@ -81,13 +81,14 @@ class TestHttpErrorContentHandling:
 
     @patch("pytigon_gui.guilib.httperror.wx")
     @patch("pytigon_gui.guilib.httperror.HttpErrorDialog")
-    def test_cancel_exits(self, mock_dlg_class, mock_wx):
-        """When Cancel is clicked, sys.exit is called."""
+    def test_cancel_closes_top_window(self, mock_dlg_class, mock_wx):
+        """When Break is clicked, the top window is closed gracefully."""
         from pytigon_gui.guilib.httperror import _http_error
 
+        top = MagicMock()
         mock_app = MagicMock()
         mock_app.lock = False
-        mock_app.GetTopWindow.return_value = MagicMock()
+        mock_app.GetTopWindow.return_value = top
         mock_wx.GetApp.return_value = mock_app
         mock_wx.ID_CANCEL = 5101
         mock_wx.PlatformInfo = ""
@@ -96,9 +97,8 @@ class TestHttpErrorContentHandling:
         mock_dlg.ShowModal.return_value = 5101  # Cancel
         mock_dlg_class.return_value = mock_dlg
 
-        with patch("pytigon_gui.guilib.httperror.sys.exit") as mock_exit:
-            _http_error(None, "error")
-            mock_exit.assert_called_once()
+        _http_error(None, "error")
+        top.Close.assert_called_once()
 
     @patch("pytigon_gui.guilib.httperror.wx")
     def test_locked_app_skips(self, mock_wx):

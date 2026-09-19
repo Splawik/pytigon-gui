@@ -5,6 +5,8 @@ Objects register to receive named signals, and signal senders can broadcast
 to all registered listeners.
 """
 
+import wx
+
 
 class Signal:
     """Simple signal/slot mechanism for communication between windows.
@@ -67,9 +69,13 @@ class Signal:
         Returns:
             List of return values from handlers (excluding None values).
         """
+        if not wx.IsMainThread():
+            # Handlers may touch wx widgets; deliver them on the GUI thread.
+            wx.CallAfter(self.signal, signal_name, *argi, **argv)
+            return []
         ret = []
         if signal_name in self._signals:
-            for obj in self._signals[signal_name]:
+            for obj in list(self._signals[signal_name]):
                 if (x := getattr(obj, signal_name)(*argi, **argv)) is not None:
                     ret.append(x)
         return ret

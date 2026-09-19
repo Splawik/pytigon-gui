@@ -136,12 +136,15 @@ class SchNotebook(aui.AuiNotebook):
             self.last_active = None
 
         def _close():
+            if not self.panel:
+                return
             self.panel.Hide()
             top = wx.GetApp().GetTopWindow()
-            if top:
-                top._mgr.Update()
+            if not top or not getattr(top, "_mgr", None):
+                return
+            top._mgr.Update()
             for pane_name in ("desktop", "panel", "menu", "header", "footer"):
-                pane_info = top._mgr.GetPane(pane_name) if top else None
+                pane_info = top._mgr.GetPane(pane_name)
                 if pane_info and pane_info.IsOk() and pane_info.IsShown():
                     pane_info.window.SetFocus()
 

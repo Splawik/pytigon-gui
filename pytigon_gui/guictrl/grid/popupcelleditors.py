@@ -193,11 +193,12 @@ class PopupDataCellEditor(GridCellEditor):
         if ch is not None:
             self._tc.start_value = ""
             self._tc.SetValue(ch)
-            if self._tc.popup:
-                self._tc.popup.set_string_value(ch)
+            popup = self._tc.popup
+            if popup and hasattr(popup, "set_string_value"):
+                popup.set_string_value(ch)
             self._tc.rec_value = (ch,)
-            if self._tc.popup:
-                self._tc.popup.Dismiss()
+            if popup:
+                popup.Dismiss()
             self._tc.SetInsertionPointEnd()
         else:
             evt.Skip()

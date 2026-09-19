@@ -27,8 +27,11 @@ class TestWxArtMap:
         """_resolve_art_id returns correct constant for known IDs."""
         from pytigon_gui.guilib.image import _resolve_art_id, _WX_ART_MAP
 
+        expected = _WX_ART_MAP["wx.ART_COPY"]
+        if isinstance(expected, bytes):
+            expected = expected.decode("utf-8")
         result = _resolve_art_id("wx.ART_COPY")
-        assert result is _WX_ART_MAP["wx.ART_COPY"]
+        assert result == expected
 
     def test_resolve_art_id_unknown(self):
         """_resolve_art_id returns None for unknown IDs."""

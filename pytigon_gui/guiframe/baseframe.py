@@ -139,15 +139,32 @@ class SchBaseFrame(wx.Frame):
                     if destroy is not None:
                         self.destroy_fun_tab.append(destroy)
 
+    def _run_destroy_fun(self):
+        """Run registered plugin destroy callbacks exactly once.
+
+        The frame and the event loop are still alive at this point, so
+        callbacks may safely stop timers and destroy child windows.
+        """
+        tab = getattr(self, "destroy_fun_tab", None)
+        if not tab:
+            return
+        for fun in list(tab):
+            try:
+                fun()
+            except Exception:
+                logger.exception("Error in plugin destroy function")
+        del tab[:]
+
     def on_close(self, event):
         """Handle the window close event.
 
-        Calls all registered close handlers in order, then allows
-        the event to propagate.
+        Calls all registered close handlers in order, runs plugin
+        teardown, then allows the event to propagate.
         """
         for fun in self.run_on_close:
             try:
                 fun(self)
             except Exception:
                 traceback.print_exc()
+        self._run_destroy_fun()
         event.Skip()

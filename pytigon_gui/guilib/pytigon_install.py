@@ -17,6 +17,7 @@ import logging
 from pathlib import Path
 
 from pytigon_lib.schtools.install import Ptig
+from pytigon_gui.guilib.threads import call_after_if_alive
 from pytigon_gui.guilib.tools import create_desktop_shortcut
 
 _ = wx.GetTranslation
@@ -110,7 +111,7 @@ class InstallWizard(Wizard):
             True if the wizard finished successfully, False otherwise.
         """
         ret = self.RunWizard(self.page1)
-        wx.CallAfter(self.Destroy)
+        call_after_if_alive(self, self.Destroy)
         return ret
 
     def on_wiz_page_changing(self, event):

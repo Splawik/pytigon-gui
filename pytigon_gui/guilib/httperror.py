@@ -5,7 +5,6 @@ with options to continue or break the application.
 """
 
 import wx
-import sys
 import logging
 
 import pytigon_gui.guictrl.ctrl
@@ -89,10 +88,10 @@ def _http_error(parent, content):
 
     Args:
         parent: Parent window.
-        content: HTML page returned by HTTP server (str or bytes).
+        content: HTML page returned by HTTP (str or bytes).
     """
     app = wx.GetApp()
-    if app.lock:
+    if app is None or app.lock:
         return
 
     app.lock = True
@@ -107,9 +106,11 @@ def _http_error(parent, content):
         else:
             c = content.decode("utf-8")
 
-        dlg = HttpErrorDialog(
-            app.GetTopWindow(), _("Error message"), c, size=(800, 600)
-        )
+        top_window = app.GetTopWindow()
+        if top_window is None:
+            return
+
+        dlg = HttpErrorDialog(top_window, _("Error message"), c, size=(800, 600))
         dlg.CenterOnScreen()
         val = dlg.ShowModal()
     except (AttributeError, TypeError, OSError) as e:
@@ -118,7 +119,13 @@ def _http_error(parent, content):
         app.lock = False
 
     if val == wx.ID_CANCEL:
-        sys.exit()
+        # Close the top window instead of raising SystemExit inside a
+        # deferred wx callback, which the event loop may swallow.
+        top_window = app.GetTopWindow()
+        if top_window:
+            top_window.Close()
+        else:
+            app.ExitMainLoop()
 
 
 def http_error(parent, content):

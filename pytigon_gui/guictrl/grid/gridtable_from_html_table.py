@@ -8,10 +8,10 @@ column sizing, cell-level attributes, and copy/paste.
 
 import urllib
 import wx
-import time
 import logging
 
 from .gridtable_base import SchGridTableBase
+from pytigon_lib.schhttptools import httpclient
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
 from pytigon_gui.guilib.tools import colour_to_html
 
@@ -91,17 +91,15 @@ class PageData:
             return ret
         else:
             wx.BeginBusyCursor()
-
-            def y(self):
-                time.sleep(0.1)
-
-            old_y = wx.GetApp().Yield
-            wx.GetApp().Yield = y
+            # Loading a page triggers a synchronous HTTP request. Mark the
+            # paint as in progress so the HTTP client blocks instead of
+            # pumping the GTK event loop from inside cell rendering.
+            httpclient.IN_PAINT += 1
             try:
                 data = self.get_page(page)
                 self.pages[page] = data
             finally:
-                wx.GetApp().Yield = old_y
+                httpclient.IN_PAINT -= 1
                 wx.EndBusyCursor()
             return self.__getitem__(id)
 
@@ -116,6 +114,11 @@ class PageData:
 
     def __len__(self):
         return self.count
+
+    def append(self, row):
+        """Append a locally inserted row (not yet persisted)."""
+        self.inserted.append(row)
+        self.count += 1
 
     def set_rec(self, id, row):
         if (

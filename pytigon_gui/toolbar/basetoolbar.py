@@ -27,6 +27,7 @@ Concrete toolbars and menus based on these abstract classes:
 import wx
 
 from pytigon_gui.guilib.events import *
+from pytigon_gui.guilib.threads import call_after_if_alive
 from pytigon_gui.toolbar.standardtoolbarbuttons import StandardButtons
 from pytigon_gui.guiframe.page import SchPage
 
@@ -555,7 +556,7 @@ class ToolbarBar:
                 page2.activate_page()
                 page2.Update()
 
-            wx.CallAfter(init_page, callback)
+            call_after_if_alive(page2, init_page, callback)
 
             return page2
 

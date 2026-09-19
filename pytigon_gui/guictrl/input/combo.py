@@ -137,7 +137,6 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
                                 str(dirname / ff),
                                 exc_info=True,
                             )
-            wx.Yield()
 
     def GetValue(self):
         """Get the current combo box value.

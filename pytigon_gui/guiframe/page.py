@@ -22,6 +22,7 @@ except ImportError:
 
 from pytigon_gui.guilib import events
 from pytigon_gui.guilib.signal import Signal
+from pytigon_gui.guilib.threads import block_http_pumping, call_after_if_alive
 from pytigon_lib.schtools import createparm
 from pytigon_lib.schparser.html_parsers import ShtmlParser
 from pytigon_lib.schhttptools.httpclient import HttpResponse
@@ -192,7 +193,7 @@ class SchPage(wx.Window, Signal):
 
     def child_closed_with_ok(self, win=None):
         """Refresh HTML when a child window closes with OK."""
-        wx.CallAfter(self.refresh_html)
+        call_after_if_alive(self, self.refresh_html)
 
     def reg_application_signal_handler(self, fun, signal):
         """Register a callback for a PyDispatcher signal.
@@ -204,8 +205,18 @@ class SchPage(wx.Window, Signal):
         for existing in self._signal_handlers:
             if existing[1] == signal:
                 break
-        dispatcher.connect(fun, signal, sender=dispatcher.Any)
-        self._signal_handlers.append((fun, signal))
+
+        # PyDispatcher invokes receivers synchronously on the sender's
+        # thread. Marshal to the GUI thread so a background sender cannot
+        # touch wx widgets directly.
+        def main_thread_fun(*args, **kwargs):
+            if wx.IsMainThread():
+                return fun(*args, **kwargs)
+            wx.CallAfter(fun, *args, **kwargs)
+            return None
+
+        dispatcher.connect(main_thread_fun, signal, sender=dispatcher.Any)
+        self._signal_handlers.append((main_thread_fun, signal))
 
     def unreg_application_signal_handler(self, signal):
         """Unregister a previously registered signal handler.
@@ -238,7 +249,11 @@ class SchPage(wx.Window, Signal):
         Returns:
             Parsed ShtmlParser instance.
         """
-        mp, adr = wx.GetApp().read_html(self, address_or_parser, parameters)
+        # Reading HTML is a synchronous request that otherwise pumps the
+        # event loop; block pumping so the page cannot be re-entered or
+        # destroyed while it is being built.
+        with block_http_pumping():
+            mp, adr = wx.GetApp().read_html(self, address_or_parser, parameters)
         return mp
 
     def append_ctrl(self, obj):

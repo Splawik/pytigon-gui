@@ -15,6 +15,7 @@ from pytigon_lib.schhtml.htmlviewer import tdata_from_html
 
 from urllib.parse import unquote
 from pytigon_lib.schparser.html_parsers import TreeParser
+from pytigon_gui.guilib.threads import block_http_pumping
 
 logger = logging.getLogger(__name__)
 
@@ -266,7 +267,10 @@ class SchBaseCtrl:
             Raw response data (bytes).
         """
         http = wx.GetApp().get_http(self.parent)
-        response = http.get(self, str(path))
+        # May be reached from widget constructors and value getters; do not
+        # pump the event loop while the caller is mid-construction.
+        with block_http_pumping():
+            response = http.get(self, str(path))
         return response.ptr()
 
     def load_string_from_server(self, path):
@@ -279,7 +283,8 @@ class SchBaseCtrl:
             Response body as a string.
         """
         http = wx.GetApp().get_http(self.parent)
-        response = http.get(self, str(path))
+        with block_http_pumping():
+            response = http.get(self, str(path))
         return response.str()
 
     def refresh_tdata(self, html_src=None):

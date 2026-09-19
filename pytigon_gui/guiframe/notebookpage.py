@@ -8,6 +8,7 @@ split/stack algorithm and supports mouse-driven divider resizing.
 import wx
 
 from pytigon_gui.guiframe import page
+from pytigon_gui.guilib.threads import call_after_if_alive
 
 
 class SchNotebookPage(wx.Window):
@@ -74,14 +75,24 @@ class SchNotebookPage(wx.Window):
         dc.Clear()
         margin = self.get_margins()
 
-        has_desktop = hasattr(top, "desktop")
-        tabs_count = len(top.desktop._mgr.GetAllPanes()) if has_desktop else 0
+        # SchBrowserFrame has desktop = None, so cannot use hasattr() here.
+        desktop = getattr(top, "desktop", None)
+        tabs_count = (
+            len(desktop._mgr.GetAllPanes())
+            if desktop is not None and getattr(desktop, "_mgr", None)
+            else 0
+        )
         page_count = self.get_page_count()
 
+        count_shown = (
+            top.count_shown_panels(count_toolbars=False)
+            if hasattr(top, "count_shown_panels")
+            else 0
+        )
         show_border = (
             (page_count > 0 and tabs_count > 2)
             or page_count > 1
-            or (top.count_shown_panels(count_toolbars=False) > 1 and page_count > 0)
+            or (count_shown > 1 and page_count > 0)
         )
 
         if not show_border:
@@ -439,7 +450,7 @@ class SchNotebookPage(wx.Window):
         size = event.GetSize()
         self.bestx = -1
         if size:
-            wx.CallAfter(self._layout, size)
+            call_after_if_alive(self, self._layout, size)
         event.Skip()
 
     # ------------------------------------------------------------------
@@ -563,15 +574,16 @@ class SchNotebookPage(wx.Window):
         self.add_page(h)
 
         def init_page():
-            nonlocal h, callback
+            if not h:
+                return
             h.init_frame(callback)
             h.activate_page()
             top = wx.GetApp().GetTopWindow()
-            if top:
+            if top and getattr(top, "_mgr", None):
                 top._mgr.GetPane("desktop").Show()
             h.Update()
 
-        wx.CallAfter(init_page)
+        call_after_if_alive(h, init_page)
         return h
 
     def new_main_page(self, address_or_parser, title="", parameters=None, view_in=None):

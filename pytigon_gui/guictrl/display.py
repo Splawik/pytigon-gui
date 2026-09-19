@@ -28,6 +28,7 @@ from pytigon_gui.guictrl.popup.popuphtml import DataPopupControl
 from pytigon_gui.guilib.image import bitmap_from_href
 from pytigon_lib.schhtml.wxdc import DcDc
 from pytigon_lib.schhtml.htmlviewer import HtmlViewerParser
+from pytigon_lib.schhttptools import httpclient
 from pytigon_lib.schparser.html_parsers import ShtmlParser
 
 from django.utils.translation import gettext_lazy as _
@@ -551,10 +552,16 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         p = HtmlViewerParser(dc=wxdc2, calc_only=calc_only, init_css_str=INIT_CSS_STR)
         p.set_http_object(wx.GetApp().http)
         p.set_parent_window(self)
+        # Feeding HTML may fetch resources over HTTP; this runs inside
+        # OnDrawItem/OnMeasureItem, so prevent the HTTP client from pumping
+        # the event loop (which would re-enter drawing).
+        httpclient.IN_PAINT += 1
         try:
             p.feed(value)
         except Exception:
             logger.error("ERROR: %s", value)
+        finally:
+            httpclient.IN_PAINT -= 1
 
         w2, h2 = p.get_max_sizes()
         if not self.h:

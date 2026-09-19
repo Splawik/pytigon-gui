@@ -180,6 +180,7 @@ class SchAppFrame(SchBaseFrame):
 
         self.destroy_fun_tab = []
         self.after_init = False
+        self._exiting = False
 
         self.sys_command = dict({"EXIT": self.on_exit, "ABOUT": self.on_about})
 
@@ -806,19 +807,31 @@ class SchAppFrame(SchBaseFrame):
             if address.startswith(("http://", "https://", "file://")):
 
                 def _ret_fun():
+                    if not ret:
+                        return
+                    body = getattr(ret, "body", None)
+                    web = getattr(body, "WEB", None) if body else None
+                    if web is None:
+                        return
                     if isinstance(address_or_parser, str):
-                        ret.body.WEB.go(address)
+                        web.go(address)
                     else:
-                        ret.body.WEB.load_str(address_or_parser.ptr())
+                        web.load_str(address_or_parser.ptr())
 
                 wx.CallAfter(_ret_fun)
             else:
 
                 def _ret_fun():
+                    if not ret:
+                        return
+                    body = getattr(ret, "body", None)
+                    web = getattr(body, "WEB", None) if body else None
+                    if web is None:
+                        return
                     if isinstance(address_or_parser, str):
-                        ret.body.WEB.go(wx.GetApp().base_path + address)
+                        web.go(wx.GetApp().base_path + address)
                     else:
-                        ret.body.WEB.load_str(address_or_parser.ptr())
+                        web.load_str(address_or_parser.ptr())
 
                 wx.CallAfter(_ret_fun)
             return ret
@@ -1029,14 +1042,27 @@ class SchAppFrame(SchBaseFrame):
         return statusbar
 
     def _exit(self, event=None):
+        # Guard against re-entry: _exit is reachable from EVT_CLOSE, the
+        # wx.ID_EXIT command and the tray menu. Running the teardown twice
+        # operates on already freed C++ objects.
+        if self._exiting:
+            return
+        self._exiting = True
+
         finish_video()
-        self.t1.Stop()
+        if getattr(self, "t1", None):
+            self.t1.Stop()
         wx.GetApp().on_exit()
-        self._mgr.UnInit()
+        # Run plugin teardown while the event loop is still alive. If
+        # on_close already did this, the list is empty and this is a no-op.
+        self._run_destroy_fun()
+        if self._mgr:
+            self._mgr.UnInit()
         if self.tbIcon:
             self.tbIcon.RemoveIcon()
             self.tbIcon = None
-        self.Destroy()
+        if not self.IsBeingDeleted():
+            self.Destroy()
 
     def on_open(self, event):
         if wx.GetApp().base_app:
@@ -1052,8 +1078,11 @@ class SchAppFrame(SchBaseFrame):
 
     def on_close(self, event):
         super().on_close(event)
+        # baseframe.on_close() calls event.Skip(); clear it so the default
+        # EVT_CLOSE handler does not destroy the frame a second time after
+        # _exit() already did.
+        event.Skip(False)
         self._exit()
-        event.Skip()
 
     def on_show_elem(self, event):
         name = ["header", "panel", "footer", "tb1", "tb2"][event.GetId() - ID_SHOWHEADER]
@@ -1130,7 +1159,12 @@ class SchAppFrame(SchBaseFrame):
                 old_bar = old_toolbar.get_bar()
                 old_bar.Enable(False)
                 old_bar.Show(False)
-                wx.CallAfter(old_bar.Destroy)
+
+                def _destroy_old_bar():
+                    if old_bar:
+                        old_bar.Destroy()
+
+                wx.CallAfter(_destroy_old_bar)
                 return
             elif id == ID_WEB_NEW_WINDOW:
                 win = (
@@ -1217,7 +1251,13 @@ class SchAppFrame(SchBaseFrame):
         form_frame = self.new_main_page("file://" + temp_filename, temp_filename, view_in="browser")
 
         def _after_init():
-            form_frame.body.WEB.execute_javascript(f"document.title = '{title}';")
+            if not form_frame:
+                return
+            body = getattr(form_frame, "body", None)
+            web = getattr(body, "WEB", None) if body else None
+            if web is None:
+                return
+            web.execute_javascript(f"document.title = '{title}';")
 
         wx.CallAfter(_after_init)
 
