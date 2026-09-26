@@ -269,8 +269,26 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
 
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down_base)
 
-        self.GetParent().get_parent_page().register_signal(self, "return_new_row")
-        self.GetParent().get_parent_page().register_signal(self, "return_updated_row")
+        self._signal_page = self.GetParent().get_parent_page()
+        self._signal_page.register_signal(self, "return_new_row")
+        self._signal_page.register_signal(self, "return_updated_row")
+        self.Bind(wx.EVT_WINDOW_DESTROY, self._on_signal_destroy)
+
+    def _on_signal_destroy(self, event):
+        """Unregister signals when the control is destroyed.
+
+        Without this the page signal registry keeps a strong reference to
+        the destroyed control (and its parsed content) forever.
+        """
+        page = getattr(self, "_signal_page", None)
+        if page is not None:
+            for signal_name in ("return_new_row", "return_updated_row"):
+                try:
+                    page.unregister_signal(self, signal_name)
+                except Exception:
+                    pass
+            self._signal_page = None
+        event.Skip()
 
     def return_updated_row(self, **argv):
         """Handle return_updated_row signal by updating the value."""

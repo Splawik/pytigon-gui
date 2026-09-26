@@ -1530,13 +1530,22 @@ def _main_run():
             create_websocket_client(app, websocket_id, local)
 
     if "import" in _PARAM:
-        x = __import__(_PARAM["import"])
+        module = __import__(_PARAM["import"])
+        x = module
+        if not callable(x):
+            for attr in ("dump", "main", "run"):
+                candidate = getattr(module, attr, None)
+                if callable(candidate):
+                    x = candidate
+                    break
 
-        def s():
-            nonlocal frame, x
-            x(frame)
+        if callable(x):
 
-        wx.CallAfter(s)
+            def s():
+                nonlocal frame, x
+                x(frame)
+
+            wx.CallAfter(s)
 
     if hasattr(wx, "pseudoimport"):
         x = getattr(wx, "pseudoimport")
