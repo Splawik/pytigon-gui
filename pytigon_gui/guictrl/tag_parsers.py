@@ -183,6 +183,48 @@ class OptionTag(BaseHtmlElemParser):
             self.parent.tdata.append([Td(data, self.attrs)])
 
 
+class OptGroupTag(BaseHtmlElemParser):
+    """Parser for <optgroup> tags inside a select/composite control.
+
+    Collects the nested <option> children into a local ``tdata`` list and,
+    on close, forwards them to the parent with the group label prefixed to
+    the display text.  The original label is preserved in the option attrs
+    under the ``optgroup`` key.
+    """
+
+    def __init__(self, parent, parser, tag, attrs):
+        BaseHtmlElemParser.__init__(self, parent, parser, tag, attrs)
+        self.child_tags = ["option"]
+        self.tdata = []
+        self.label = attrs.get("label", "") or ""
+
+    def handle_starttag(self, parser, tag, attrs):
+        """Handle nested <option> tags.
+
+        Args:
+            parser: The HTML parser.
+            tag: Tag name.
+            attrs: Tag attributes dict.
+
+        Returns:
+            An OptionTag parser for <option>, or None.
+        """
+        if tag == "option":
+            return OptionTag(self, parser, tag, attrs)
+        return None
+
+    def close(self):
+        """Prefix the group label and forward options to the parent."""
+        for row in self.tdata:
+            td = row[0]
+            if self.label:
+                if not isinstance(td.attrs, dict):
+                    td.attrs = {}
+                td.attrs["optgroup"] = self.label
+                td.data = self.label + ": " + (td.data or "")
+            self.parent.tdata.append(row)
+
+
 class CompositeChildTag(BaseHtmlElemParser):
     """Parser for nested tags within ctrl-composite.
 

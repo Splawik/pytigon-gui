@@ -96,6 +96,28 @@ def to_bool(value, default=None):
     return default
 
 
+def _html_bool(param, key):
+    """Interpret an HTML boolean attribute (presence means True).
+
+    Unlike :func:`to_bool`, an empty value (``disabled`` or ``disabled=""``)
+    means the attribute is set.  An explicit false-ish value
+    ('false', '0', 'no', 'off') still disables it.
+
+    Args:
+        param: Attribute dictionary.
+        key: Attribute name.
+
+    Returns:
+        bool
+    """
+    if key not in param:
+        return False
+    value = param.get(key)
+    if value is None or value == "":
+        return True
+    return to_bool(value, True)
+
+
 # ---------------------------------------------------------------------------
 # SchBaseCtrl
 # ---------------------------------------------------------------------------
@@ -180,6 +202,33 @@ class SchBaseCtrl:
 
         self.param = _extract_kwarg(kwds, "param", None)
         self.style = _extract_kwarg(kwds, "style", None)
+        if self.style is None and isinstance(self.param, dict):
+            # CSS 'style' is kept in param (CtrlTag strips it from kwargs
+            # because wx style is an integer bitmask).
+            self.style = self.param.get("style")
+
+        # Standard HTML form / global attributes.  They are carried in the
+        # 'param' dict (built from the raw tag attrs by CtrlTag) so that they
+        # never leak into the wxPython constructors as unexpected kwargs.
+        param = self.param if isinstance(self.param, dict) else {}
+        self.placeholder = param.get("placeholder")
+        self.required = _html_bool(param, "required")
+        self.disabled = _html_bool(param, "disabled")
+        self.autofocus = _html_bool(param, "autofocus")
+        self.multiple = _html_bool(param, "multiple")
+        self.pattern = param.get("pattern")
+        self.min = param.get("min")
+        self.max = param.get("max")
+        self.step = param.get("step")
+        self.list_id = param.get("list")
+        self.title_attr = param.get("title")
+        self.tabindex = to_int(param.get("tabindex"), None)
+        # data-* attributes are exposed as metadata (without the prefix).
+        self.data_attrs = {
+            key[5:]: value
+            for key, value in param.items()
+            if isinstance(key, str) and key.startswith("data-")
+        }
 
         # Invoke any registered ctrl_process hooks for this tag type
         ctrl_process = wx.GetApp().ctrl_process
@@ -205,7 +254,46 @@ class SchBaseCtrl:
         if hasattr(self, "__ext_init__"):
             self.__ext_init__()
 
+        self._apply_common_attrs()
+
         self.get_parent_form().signal_from_child(self, "after_create")
+
+    def _apply_common_attrs(self):
+        """Apply common HTML attributes to the created widget.
+
+        Handles ``placeholder``, ``title``, ``disabled`` and ``autofocus``
+        in a widget-agnostic way.  ``min``/``max``/``step``/``multiple``/
+        ``required``/``list`` are exposed as instance attributes for the
+        concrete widgets and for later validation.
+        """
+        placeholder = getattr(self, "placeholder", None)
+        if placeholder:
+            if hasattr(self, "SetHint"):
+                self.SetHint(placeholder)
+            elif hasattr(self, "SetDescriptiveText"):
+                self.SetDescriptiveText(placeholder)
+
+        title = getattr(self, "title_attr", None)
+        if title and hasattr(self, "SetToolTip"):
+            self.SetToolTip(str(title))
+
+        if getattr(self, "disabled", False):
+            self.Disable()
+
+        if getattr(self, "autofocus", False):
+
+            def _focus():
+                try:
+                    if (
+                        self
+                        and not getattr(self, "IsBeingDeleted", lambda: False)()
+                        and self.CanAcceptFocus()
+                    ):
+                        self.SetFocus()
+                except Exception:
+                    logger.debug("autofocus failed", exc_info=True)
+
+            wx.CallAfter(_focus)
 
     def CanAcceptFocus(self):
         """Return True if the control can accept keyboard focus."""

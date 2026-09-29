@@ -137,7 +137,6 @@ class HYPERLINK(wx.adv.HyperlinkCtrl, SchBaseCtrl):
         event.Skip()
 
 
-
 class ERRORLIST(BitmapTextButton, SchBaseCtrl):
     """Error indicator button with tooltip.
 
@@ -340,6 +339,11 @@ class COLOURSELECT(colourselect.ColourSelect, SchBaseCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
         if "name" in kwds:
             del kwds["name"]
+        # ColourSelect builds its bitmap during construction, so it needs a
+        # concrete (positive) size; the default (-1, -1) triggers an
+        # assertion inside wx.Bitmap.
+        if not kwds.get("size"):
+            kwds["size"] = (80, 25)
         colourselect.ColourSelect.__init__(self, parent, id=-1, **kwds)
 
 
@@ -386,9 +390,7 @@ class FILEBROWSEBUTTON(filebrowsebutton.FileBrowseButton, SchBaseCtrl):
         kwds["buttonText"] = str(_("Browse"))
         kwds["size"] = (400, -1)
         if self.param and "dialogtype" in self.param:
-            kwds["dialogType"] = getattr(
-                wx, self.param["dialogtype"].upper(), wx.OPEN
-            )
+            kwds["dialogType"] = getattr(wx, self.param["dialogtype"].upper(), wx.OPEN)
         if self.param and "wildcard" in self.param:
             kwds["wildcard"] = self.param["wildcard"]
         elif self.param and "fileMask" in self.param:

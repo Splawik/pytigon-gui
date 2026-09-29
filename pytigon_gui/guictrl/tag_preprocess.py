@@ -18,9 +18,14 @@ Functions:
     error_span_to_error, error_p_to_error, ul_convert, component_convert
 """
 
+import logging
+
 import wx
 from pytigon_lib.schhtml.basehtmltags import register_tag_preprocess_map
+from pytigon_lib.schhtml.htmltools import Td
 from pytigon_lib.schtools.tools import is_null
+
+logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
@@ -43,10 +48,159 @@ HIDDEN_DIVS = [
     "td_action",
 ]
 
+# ---------------------------------------------------------------------------
+# Standard HTML5 input types mapped onto existing ctrl widgets.
+# Values are the ctrl widget name (without the 'ctrl-' prefix).
+# ---------------------------------------------------------------------------
+HTML5_INPUT_TYPE_MAP = {
+    "number": "num",
+    "range": "slider",
+    "color": "colourselect",
+    "search": "search",
+    "date": "datepicker",
+    "time": "time",
+    "datetime-local": "datetimepicker",
+}
+
+# Input types whose value must be passed through as a raw string
+# (as opposed to ast.literal_eval for numeric widgets).
+_STRING_VALUE_INPUT_TYPES = (
+    "color",
+    "search",
+    "date",
+    "time",
+    "datetime-local",
+    "month",
+    "week",
+)
+
+# ---------------------------------------------------------------------------
+# Semantic HTML5 elements mapped onto the structural tags already supported
+# by the schhtml renderer.  header/footer are intentionally absent: they are
+# reserved for printed page headers/footers by the renderer.
+# ---------------------------------------------------------------------------
+SEMANTIC_TAG_MAP = {
+    # "section": "div",
+    "article": "div",
+    "nav": "div",
+    # "main": "div",
+    # "aside": "div",
+    "address": "div",
+    "figure": "div",
+    "figcaption": "span",
+    "dl": "div",
+    "dt": "b",
+    "dd": "div",
+    "details": "div",
+    "summary": "b",
+    "mark": "span",
+    "cite": "span",
+    "q": "span",
+    "abbr": "span",
+    "time": "span",
+    "u": "span",
+    "bdi": "span",
+    "bdo": "span",
+    "samp": "code",
+    "kbd": "code",
+    "var": "code",
+    "del": "span",
+    "ins": "span",
+}
+
 
 # ---------------------------------------------------------------------------
 # Tag preprocess functions
 # ---------------------------------------------------------------------------
+
+
+def _submit_attrs(parent, attrs):
+    """Build ctrl-button attributes for a submit control.
+
+    Walks up the parser tree to locate the enclosing ``<form>`` parser and
+    copy its action (href), fields and upload flag.
+
+    Args:
+        parent: Parent parser.
+        attrs: Submit tag attributes.
+
+    Returns:
+        Dict of attributes for the resulting ctrl-button.
+    """
+    target = attrs.get("target", "_parent_refr")
+    ret = {
+        "defaultvalue": "1",
+        "param": attrs.get("formmethod", "post"),
+        "target": target,
+        "id": "wx.ID_OK",
+    }
+    href = "."
+    fields = None
+    p = parent
+    while p:
+        if hasattr(p, "gethref"):
+            # A <form> without an 'action' attribute raises KeyError here.
+            try:
+                href = p.gethref()
+            except Exception:
+                href = "."
+            try:
+                fields = p.get_fields()
+            except Exception:
+                fields = None
+            try:
+                if p.get_upload():
+                    ret["valuetype"] = "upload"
+            except Exception:
+                pass
+            break
+        p = p.parent
+    if href is None:
+        href = ""
+    if attrs.get("formaction"):
+        href = attrs["formaction"]
+    ret["href"] = href
+    if fields:
+        ret["fields"] = fields
+    return ret
+
+
+def _datalist_choices(parent, list_id):
+    """Collect the ``<option>`` suggestions of a ``<datalist>`` element.
+
+    The schhtml parser already holds the full document tree before crawling
+    it, so the datalist may appear before or after the referencing input.
+
+    Args:
+        parent: Parent parser (must expose ``parser._tree``).
+        list_id: Value of the input's ``list`` attribute.
+
+    Returns:
+        A list of :class:`Td` rows, or None when the datalist is missing.
+    """
+    if not list_id:
+        return None
+    parser = getattr(parent, "parser", None)
+    tree = getattr(parser, "_tree", None)
+    if tree is None:
+        return None
+    try:
+        for datalist in tree.iterfind(".//datalist"):
+            if datalist.attrib.get("id") != list_id:
+                continue
+            choices = []
+            for option in datalist.iterfind(".//option"):
+                raw_value = option.attrib.get("value")
+                text = (option.text or "").strip()
+                value = raw_value if raw_value is not None else text
+                display = text if text else value
+                if not value:
+                    continue
+                choices.append([Td(display, {"value": value})])
+            return choices or None
+    except Exception:
+        logger.debug("datalist resolution failed for %r", list_id, exc_info=True)
+    return None
 
 
 def table_to_ctrltab(parent, attrs):
@@ -140,29 +294,31 @@ def input_to_ctrltab(parent, attrs):
         upload = True
     elif input_type == "submit":
         ret = "button"
-        target = attrs.get("target", "_parent_refr")
+        attrs_ret = _submit_attrs(parent, attrs)
+    # ---- standard HTML5 input types -> existing ctrl widgets ----
+    elif input_type in HTML5_INPUT_TYPE_MAP:
+        ret = HTML5_INPUT_TYPE_MAP[input_type]
+    elif input_type in ("tel", "url"):
+        # wx.lib.masked has no generic PHONE/URL autoformat, so keep these
+        # as plain text controls (placeholder/pattern are still forwarded).
+        ret = "text"
+    elif input_type == "reset":
+        ret = "button"
         attrs_ret = {
-            "defaultvalue": "1",
-            "param": "post",
-            "target": target,
-            "id": "wx.ID_OK",
+            "label": is_null(attrs.get("value"), "Reset"),
+            "href": "",
+            "target": "_parent",
         }
-        href = "."
-        fields = None
-        p = parent
-        while p:
-            if hasattr(p, "gethref"):
-                href = p.gethref()
-                fields = p.get_fields()
-                if p.get_upload():
-                    attrs_ret["valuetype"] = "upload"
-                break
-            p = p.parent
-        if href is None:
-            href = ""
-        attrs_ret["href"] = href
-        if fields:
-            attrs_ret["fields"] = fields
+    elif input_type == "image":
+        ret = "button"
+        attrs_ret = {"label": is_null(attrs.get("alt", attrs.get("value")), "")}
+    # A `list` attribute turns a text-like input into an editable combo box
+    # fed from the referenced <datalist>.
+    if "list" in attrs and ret in ("text", "search", "masktext", "num"):
+        choices = _datalist_choices(parent, attrs["list"])
+        if choices:
+            ret = "combobox"
+            attrs_ret["_choices"] = choices
 
     # Width from size attribute
     if "size" in attrs and input_type in ("text", "email"):
@@ -182,9 +338,19 @@ def input_to_ctrltab(parent, attrs):
         attrs_ret["maxlength"] = str(int(is_null(attrs["size"], "80")))
 
     # Value propagation for text-like inputs
-    if "value" in attrs and input_type in ("text", "hidden", "checkbox"):
+    if "value" in attrs and input_type in ("text", "hidden", "checkbox", "tel", "url"):
         attrs_ret["value"] = is_null(attrs["value"], "")
         attrs_ret["valuetype"] = "str"
+
+    # Value propagation for HTML5 input types
+    if "value" in attrs and input_type in HTML5_INPUT_TYPE_MAP:
+        attrs_ret["value"] = attrs["value"]
+        if input_type in _STRING_VALUE_INPUT_TYPES:
+            attrs_ret["valuetype"] = "str"
+
+    # HTML5 `step` maps onto the spin/slider increment parameter
+    if "step" in attrs and input_type == "number":
+        attrs_ret["inc"] = attrs["step"]
 
     # Label from value for buttons
     if "value" in attrs and input_type in ("button", "submit"):
@@ -219,7 +385,9 @@ def input_to_ctrltab(parent, attrs):
 def textarea_to_ctrltab(parent, attrs):
     """Convert <textarea> to ctrl-textarea.
 
-    Forwards cols, rows, src, and name attributes.
+    All attributes except ``value`` are forwarded (the widget content comes
+    from the element's child text).  This preserves standard form/global
+    attributes such as placeholder, required, disabled or maxlength.
 
     Args:
         parent: Parent parser.
@@ -228,10 +396,7 @@ def textarea_to_ctrltab(parent, attrs):
     Returns:
         Tuple of ('ctrl-textarea', new_attrs).
     """
-    attrs_ret = {}
-    for key in ("cols", "rows", "src", "name"):
-        if key in attrs:
-            attrs_ret[key] = attrs[key]
+    attrs_ret = {key: value for key, value in attrs.items() if key != "value"}
     return ("ctrl-textarea", attrs_ret)
 
 
@@ -418,6 +583,143 @@ def component_convert(parent, attrs):
     return ("_component", attrs)
 
 
+def button_to_ctrltab(parent, attrs):
+    """Convert the standard <button> element to ctrl-button.
+
+    The HTML ``type`` attribute defaults to ``submit`` (as per the HTML
+    standard).  ``submit`` reuses the same form-navigation attributes as
+    ``<input type="submit">``, ``reset`` cancels the child form and
+    ``button`` is a plain action button.  The visible label is taken from
+    the element's text content (handled by CtrlTag) or the ``value``
+    attribute.
+
+    Args:
+        parent: Parent parser.
+        attrs: Button tag attributes.
+
+    Returns:
+        Tuple of ('ctrl-button', new_attrs).
+    """
+    button_type = attrs.get("type", "submit")
+    if button_type == "submit":
+        attrs_ret = _submit_attrs(parent, attrs)
+    elif button_type == "reset":
+        attrs_ret = {
+            "label": is_null(attrs.get("value"), "Reset"),
+            "href": "",
+            "target": "_parent",
+        }
+    else:
+        attrs_ret = {"label": is_null(attrs.get("value"), "")}
+
+    for attr in attrs:
+        if attr not in attrs_ret and attr != "value":
+            attrs_ret[attr] = attrs[attr]
+
+    return ("ctrl-button", attrs_ret)
+
+
+def fieldset_to_ctrlstaticbox(parent, attrs):
+    """Convert <fieldset> to ctrl-staticbox (visual grouping).
+
+    Args:
+        parent: Parent parser.
+        attrs: Fieldset attributes.
+
+    Returns:
+        Tuple of ('ctrl-staticbox', attrs).
+    """
+    return ("ctrl-staticbox", attrs)
+
+
+def legend_to_ctrlstatictext(parent, attrs):
+    """Convert <legend> to ctrl-statictext (group caption).
+
+    Args:
+        parent: Parent parser.
+        attrs: Legend attributes.
+
+    Returns:
+        Tuple of ('ctrl-statictext', attrs).
+    """
+    return ("ctrl-statictext", attrs)
+
+
+def output_to_ctrlstatictext(parent, attrs):
+    """Convert <output> to ctrl-statictext.
+
+    Args:
+        parent: Parent parser.
+        attrs: Output attributes.
+
+    Returns:
+        Tuple of ('ctrl-statictext', attrs).
+    """
+    return ("ctrl-statictext", attrs)
+
+
+def progress_to_ctrlgauge(parent, attrs):
+    """Convert <progress> to ctrl-gauge.
+
+    The GAUGE widget reads its range from ``max`` and its value from
+    ``value``.
+
+    Args:
+        parent: Parent parser.
+        attrs: Progress attributes.
+
+    Returns:
+        Tuple of ('ctrl-gauge', attrs).
+    """
+    return ("ctrl-gauge", attrs)
+
+
+def meter_to_ctrlgauge(parent, attrs):
+    """Convert <meter> to ctrl-gauge.
+
+    Args:
+        parent: Parent parser.
+        attrs: Meter attributes.
+
+    Returns:
+        Tuple of ('ctrl-gauge', attrs).
+    """
+    return ("ctrl-gauge", attrs)
+
+
+def datalist_to_comment(parent, attrs):
+    """Suppress rendering of <datalist>.
+
+    The options are resolved from the document tree by
+    :func:`_datalist_choices` and attached to the referencing input as an
+    editable combo box, so the element itself must not render.
+
+    Args:
+        parent: Parent parser.
+        attrs: Datalist attributes.
+
+    Returns:
+        Tuple of ('comment', attrs).
+    """
+    return ("comment", attrs)
+
+
+def _const_tag_convert(new_tag):
+    """Return a preprocess function that always rewrites a tag to *new_tag*.
+
+    Args:
+        new_tag: Target tag name.
+
+    Returns:
+        Callable compatible with register_tag_preprocess_map.
+    """
+
+    def _convert(parent, attrs):
+        return (new_tag, attrs)
+
+    return _convert
+
+
 # ---------------------------------------------------------------------------
 # Register all preprocess functions
 # ---------------------------------------------------------------------------
@@ -426,10 +728,21 @@ register_tag_preprocess_map("table", table_to_ctrltab)
 register_tag_preprocess_map("input", input_to_ctrltab)
 register_tag_preprocess_map("textarea", textarea_to_ctrltab)
 register_tag_preprocess_map("select", select_to_ctrltab)
+register_tag_preprocess_map("button", button_to_ctrltab)
 register_tag_preprocess_map("a", a_to_button)
 register_tag_preprocess_map("div", div_convert)
 register_tag_preprocess_map("label", label_to_th)
 register_tag_preprocess_map("span", error_span_to_error)
 register_tag_preprocess_map("p", error_p_to_error)
 register_tag_preprocess_map("ul", ul_convert)
+register_tag_preprocess_map("fieldset", fieldset_to_ctrlstaticbox)
+register_tag_preprocess_map("legend", legend_to_ctrlstatictext)
+register_tag_preprocess_map("output", output_to_ctrlstatictext)
+register_tag_preprocess_map("progress", progress_to_ctrlgauge)
+register_tag_preprocess_map("meter", meter_to_ctrlgauge)
+register_tag_preprocess_map("datalist", datalist_to_comment)
 register_tag_preprocess_map("*-*", component_convert, "ctr*")
+
+# Semantic HTML5 elements -> structural tags already supported by the renderer
+for _sem_tag, _sem_new in SEMANTIC_TAG_MAP.items():
+    register_tag_preprocess_map(_sem_tag, _const_tag_convert(_sem_new))

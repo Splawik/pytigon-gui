@@ -161,6 +161,14 @@ class SchForm(ScrolledPanel):
         children = [
             child for child in list(self.GetChildren()) if child.CanAcceptFocus()
         ]
+        # Honour the HTML tabindex attribute when any child defines it.
+        # Elements without tabindex keep their DOM order (stable sort).
+        if any(getattr(child, "tabindex", None) is not None for child in children):
+            children.sort(
+                key=lambda c: (0, c.tabindex)
+                if getattr(c, "tabindex", None) is not None
+                else (1, 0)
+            )
         if back:
             widgets = reversed(children)
         else:

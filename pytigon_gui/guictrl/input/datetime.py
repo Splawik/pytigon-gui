@@ -16,6 +16,7 @@ from wx.adv import CalendarCtrl
 from wx.lib import masked
 
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.popup.popuphtml import DataPopupControl
 from pytigon_lib.schparser.html_parsers import Td
 
 
@@ -115,7 +116,7 @@ class TIME(masked.TimeCtrl, SchBaseCtrl):
 
 if platform.system() == "Linux":
 
-    class DATEPICKER(SchBaseCtrl, wx.ComboCtrl):
+    class DATEPICKER(DataPopupControl, SchBaseCtrl):
         """Date picker control (Linux: popup-based).
 
         On Linux, uses a popup HTML dialog for date selection
@@ -131,11 +132,8 @@ if platform.system() == "Linux":
 
             Args:
                 parent: Parent window.
-                **kwds: Forwarded to the underlying POPUPHTML control.
+                **kwds: Forwarded to the underlying DataPopupControl.
             """
-            # Deferred import to avoid circular dependency
-            from pytigon_gui.guictrl.display import POPUPHTML
-
             kwds["href"] = wx.GetApp().make_href("/schsys/datedialog/")
 
             if "style" in kwds:
@@ -149,7 +147,7 @@ if platform.system() == "Linux":
                 kwds["size"] = wx.Size(150, -1)
 
             SchBaseCtrl.__init__(self, parent, kwds)
-            POPUPHTML.__init__(self, parent, **kwds)
+            DataPopupControl.__init__(self, parent, **kwds)
 
             if self.value:
                 self.set_rec(self.value, Td(self.value))
@@ -183,10 +181,7 @@ if platform.system() == "Linux":
             Returns:
                 Tuple of (130, height).
             """
-            # Deferred import
-            from pytigon_gui.guictrl.display import POPUPHTML
-
-            dx, dy = POPUPHTML.GetBestSize(self)
+            dx, dy = DataPopupControl.GetBestSize(self)
             return (130, dy)
 
 else:
@@ -246,7 +241,7 @@ else:
                 return None
 
 
-class DATETIMEPICKER(SchBaseCtrl):
+class DATETIMEPICKER(DataPopupControl, SchBaseCtrl):
     """Date-time picker control with popup dialog.
 
     Handles ctrldatetimepicker tag. Provides combined date and time
@@ -261,10 +256,8 @@ class DATETIMEPICKER(SchBaseCtrl):
 
         Args:
             parent: Parent window.
-            **kwds: Forwarded to the underlying POPUPHTML control.
+            **kwds: Forwarded to the underlying DataPopupControl.
         """
-        from pytigon_gui.guictrl.display import POPUPHTML
-
         kwds["href"] = wx.GetApp().make_href("/schsys/datedialog/")
 
         if "style" in kwds:
@@ -278,7 +271,7 @@ class DATETIMEPICKER(SchBaseCtrl):
             kwds["size"] = wx.Size(200, -1)
 
         SchBaseCtrl.__init__(self, parent, kwds)
-        POPUPHTML.__init__(self, parent, **kwds)
+        DataPopupControl.__init__(self, parent, **kwds)
 
         self.to_masked(
             mask="####-##-## ##:##",
@@ -303,15 +296,15 @@ class DATETIMEPICKER(SchBaseCtrl):
         Returns:
             Result from parent set_rec.
         """
-        from pytigon_gui.guictrl.display import POPUPHTML
-
         if len(value) == 16:
-            return POPUPHTML.set_rec(self, value, value_rec, dismiss)
+            return DataPopupControl.set_rec(self, value, value_rec, dismiss)
         elif len(value) == 10:
             value_rec.data = value_rec.data + " 00:00"
-            return POPUPHTML.set_rec(self, value + " 00:00", value_rec, dismiss)
+            return DataPopupControl.set_rec(self, value + " 00:00", value_rec, dismiss)
         else:
-            return POPUPHTML.set_rec(self, "0000.00.00 00:00", value_rec, dismiss)
+            return DataPopupControl.set_rec(
+                self, "0000.00.00 00:00", value_rec, dismiss
+            )
 
     def GetValue(self):
         """Get the current date-time value.
@@ -320,8 +313,6 @@ class DATETIMEPICKER(SchBaseCtrl):
             Date-time string from the record, or parsed from
             the text control if the record is empty.
         """
-        from pytigon_gui.guictrl.display import POPUPHTML
-
         value = self.get_rec()
         value2 = self.GetTextCtrl().GetValue()
         if value2 and value2[0] != " ":
@@ -339,7 +330,5 @@ class DATETIMEPICKER(SchBaseCtrl):
         Returns:
             Tuple of (180, height).
         """
-        from pytigon_gui.guictrl.display import POPUPHTML
-
-        dx, dy = POPUPHTML.GetBestSize(self)
+        dx, dy = DataPopupControl.GetBestSize(self)
         return (180, dy)

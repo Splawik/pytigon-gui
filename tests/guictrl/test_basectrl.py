@@ -342,3 +342,155 @@ class TestHandleBestSize:
         result = widget.GetBestSize()
         # Falls back to base width
         assert result == (100, 50)
+
+
+class TestHtmlBool:
+    """Tests for the _html_bool helper (HTML boolean attributes)."""
+
+    def test_absent_is_false(self):
+        from pytigon_gui.guictrl.basectrl import _html_bool
+
+        assert _html_bool({}, "disabled") is False
+
+    def test_present_empty_is_true(self):
+        from pytigon_gui.guictrl.basectrl import _html_bool
+
+        assert _html_bool({"disabled": ""}, "disabled") is True
+
+    def test_present_none_is_true(self):
+        from pytigon_gui.guictrl.basectrl import _html_bool
+
+        assert _html_bool({"disabled": None}, "disabled") is True
+
+    def test_explicit_false(self):
+        from pytigon_gui.guictrl.basectrl import _html_bool
+
+        assert _html_bool({"disabled": "false"}, "disabled") is False
+
+    def test_explicit_true(self):
+        from pytigon_gui.guictrl.basectrl import _html_bool
+
+        assert _html_bool({"required": "required"}, "required") is True
+
+
+class TestSchBaseCtrlHtml5Attrs:
+    """Tests for HTML5 / global attributes extracted by init_base()."""
+
+    def _make_ctrl(self, param):
+        from unittest.mock import MagicMock, patch
+
+        with patch("pytigon_gui.guictrl.basectrl.wx") as mock_wx:
+            mock_app = MagicMock()
+            mock_app.ctrl_process = {}
+            mock_wx.GetApp.return_value = mock_app
+            from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+
+            ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+            ctrl.init_base({"param": param})
+        return ctrl
+
+    def test_all_attributes(self):
+        ctrl = self._make_ctrl(
+            {
+                "placeholder": "p",
+                "required": "",
+                "disabled": "",
+                "autofocus": "1",
+                "multiple": "multiple",
+                "pattern": "[0-9]+",
+                "min": "1",
+                "max": "9",
+                "step": "2",
+                "list": "ids",
+                "title": "tip",
+                "tabindex": "4",
+                "data-role": "x",
+                "data-count": "3",
+            }
+        )
+        assert ctrl.placeholder == "p"
+        assert ctrl.required is True
+        assert ctrl.disabled is True
+        assert ctrl.autofocus is True
+        assert ctrl.multiple is True
+        assert ctrl.pattern == "[0-9]+"
+        assert ctrl.min == "1"
+        assert ctrl.max == "9"
+        assert ctrl.step == "2"
+        assert ctrl.list_id == "ids"
+        assert ctrl.title_attr == "tip"
+        assert ctrl.tabindex == 4
+        assert ctrl.data_attrs == {"role": "x", "count": "3"}
+
+    def test_defaults(self):
+        ctrl = self._make_ctrl({})
+        assert ctrl.placeholder is None
+        assert ctrl.required is False
+        assert ctrl.disabled is False
+        assert ctrl.autofocus is False
+        assert ctrl.multiple is False
+        assert ctrl.list_id is None
+        assert ctrl.tabindex is None
+        assert ctrl.data_attrs == {}
+
+
+class TestApplyCommonAttrs:
+    """Tests for SchBaseCtrl._apply_common_attrs()."""
+
+    def test_applies_placeholder_title_disabled(self):
+        from unittest.mock import MagicMock, patch
+
+        with patch("pytigon_gui.guictrl.basectrl.wx"):
+            from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+
+            ctrl = MagicMock()
+            ctrl.placeholder = "hint"
+            ctrl.title_attr = "tip"
+            ctrl.disabled = True
+            ctrl.autofocus = False
+            SchBaseCtrl._apply_common_attrs(ctrl)
+
+        ctrl.SetHint.assert_called_once_with("hint")
+        ctrl.SetToolTip.assert_called_once_with("tip")
+        ctrl.Disable.assert_called_once()
+
+    def test_autofocus_only_when_accepted(self):
+        from unittest.mock import MagicMock, patch
+
+        with patch("pytigon_gui.guictrl.basectrl.wx") as mock_wx:
+            from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+
+            ctrl = MagicMock()
+            ctrl.placeholder = None
+            ctrl.title_attr = None
+            ctrl.disabled = False
+            ctrl.autofocus = True
+            ctrl.IsBeingDeleted.return_value = False
+            ctrl.CanAcceptFocus.return_value = False
+            SchBaseCtrl._apply_common_attrs(ctrl)
+
+            # Focus is deferred, so CallAfter is registered...
+            mock_wx.CallAfter.assert_called_once()
+            ctrl.SetFocus.assert_not_called()
+
+            # ...but the deferred call must not focus when it is refused.
+            mock_wx.CallAfter.call_args[0][0]()
+            ctrl.SetFocus.assert_not_called()
+
+    def test_autofocus_focuses_when_accepted(self):
+        from unittest.mock import MagicMock, patch
+
+        with patch("pytigon_gui.guictrl.basectrl.wx") as mock_wx:
+            from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+
+            ctrl = MagicMock()
+            ctrl.placeholder = None
+            ctrl.title_attr = None
+            ctrl.disabled = False
+            ctrl.autofocus = True
+            ctrl.IsBeingDeleted.return_value = False
+            ctrl.CanAcceptFocus.return_value = True
+            SchBaseCtrl._apply_common_attrs(ctrl)
+
+            mock_wx.CallAfter.call_args[0][0]()
+            ctrl.SetFocus.assert_called_once()

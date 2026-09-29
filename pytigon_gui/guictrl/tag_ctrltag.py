@@ -54,6 +54,32 @@ _ATTRIBUTES = (
 )
 
 
+def _collect_wx_kwargs(attrs, attributes=_ATTRIBUTES):
+    """Build wx widget keyword arguments from HTML tag attributes.
+
+    The HTML/CSS ``style`` attribute is a string, while wx widgets expect
+    an integer style bitmask.  A string style must therefore be filtered
+    out here (it remains available through ``param`` / ``SchBaseCtrl.style``)
+    to avoid ``str | int`` errors inside widget constructors.
+
+    Args:
+        attrs: Tag attribute dict.
+        attributes: Attribute names to forward.
+
+    Returns:
+        Dict suitable for passing as ``**kwargs`` to a widget.
+    """
+    kwargs = {}
+    for name in attributes:
+        if name not in attrs:
+            continue
+        value = attrs[name]
+        if name == "style" and isinstance(value, str):
+            continue
+        kwargs[name] = "" if value is None else value
+    return kwargs
+
+
 class CtrlTag(TableTag):
     """Handler for all tags starting with 'ctrl-'.
 
@@ -80,7 +106,7 @@ class CtrlTag(TableTag):
         TableTag.__init__(self, parent, parser, tag, attrs)
 
         self.list = None
-        self.child_tags += ["ul", "li", "data", "option", "div"]
+        self.child_tags += ["ul", "li", "data", "option", "div", "optgroup"]
         self.subtab = True
         self.kwargs = {}
         self.classObj = None
@@ -264,6 +290,7 @@ class CtrlTag(TableTag):
             TreeLi,
             Data,
             OptionTag,
+            OptGroupTag,
             CompositeChildTag,
         )
 
@@ -283,6 +310,8 @@ class CtrlTag(TableTag):
             return Data(self, parser, tag, attrs)
         elif tag == "option":
             return OptionTag(self, parser, tag, attrs)
+        elif tag == "optgroup":
+            return OptGroupTag(self, parser, tag, attrs)
         elif tag in self.child_tags:
             o = self.class_from_tag_name(tag)
             if o:
@@ -404,11 +433,17 @@ class CtrlTag(TableTag):
                 i += 1
             name = tmp
 
+        # For <button> / <output> the visible label may come from the
+        # element's text content rather than an attribute.
+        if self.tag in ("ctrl-button", "ctrl-statictext") and not self.attrs.get(
+            "label"
+        ):
+            text = "".join(self.data).strip()
+            if text:
+                self.attrs["label"] = text
+
         # Build kwargs from attributes
-        for atrybut in _ATTRIBUTES:
-            if atrybut in self.attrs:
-                attr_val = self.attrs[atrybut]
-                self.kwargs[atrybut] = "" if attr_val is None else attr_val
+        self.kwargs.update(_collect_wx_kwargs(self.attrs))
 
         # Resolve value
         valuetype = "data"
@@ -451,6 +486,9 @@ class CtrlTag(TableTag):
         # Attach tdata and ldata to kwargs
         if len(self.tdata) > 0:
             self.kwargs["tdata"] = self.tdata
+        # Choices resolved from a referenced <datalist> (input list="...").
+        if "_choices" in self.attrs:
+            self.kwargs["tdata"] = self.attrs.pop("_choices")
         self.kwargs["param"] = dict(self.attrs)
         self.kwargs["param"]["table_lp"] = str(self.parser.table_lp)
         self.kwargs["param"]["tag"] = tag.lower()

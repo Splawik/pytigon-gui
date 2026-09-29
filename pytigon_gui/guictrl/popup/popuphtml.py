@@ -169,9 +169,23 @@ class DataPopupControl(ComboCtrl):
         self.http = wx.GetApp().get_http(self)
         # The control is only half constructed here; block loop pumping so
         # re-entrant events cannot reach it before setup is complete.
-        with block_http_pumping():
-            response = self.http.get(self, str(self.href) + "size/")
-            self.size = schjson.loads(response.str())
+        # A missing/unreachable size endpoint must not abort construction.
+        self.size = (200, 200)
+        try:
+            with block_http_pumping():
+                response = self.http.get(self, str(self.href) + "size/")
+                size = schjson.loads(response.str())
+                if (
+                    isinstance(size, (list, tuple))
+                    and len(size) >= 2
+                    and size[0] is not None
+                    and size[1] is not None
+                ):
+                    self.size = size
+                else:
+                    logger.warning("Invalid popup size for %s: %r", self.href, size)
+        except Exception:
+            logger.warning("Cannot fetch popup size for %s", self.href, exc_info=True)
 
         self.simpleDialog = True
         if self.GetTextCtrl():

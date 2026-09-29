@@ -65,14 +65,29 @@ class NUM(wx.SpinCtrl, SchBaseCtrl):
         Args:
             parent: Parent window.
             **kwds: Forwarded to wx.SpinCtrl with optional
-                TE_PROCESS_ENTER and TE_READONLY styles.
+                TE_PROCESS_ENTER and TE_READONLY styles. Integer bounds
+                are read from param['min'] / param['max'] and the
+                increment from param['inc'] / param['step'].
         """
         SchBaseCtrl.__init__(self, parent, kwds)
         if self.param and "process_enter" in self.param:
             kwds["style"] = kwds.get("style", 0) | wx.TE_PROCESS_ENTER
         if self.readonly:
             kwds["style"] = kwds.get("style", 0) | wx.TE_READONLY
+        if self.param:
+            minv = to_int(self.param.get("min"), None)
+            maxv = to_int(self.param.get("max"), None)
+            if minv is not None:
+                kwds["min"] = minv
+            if maxv is not None:
+                kwds["max"] = maxv
         wx.SpinCtrl.__init__(self, parent, **kwds)
+        if self.param:
+            inc = to_int(self.param.get("inc"), None)
+            if inc is None:
+                inc = to_int(self.param.get("step"), None)
+            if inc is not None:
+                self.SetIncrement(inc)
 
 
 class AMOUNT(wx.SpinCtrlDouble, SchBaseCtrl):
@@ -340,4 +355,3 @@ class PROGRESSDIALOG(wx.ProgressDialog, SchBaseCtrl):
     def CanAcceptFocus(self):
         """Progress dialogs do not accept keyboard focus."""
         return False
-
