@@ -43,3 +43,6 @@ pytigon/prj/*
 !*pytigon/prj/schpytigondemo/*
 !*pytigon/prj/schsetup/*
 
+
+# Katalogi ukryte (np. .kilo) sa ignorowane, ale CI musi byc w repo
+!.github/
