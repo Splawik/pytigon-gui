@@ -5,7 +5,6 @@ for data selection within grid cells: generic popup, date picker,
 list picker, and a base popup data editor.
 """
 
-import string
 import datetime
 
 import wx
@@ -44,6 +43,7 @@ class PopupDataCellEditor(GridCellEditor):
         GridCellEditor.__init__(self)
         self.address = None
         self.param = None
+        self._tc = None
 
     def get_address(self):
         """Return the server address for data lookup."""
@@ -67,6 +67,11 @@ class PopupDataCellEditor(GridCellEditor):
             id: Window ID.
             evt_handler: Event handler for focus events.
         """
+        # wx.Grid reuses one editor object across every editing session and
+        # calls Create() again for each of them.  Bind EVT_KILL_FOCUS only on
+        # the first call, otherwise the handler (and this editor) is retained
+        # by the grid forever.
+        first_create = self._tc is None
         self.Parent = parent
         self._tc = PopupDataCellControl(self.address, parent, id)
         self._tc.DismissObject = self
@@ -75,7 +80,8 @@ class PopupDataCellEditor(GridCellEditor):
 
         if evt_handler:
             self._tc.PushEventHandler(self.evtHandler)
-            evt_handler.Bind(wx.EVT_KILL_FOCUS, self.on_kill_focus)
+            if first_create:
+                evt_handler.Bind(wx.EVT_KILL_FOCUS, self.on_kill_focus)
 
     def on_kill_focus(self, event):
         """Handle kill-focus event (no-op)."""
@@ -188,7 +194,7 @@ class PopupDataCellEditor(GridCellEditor):
         """
         key = evt.GetKeyCode()
         ch = None
-        if 0 <= key < 256 and chr(key) in string.printable:
+        if 0 <= key < 256 and chr(key).isprintable():
             ch = chr(key)
         if ch is not None:
             self._tc.start_value = ""

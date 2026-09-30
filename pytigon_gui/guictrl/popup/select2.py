@@ -7,17 +7,21 @@ Classes:
     ListBoxNoFocus, Select2Popup, Select2Base
 """
 
-import string
 import logging
+
 import wx
 
-from pytigon_lib.schtools import schjson
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 from pytigon_gui.guilib.threads import block_http_pumping, is_alive
+from pytigon_lib.schtools import schjson
 
 logger = logging.getLogger(__name__)
 
 _ = wx.GetTranslation
+
+# Delay in milliseconds before an autocomplete request is issued, so that a
+# burst of keystrokes results in a single HTTP call.
+SELECT2_DEBOUNCE_MS = 300
 
 
 class ListBoxNoFocus(wx.ListBox):
@@ -62,13 +66,13 @@ class Select2Popup(wx.MiniFrame):
             url: Optional override URL for the autocomplete endpoint.
             minimum_input_length: Minimum characters before search triggers.
         """
-        from pytigon_gui.guiframe.page import SchPage
 
         self.combo = combo
         self.point = pos
         self.field_id = field_id
         self.url = url
         self.minimum_input_length = minimum_input_length if minimum_input_length else 0
+        self._debounce_call = None
 
         wx.MiniFrame.__init__(self, parent, id, title, pos, size, wx.RESIZE_BORDER)
 
@@ -95,10 +99,17 @@ class Select2Popup(wx.MiniFrame):
 
     def on_close(self, event):
         """Clear the owner's popup reference when the frame is closed."""
+        self.cancel_pending_fetch()
         if self.combo and getattr(self.combo, "popup", None) is self:
             self.combo.popup = None
             self.combo._popup_shown = False
         event.Skip()
+
+    def cancel_pending_fetch(self):
+        """Cancel a debounced autocomplete request, if one is pending."""
+        if self._debounce_call is not None:
+            self._debounce_call()
+            self._debounce_call = None
 
     def on_enter(self, event):
         """Handle Enter/DoubleClick on a list item: dismiss and set value.
@@ -152,6 +163,9 @@ class Select2Popup(wx.MiniFrame):
     def on_text(self, event):
         """Handle text input: query the server for autocomplete results.
 
+        The request is debounced with ``wx.CallLater`` so that a burst of
+        keystrokes triggers a single HTTP call instead of one per character.
+
         Args:
             event: wx.CommandEvent with the text string.
         """
@@ -160,6 +174,17 @@ class Select2Popup(wx.MiniFrame):
         if len(s) < self.minimum_input_length:
             return
 
+        if self._debounce_call is not None:
+            self.cancel_pending_fetch()
+        self._debounce_call = wx.CallLater(SELECT2_DEBOUNCE_MS, self._fetch, s)
+
+    def _fetch(self, s):
+        """Fetch autocomplete results for the given search term.
+
+        Args:
+            s: Current text typed by the user.
+        """
+        self._debounce_call = None
         base_url = self.url if self.url else "/select2/fields/auto.json"
         url = f"{base_url}?term={s}&page=1&context=&field_id={self.field_id}"
 
@@ -286,7 +311,9 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
                 try:
                     page.unregister_signal(self, signal_name)
                 except Exception:
-                    pass
+                    logger.warning(
+                        "Failed to unregister signal %s", signal_name, exc_info=True
+                    )
             self._signal_page = None
         event.Skip()
 
@@ -337,7 +364,10 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
             if item_id not in self.item_id:
                 self.item_id.append(item_id)
                 self.item_str.append(item_str)
-            self.SetValue("; ".join(self.item_str)[2:])
+            # item_str entries are plain display labels (no "1;" prefix), so
+            # the joined string is shown as-is; slicing [2:] chopped two real
+            # characters off the first label.
+            self.SetValue("; ".join(self.item_str))
         else:
             self.item_id = [item_id]
             self.item_str = [item_str]
@@ -359,13 +389,13 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
         """
         try:
             c = chr(event.GetUnicodeKey())
-            if c in string.printable:
+            if c.isprintable():
                 if not self._popup_shown:
                     self._on_button_click()
                 self.popup.edit_ctrl.AppendText(c)
         except (ValueError, OverflowError):
             pass
-        if event.KeyCode in (wx.WXK_DELETE, wx.WXK_BACK):
+        if event.GetKeyCode() in (wx.WXK_DELETE, wx.WXK_BACK):
             self.item_id = [-1]
             self.item_str = [""]
             self.Clear()

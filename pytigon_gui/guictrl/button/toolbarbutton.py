@@ -1,13 +1,19 @@
 """Module contains helper classes for button widgets"""
 
 import wx
-from wx.lib.agw.ribbon import art
 import wx.lib.agw.ribbon as RB
+import wx.lib.buttons as buttons
 from wx.lib import imageutils
+from wx.lib.agw.ribbon import art
 
 
-class BitmapTextButton(wx.lib.buttons.GenBitmapButton):
-    """Button for toolbars"""
+class BitmapTextButton(buttons.GenBitmapButton):
+    """Button for toolbars
+
+    Still built on the unmaintained ``wx.lib.buttons.GenBitmapButton``:
+    it overrides GenBitmapButton internals (``bmpLabel``, ``_GetLabelSize``
+    and ``DrawLabel``), so swapping the base class is not mechanical.
+    """
 
     def __init__(
         self,
@@ -25,7 +31,7 @@ class BitmapTextButton(wx.lib.buttons.GenBitmapButton):
 
         self._art = RB.RibbonMSWArtProvider()
         # self._art = RB.RibbonArtProvider()
-        wx.lib.buttons.GenBitmapButton.__init__(
+        buttons.GenBitmapButton.__init__(
             self, parent, id, bitmap, pos, size, style | wx.BU_EXACTFIT, validator, name
         )
         self.SetLabel(label)

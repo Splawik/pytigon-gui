@@ -5,11 +5,13 @@ data from a Django backend via HTTP, supporting CRUD operations,
 sorting, autocomplete, and column metadata retrieval.
 """
 
-import sys
+import logging
 
 import wx
 
 from pytigon_lib.schtools import schjson
+
+logger = logging.getLogger(__name__)
 
 _ = wx.GetTranslation
 
@@ -21,6 +23,103 @@ CMD_SYNC = 4
 CMD_AUTO = 5
 CMD_RECASSTR = 6
 CMD_EXEC = 7
+
+
+class NullProxy:
+    """Stand-in proxy used when the data source cannot be reached.
+
+    Implements just enough of the :class:`DataProxy` interface for a grid to
+    be built and displayed with zero rows, so a failed HTTP request degrades
+    to an empty grid instead of raising out of the HTML parser.
+    """
+
+    is_valid = False
+
+    def __init__(self, address=""):
+        """Initialize the empty proxy.
+
+        Args:
+            address: The unreachable table address, kept for diagnostics.
+        """
+        self.tabaddress = address
+        self.parm = dict()
+
+    def set_parent(self, parent):
+        """Accept (and ignore) the owning table."""
+
+    def set_address(self, address):
+        """Accept (and ignore) a new address."""
+
+    def get_address(self):
+        """Return the unreachable table address."""
+        return self.tabaddress
+
+    def set_address_parm(self, parm):
+        """Accept (and ignore) address parameters."""
+        self.parm = parm
+
+    def get_address_parm(self):
+        """Return the address parameters."""
+        return self.parm
+
+    def set_parm(self, key, value):
+        """Store a query parameter."""
+        self.parm[key] = value
+
+    def get_max_count(self):
+        """Return an empty record count."""
+        return 0
+
+    def get_count(self):
+        """Return an empty record count."""
+        return 0
+
+    def get_page(self, nrPage):
+        """Return no records for the requested page."""
+        return []
+
+    def get_default_rec(self):
+        """Return a single empty cell as the default record."""
+        return [""]
+
+    def sync_data(self, listaRecUpdate, listaRecInsert, listaRecDelete):
+        """Discard pending changes - there is nothing to sync."""
+
+    def auto_update(self, col_name, col_names, rec):
+        """Return the record unchanged."""
+        return rec
+
+    def clone(self):
+        """Return another empty proxy for the same address."""
+        return NullProxy(self.tabaddress)
+
+    def run(self, parm):
+        """Reject server commands: return None."""
+        return None
+
+    def GetRecAsStr(self, nrRec):
+        """Return an empty record representation."""
+        return ""
+
+    def GetColNames(self):
+        """Return a single placeholder column name."""
+        return [""]
+
+    def GetAutoCols(self):
+        """Return no auto-refresh columns."""
+        return []
+
+    def GetColTypes(self):
+        """Return a single 'string' column type."""
+        return ["string"]
+
+    def GetColSize(self):
+        """Return a single default column width."""
+        return [32]
+
+    def GetColIcons(self):
+        """Return no column icons."""
+        return None
 
 
 def process_post_parm(obj):
@@ -124,10 +223,9 @@ class DataProxy:
 
     def _reformat_rec(self, rec):
         ret = []
-        i = 0
-        for col in rec:
-            ret.append((self.tab_conw)[(self.col_types2)[i]](col))
-            i = i + 1
+        for i, col in enumerate(rec):
+            convert = self.tab_conw.get(self.col_types2[i], self.conw_none)
+            ret.append(convert(col))
         return ret
 
     def set_parm(self, key, value):
@@ -144,11 +242,9 @@ class DataProxy:
             page = schjson.loads(response.str())
             retpage = page["page"]
         except (KeyError, ValueError, TypeError):
-            retpage = None
-            # from pytigon_lib.schhttptools.httperror import http_error
-            # http_error(wx.GetApp().GetTopWindow(), self.http.str())
-            self.http.show(wx.GetApp().GetTopWindow())
+            logger.exception("Failed to decode grid page from %s", self.tabaddress)
             retpage = []
+            self.http.show(wx.GetApp().GetTopWindow())
         return retpage
 
     def get_max_count(self):
@@ -197,7 +293,15 @@ class DataProxy:
         c.set_address_parm(self.get_address_parm())
         return c
 
-    def exec(self, parm):
+    def run(self, parm):
+        """Execute a server-side command and return its decoded result.
+
+        Args:
+            parm: Opaque command payload forwarded to the backend.
+
+        Returns:
+            The decoded server response.
+        """
         c = {"cmd": CMD_EXEC, "value": parm}
         response = self.http.post(self.parent, self.tabaddress, process_post_parm(c))
         ret = schjson.loads(response.str())

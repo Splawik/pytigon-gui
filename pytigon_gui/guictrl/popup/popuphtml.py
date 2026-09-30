@@ -19,9 +19,9 @@ import wx
 from wx import ComboCtrl
 from wx.lib import masked
 
-from pytigon_lib.schtools import schjson
-from pytigon_lib.schtools.tools import bencode, bdecode
 from pytigon_gui.guilib.threads import block_http_pumping
+from pytigon_lib.schtools import schjson
+from pytigon_lib.schtools.tools import bencode
 
 logger = logging.getLogger(__name__)
 

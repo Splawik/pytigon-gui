@@ -3,42 +3,32 @@ This module contains SchAppFrame class. When pytigon application starts, new top
 During the initialisation process all defined for application plugins are started.
 """
 
+import logging
 import os
-import sys
 import platform
 import subprocess
-import base64
-import logging
-from pydispatch import dispatcher
 from pathlib import Path
 
 import wx
+from pydispatch import dispatcher
 
 logger = logging.getLogger(__name__)
 
 # import wx.html2
-import datetime
 from wx.lib.agw import aui
 
-from django.conf import settings
-
-from pytigon_lib.schfs.vfstools import get_temp_filename
-from pytigon_lib.schdjangoext.tools import gettempdir
-from pytigon_lib.schhttptools.httpclient import HttpResponse
-from pytigon_lib import schfs
-
-from pytigon_lib.schtools.tools import split2
-
-# from pytigon_lib.schtasks.task import get_process_manager
-
-from pytigon_gui.guilib.image import ArtProviderFromIcon
-from pytigon_gui.guilib.events import *  # @UnusedWildImport
+from pytigon_gui.guiframe.baseframe import SchBaseFrame
+from pytigon_gui.guiframe.manager import SChAuiManager
 from pytigon_gui.guiframe.notebook import SchNotebook
 from pytigon_gui.guiframe.notebookpage import SchNotebookPage
-from pytigon_gui.guiframe.manager import SChAuiManager
-from pytigon_gui.guilib.image import bitmap_from_href
+from pytigon_gui.guilib.events import *  # @UnusedWildImport
 
-from pytigon_gui.guiframe.baseframe import SchBaseFrame
+# from pytigon_lib.schtasks.task import get_process_manager
+from pytigon_gui.guilib.image import ArtProviderFromIcon, bitmap_from_href
+from pytigon_lib import schfs
+from pytigon_lib.schdjangoext.tools import gettempdir
+from pytigon_lib.schhttptools.httpclient import HttpResponse
+from pytigon_lib.schtools.tools import split2
 
 _ = wx.GetTranslation
 
@@ -177,12 +167,15 @@ class SchAppFrame(SchBaseFrame):
         self.toolbar_interface = None
         self.menubar_interface = None
         self.statusbar_interface = None
+        # on_command is bound on the frame, so both the menu bar and the tool
+        # bar would otherwise register the same handler twice.
+        self._command_bound = False
 
         self.destroy_fun_tab = []
         self.after_init = False
         self._exiting = False
 
-        self.sys_command = dict({"EXIT": self.on_exit, "ABOUT": self.on_about})
+        self.sys_command = {"EXIT": self.on_exit, "ABOUT": self.on_about}
 
         if "dialog" in self.gui_style or "one_form" in self.gui_style:
             hide_on_single_page = True
@@ -953,9 +946,9 @@ class SchAppFrame(SchBaseFrame):
         if self._video:
             if _RECORD_VIDEO == 0:
                 try:
-                    from mss import mss
                     import cv2
                     import numpy
+                    from mss import mss
 
                     _RECORD_VIDEO_STRUCT = (mss, cv2, numpy)
                     _RECORD_VIDEO = 1
@@ -982,38 +975,45 @@ class SchAppFrame(SchBaseFrame):
         return id
 
     def _create_bars(self, bar, tab):
+        page = None
+        panel = None
         for row in tab:
             if len(row[0].data) > 0:
                 pos = 1
+            elif len(row[1].data) > 0:
+                pos = 2
+            elif len(row[2].data) > 0:
+                pos = 3
             else:
-                if len(row[1].data) > 0:
-                    pos = 2
-                else:
-                    if len(row[2].data) > 0:
-                        pos = 3
-                    else:
-                        pos = -1
-            if pos >= 0:
-                if pos == 1:
-                    page = bar.append(row[0].data)
-                if pos == 2:
-                    panel = page.append(row[1].data)
-                if pos == 3:
-                    try:
-                        bitmap = (wx.GetApp().images)[int(row[4].data)]
-                    except (ValueError, KeyError, TypeError):
-                        if row[4].data and row[4].data != "" and row[4].data != "None":
-                            try:
-                                bitmap = bitmap_from_href(row[4].data.split("<=")[0])
-                            except Exception:
-                                bitmap = (wx.GetApp().images)[0]
-                        else:
+                pos = -1
+            if pos == 1:
+                page = bar.append(row[0].data)
+            elif pos == 2:
+                if page is None:
+                    logger.warning("toolbar row %r has no parent page", row[1].data)
+                    continue
+                panel = page.append(row[1].data)
+            elif pos == 3:
+                if panel is None:
+                    logger.warning("toolbar row %r has no parent panel", row[2].data)
+                    continue
+                try:
+                    bitmap = (wx.GetApp().images)[int(row[4].data)]
+                except (ValueError, KeyError, TypeError):
+                    if row[4].data and row[4].data != "" and row[4].data != "None":
+                        try:
+                            bitmap = bitmap_from_href(row[4].data.split("<=")[0])
+                        except Exception:
                             bitmap = (wx.GetApp().images)[0]
-                    if not bitmap:
+                    else:
                         bitmap = (wx.GetApp().images)[0]
-                    idn = self._append_command(row[5].data, row[6].data)
-                    panel.append(idn, row[2].data, bitmap)
+                if not bitmap:
+                    bitmap = (wx.GetApp().images)[0]
+                idn = self._append_command(row[5].data, row[6].data)
+                panel.append(idn, row[2].data, bitmap)
+        if not self._command_bound:
             bar.bind(self.on_command)
+            self._command_bound = True
 
     def _create_menu_bar(self):
         tab = wx.GetApp().get_tab(self._menu_bar_lp)[1:]
@@ -1127,7 +1127,6 @@ class SchAppFrame(SchBaseFrame):
         try:
             exec(command)
         except Exception:
-            import traceback
 
             logger.error("Error executing python command: %s", command, exc_info=True)
 
@@ -1196,7 +1195,7 @@ class SchAppFrame(SchBaseFrame):
                     continue
                 if event.ShiftDown() and (a[0] & wx.ACCEL_SHIFT == 0):
                     continue
-                self.ProcessEvent(wx.CommandEvent(wx.wxEVT_COMMAND_MENU_SELECTED, a[2]))
+                self.ProcessEvent(wx.CommandEvent(wx.EVT_MENU.typeId, a[2]))
                 return
         event.Skip()
 

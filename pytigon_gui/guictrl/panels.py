@@ -68,7 +68,7 @@ class HTML(page.SchPage, SchBaseCtrl):
         mp.process(self._value)
         mp.address = None
         body = mp.get_body()
-        self.body.show_page(body)
+        self.body.set_page(body)
         if refresh:
             self.body.wxdc = None
             self.body.draw_background()

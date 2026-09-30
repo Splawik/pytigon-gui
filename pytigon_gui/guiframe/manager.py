@@ -5,9 +5,10 @@ Provides SChAuiBaseManager (base) and SChAuiManager, which wrap
 wx.lib.agw.aui to add pane activation and hit-test refinements.
 """
 
+import logging
+
 import wx
 from wx.lib.agw import aui
-import logging
 
 logger = logging.getLogger(__name__)
 

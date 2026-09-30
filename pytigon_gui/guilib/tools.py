@@ -4,14 +4,14 @@ Includes color manipulation helpers, desktop shortcut creation,
 focus tracking, and plugin import functionality.
 """
 
-import sys
+import importlib
 import logging
+import sys
 from pathlib import Path
 
-import importlib
 import wx
-import pytigon
 
+import pytigon
 from pytigon_lib.schtools.main_paths import get_main_paths
 
 try:

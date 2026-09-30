@@ -6,7 +6,10 @@ autobahn.twisted.websocket for use in Pytigon applications.
 
 import logging
 
-from autobahn.twisted.websocket import WebSocketClientProtocol, WebSocketClientFactory
+from autobahn.twisted.websocket import (
+    WebSocketClientFactory,
+    WebSocketClientProtocol,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +52,7 @@ class MyClientProtocol(WebSocketClientProtocol):
             """Send a text and binary keep-alive message."""
             if self._closed:
                 return
-            self.sendMessage("Hello, world!".encode("utf8"))
+            self.sendMessage(b"Hello, world!")
             self.sendMessage(b"\x00\x01\x03\x04", isBinary=True)
             self._keepalive = self.factory.reactor.callLater(1, send_hello)
 

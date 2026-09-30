@@ -26,10 +26,10 @@ Concrete toolbars and menus based on these abstract classes:
 
 import wx
 
+from pytigon_gui.guiframe.page import SchPage
 from pytigon_gui.guilib.events import *
 from pytigon_gui.guilib.threads import call_after_if_alive
 from pytigon_gui.toolbar.standardtoolbarbuttons import StandardButtons
-from pytigon_gui.guiframe.page import SchPage
 
 _ = wx.GetTranslation
 
@@ -153,6 +153,30 @@ class ToolbarButton:
         else:
             self.bitmap_disabled = bitmap_disabled
         self.kind = kind
+        # The concrete wx/AUI/Ribbon tool item, set by the panel's _append().
+        self.tool_item = None
+        self.enabled = True
+
+    def is_enabled(self):
+        """Return whether the button is currently enabled."""
+        return self.enabled
+
+    def set_enabled(self, enabled):
+        """Enable or disable the button and its underlying tool item.
+
+        Args:
+            enabled: True to enable, False to disable.
+
+        Returns:
+            True if the state changed, False otherwise.
+        """
+        enabled = bool(enabled)
+        changed = enabled != self.enabled
+        self.enabled = enabled
+        item = self.tool_item
+        if item is not None and hasattr(item, "Enable"):
+            item.Enable(enabled)
+        return changed
 
 
 class ToolbarPanel:
@@ -244,6 +268,13 @@ class ToolbarPanel:
         button = self.create_button(id, title, bitmap, bitmap_disabled, kind)
         self.buttons.append(button)
         return button
+
+    def refresh(self):
+        """Force the widget hosting this panel to repaint.
+
+        The base implementation is a no-op; concrete toolbar implementations
+        override it with their own wx/AUI/Ribbon call.
+        """
 
     def add_tool(self, id, title, bitmaps, kind):
         b = self._transform_bitmaps_parm(bitmaps)
@@ -396,23 +427,29 @@ class ToolbarBar:
         """Remove the page with the specified title from the toolbar.
 
         Args:
-            title: Title of the page to remove.
+            title: Title of the page to remove. Matched against both the
+                untranslated page name and the translated display title, so
+                removal works in any locale.
         """
+
+        def matches(page):
+            return page.name == title or page.title == title
+
         # Remove from pages list
         for page in self.pages:
-            if page.title == title:
+            if matches(page):
                 self.pages.remove(page)
                 break
 
         # If the main page was removed, pick a new one
-        if self.main_page and self.main_page.title == title:
+        if self.main_page and matches(self.main_page):
             self.main_page = self.pages[0] if self.pages else None
 
         # Remove associated user panels (iterate over a static list of keys
         # to avoid "dictionary changed size during iteration" errors)
         for key in list(self.user_panels.keys()):
             panel = self.user_panels[key]
-            if panel.page.title == title:
+            if panel.page and matches(panel.page):
                 del self.user_panels[key]
 
     def append(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):

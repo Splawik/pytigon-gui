@@ -562,14 +562,6 @@ class SchNotebookPage(wx.Window):
         if self.get_page_count() > 0:
             h.parent_page = self.get_page(-1)
 
-        nr = 0
-        if (header := h.header) is not None:
-            nr += 4
-        if (footer := h.footer) is not None:
-            nr += 2
-        if (panel := h.panel) is not None:
-            nr += 1
-
         title2 = title if title else h.get_title()
         self.add_page(h)
 

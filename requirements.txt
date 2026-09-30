@@ -3,3 +3,6 @@ wxpython>=4.2.0
 PyDispatcher>=2.0.5
 pyshortcuts>=1.8
 libsass>=0.22
+# pytigon.ext_lib.autocomplete is imported by pytigon_gui.toolbar.standardtoolbarbuttons.
+# pytigon-batteries already requires pytigon transitively; declare it directly.
+pytigon>=0.260929

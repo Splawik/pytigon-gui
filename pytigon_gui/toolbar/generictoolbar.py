@@ -5,7 +5,6 @@ toolbar panes with standard button types.
 """
 
 import wx
-
 import wx.lib.agw
 import wx.lib.agw.aui as aui
 import wx.lib.agw.aui.aui_utilities
@@ -13,11 +12,10 @@ import wx.lib.agw.aui.aui_utilities
 from pytigon_gui.guilib.events import *
 from pytigon_gui.toolbar.basetoolbar import (
     ToolbarBar,
+    ToolbarButton,
     ToolbarPage,
     ToolbarPanel,
-    ToolbarButton,
 )
-
 
 _ = wx.GetTranslation
 
@@ -42,12 +40,12 @@ class SchAuiToolBarArt(aui.AuiDefaultToolBarArt):
             _rect: Rectangle to fill.
             horizontal: True for horizontal toolbar, False for vertical.
         """
-        rect = wx.Rect(*_rect)
+        rect = _rect
         start_colour = self._base_colour
         end_colour = self._base_colour
-        reflex_colour = aui.StepColour(self._base_colour, 95)
+        reflex_colour = wx.GradientColour(self._base_colour, 95)
         dc.GradientFillLinear(
-            rect, start_colour, end_colour, (horizontal and [wx.SOUTH] or [wx.EAST])[0]
+            rect, start_colour, end_colour, wx.SOUTH if horizontal else wx.EAST
         )
         left = rect.GetLeft()
         right = rect.GetRight()
@@ -112,7 +110,12 @@ class GenericToolbarPanel(ToolbarPanel):
                 pass
             elif b.kind == ToolbarButton.TYPE_SEPARATOR:
                 self.parent_page.AddSeparator()
+        b.tool_item = item
         return item
+
+    def refresh(self):
+        """Repaint the AUI toolbar that hosts this panel."""
+        self.parent_page.Refresh()
 
     def create_button(
         self,

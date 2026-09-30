@@ -5,12 +5,17 @@ Browse, and Address panels with their associated event handlers.
 Also includes the SchAutoComplete widget for the address bar.
 """
 
+import logging
+
 import wx
+from wx.lib.agw import flatmenu as FM
+
+from pytigon.ext_lib.autocomplete import TextCtrlAutoComplete
 from pytigon_gui.guilib.events import *
-from autocomplete import TextCtrlAutoComplete
 from pytigon_gui.guilib.image import bitmaps_from_art_id
 from pytigon_gui.guilib.tools import colour_to_html, find_focus_in_form
-from wx.lib.agw import flatmenu as FM
+
+logger = logging.getLogger(__name__)
 
 _ = wx.GetTranslation
 
@@ -43,8 +48,7 @@ class WebHistory:
 
     def __iter__(self):
         """Iterate over all history entries."""
-        for x in ADDRESS_HISTORY:
-            yield x
+        yield from ADDRESS_HISTORY
 
     def __getitem__(self, idx):
         """Return a history entry by index.
@@ -240,6 +244,9 @@ class StandardButtons:
         self.progress = 0
         self.info = ""
         self.address_txt = ""
+        # Handlers bound on the parent window, so they can be unbound when the
+        # toolbar is rebuilt (ID_RESET) instead of staying live forever.
+        self._parent_handlers = []
 
     def make_ui_handler(self, fun_name, event_id, propagate=False):
         """Create a UI update handler that enables/disables based on focus.
@@ -270,6 +277,21 @@ class StandardButtons:
             event.Enable(False)
 
         self.toolbar_interface.parent.Bind(wx.EVT_UPDATE_UI, on_update_ui, id=event_id)
+        self._parent_handlers.append((wx.EVT_UPDATE_UI, on_update_ui, event_id))
+
+    def unbind_parent_handlers(self):
+        """Remove every handler this instance bound on the parent window.
+
+        Called on toolbar teardown so an ``ID_RESET`` rebuild does not leave
+        the previous closures bound (and holding this object alive).
+        """
+        parent = self.toolbar_interface.parent
+        for evt_type, handler, event_id in self._parent_handlers:
+            try:
+                parent.Unbind(evt_type, handler, id=event_id)
+            except (TypeError, RuntimeError):
+                logger.debug("Could not unbind toolbar handler", exc_info=True)
+        self._parent_handlers = []
 
     def make_handler(self, fun_name, event_id, propagate=False):
         """Create a command handler that delegates to the focused control.
@@ -316,6 +338,7 @@ class StandardButtons:
             self.toolbar_interface.parent.Bind(
                 wx.EVT_UPDATE_UI, on_update_ui, id=event_id
             )
+            self._parent_handlers.append((wx.EVT_UPDATE_UI, on_update_ui, event_id))
 
     def create_file_panel(self, toolbar_page):
         """Create the File panel with Open, Save, Print, and Exit buttons.
@@ -379,6 +402,17 @@ class StandardButtons:
                     )
                 self.make_handlers(ID_PRINT, "Print", "CanPrint", propagate=True)
                 self.ti.bind_dropdown(self.on_print, ID_PRINT)
+                # The dropdown menu items reuse these ids, so route them to
+                # the same focused-control dispatch as the toolbar buttons.
+                self.make_handlers(
+                    ID_PRINT_PREVIEW, "PrintPreview", "CanPrintPreview", propagate=True
+                )
+                self.make_handlers(
+                    ID_PRINT_SETTINGS,
+                    "PrinterSettings",
+                    "CanPrinterSettings",
+                    propagate=True,
+                )
 
     def create_edit_panel(self, toolbar_page):
         """Create the Clipboard panel with Copy, Cut, and Paste buttons.
@@ -442,6 +476,7 @@ class StandardButtons:
             self.make_handlers(wx.ID_UNDO, "Undo", "CanUndo")
             self.make_handlers(wx.ID_REDO, "Redo", "CanRedo")
             self.make_handlers(ID_FIND, "Find", "CanFind")
+            self.make_handlers(ID_REPLACE, "Replace", "CanReplace")
 
     def create_browse_panel(self, toolbar_page):
         """Create the Browser panel with navigation buttons.
@@ -569,20 +604,18 @@ class StandardButtons:
         Args:
             tab: List of (enabled, panel_key, button_key) tuples.
         """
-        start_status = []
-        dis = self.ti.status_tool_disabled()
-        for pos in tab:
-            start_status.append(self.tbs[pos[1]][pos[2]].state & dis)
-            if pos[0]:
-                self.tbs[pos[1]][pos[2]].state &= ~dis
-            else:
-                self.tbs[pos[1]][pos[2]].state |= dis
-        i = 0
-        for pos in tab:
-            if start_status[i] != self.tbs[pos[1]][pos[2]].state & dis:
-                self.tbs[pos[1]]["bar"].Refresh()
-                return
-            i += 1
+        changed_panels = []
+        for enabled, panel_key, button_key in tab:
+            panel = self.tbs.get(panel_key)
+            if not panel:
+                continue
+            button = panel.get(button_key)
+            if button is None:
+                continue
+            if button.set_enabled(enabled):
+                changed_panels.append(panel)
+        for panel in changed_panels:
+            panel.refresh()
 
     def clipboard_refr(self, editctrl):
         """Refresh clipboard buttons based on the focused control's capabilities.
@@ -797,12 +830,17 @@ class StandardButtons:
             event: The dropdown event.
         """
         menu = FM.FlatMenu()
-        menu.Append(wx.ID_ANY, _("Print"), _("Print"), wx.ITEM_NORMAL)
-        menu.Append(wx.ID_ANY, _("Print preview"), _("Print preview"), wx.ITEM_NORMAL)
+        menu.Append(ID_PRINT, _("Print"), _("Print"), wx.ITEM_NORMAL)
         menu.Append(
-            wx.ID_ANY, _("Printer settings"), _("Printer settings"), wx.ITEM_NORMAL
+            ID_PRINT_PREVIEW, _("Print preview"), _("Print preview"), wx.ITEM_NORMAL
         )
-        self.ti.popup_menu(event, menu)
+        menu.Append(
+            ID_PRINT_SETTINGS, _("Printer settings"), _("Printer settings"), wx.ITEM_NORMAL
+        )
+        try:
+            self.ti.popup_menu(event, menu)
+        finally:
+            menu.Destroy()
 
     def on_find(self, event):
         """Show the find/replace dropdown menu.
@@ -811,9 +849,12 @@ class StandardButtons:
             event: The dropdown event.
         """
         menu = FM.FlatMenu()
-        menu.Append(wx.ID_ANY, _("Find"), _("Find"), wx.ITEM_NORMAL)
-        menu.Append(wx.ID_ANY, _("Replace"), _("Replace"), wx.ITEM_NORMAL)
-        event.PopupMenu(menu)
+        menu.Append(ID_FIND, _("Find"), _("Find"), wx.ITEM_NORMAL)
+        menu.Append(ID_REPLACE, _("Replace"), _("Replace"), wx.ITEM_NORMAL)
+        try:
+            event.PopupMenu(menu)
+        finally:
+            menu.Destroy()
 
     def make_menu(self, menubar, menulist):
         """Build a flat menu bar from a nested menu definition.

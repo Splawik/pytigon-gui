@@ -5,12 +5,13 @@ and status information for background threads. Includes a manager that
 handles layout and periodic updates.
 """
 
-import wx
-import wx.html
 import logging
 
-from pytigon_lib.schtools import schjson
+import wx
+import wx.html
+
 from pytigon_gui.guilib.threads import block_http_pumping
+from pytigon_lib.schtools import schjson
 
 logger = logging.getLogger(__name__)
 

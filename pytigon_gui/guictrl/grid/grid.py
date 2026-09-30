@@ -1,22 +1,24 @@
-import wx
-import wx.grid
 import csv
 import io
+import logging
 
+import wx
+import wx.grid
 from wx.grid import (
-    GridCellAttr,
-    GridTableMessage,
-    GRIDTABLE_NOTIFY_ROWS_DELETED,
     GRIDTABLE_NOTIFY_ROWS_APPENDED,
+    GRIDTABLE_NOTIFY_ROWS_DELETED,
+    GridTableMessage,
 )
 
 from pytigon_gui.guictrl.grid import popupcelleditors
 from pytigon_gui.guictrl.grid.renderers import (
+    DateTimeRenderer,
     ExtStringRenderer,
     IconAndStringRenderer,
-    DateTimeRenderer,
 )
 from pytigon_lib.schtools.schjson import json_dumps, json_loads
+
+logger = logging.getLogger(__name__)
 
 _ = wx.GetTranslation
 
@@ -81,7 +83,7 @@ class SchTableGrid(wx.grid.Grid):
             for i in range(min(len(sizes), ncols)):
                 name_len = len(str(names[i + 1]))
                 size_val = int(sizes[i])
-                print("size: ", i, name_len, size_val)
+                logger.debug("size: %s %s %s", i, name_len, size_val)
                 if 7 * name_len > 7 * size_val:
                     self.SetColSize(i, 7 * name_len)
                 else:
@@ -284,7 +286,8 @@ class SchTableGrid(wx.grid.Grid):
         w = self.GetGridColLabelWindow()
         dc = wx.PaintDC(w)
         client_rect = w.GetClientRect()
-        font = wx.NORMAL_FONT
+        # Copy: wx.NORMAL_FONT is a process-wide singleton and must not be mutated.
+        font = wx.Font(wx.NORMAL_FONT)
         tot_col_size = -self.GetViewStart()[0] * self.GetScrollPixelsPerUnit()[0]
         fs = font.GetPointSize()
         fs2 = int(0.8 * fs)
@@ -556,7 +559,6 @@ class SchTableGrid(wx.grid.Grid):
             names = self.GetTable().GetColNames()[1:]
             parm = dict()
             parm["rec"] = rec
-            self.GetHtmlParent().ActiveCtrl = self
             okno = self.GetHtmlParent().new_child_page(
                 self.address + "../" + str(rec[0]) + "/edit/", "", param=parm
             )
@@ -598,59 +600,80 @@ class SchTableGrid(wx.grid.Grid):
 
     def copy(self, evt, format="json"):
         x = self.GetTable().copy()
-        if x:
-            if wx.TheClipboard.Open():
-                if format == "csv":
-                    data = []
-                    first_rec = True
-                    for obj in x:
-                        row = obj["fields"]
-                        if first_rec:
-                            rec = []
-                            for key, value in row.items():
-                                rec.append(key)
-                            data.append(rec)
-                            first_rec = False
-                        rec = []
-                        for pos in data[0]:
-                            if pos in row:
-                                rec.append(row[pos])
-                            else:
-                                rec.append(None)
-                        data.append(rec)
-                    writer = io.StringIO()
-                    csvwriter = csv.writer(writer)
-                    for row in data:
-                        csvwriter.writerow(row)
-                    writer.seek(0)
-                    x = writer.read()
-                    wx.TheClipboard.SetData(wx.TextDataObject(x))
-                if format == "json":
-                    wx.TheClipboard.SetData(wx.TextDataObject(json_dumps(x, indent=4)))
-                wx.TheClipboard.Close()
-            else:
-                wx.MessageBox(_("Unable to open the clipboard"), _("Error"))
+        if not x:
+            return
+        if format == "csv":
+            data = []
+            first_rec = True
+            for obj in x:
+                row = obj["fields"]
+                if first_rec:
+                    rec = []
+                    for key in row:
+                        rec.append(key)
+                    data.append(rec)
+                    first_rec = False
+                rec = []
+                for pos in data[0]:
+                    if pos in row:
+                        rec.append(row[pos])
+                    else:
+                        rec.append(None)
+                data.append(rec)
+            writer = io.StringIO()
+            csvwriter = csv.writer(writer)
+            for row in data:
+                csvwriter.writerow(row)
+            writer.seek(0)
+            x = writer.read()
+            payload = x
+        elif format == "json":
+            payload = json_dumps(x, indent=4)
+        else:
+            return
+        try:
+            # wxPython 4.3 exposes no context-manager protocol on
+            # wx.Clipboard, so Open()/Close() must be balanced by hand;
+            # a dedicated instance is used instead of the global one.
+            cb = wx.Clipboard()
+            if not cb.Open():
+                raise RuntimeError("clipboard is locked by another application")
+            try:
+                cb.SetData(wx.TextDataObject(payload))
+            finally:
+                cb.Close()
+        except Exception:
+            logger.exception("Unable to open the clipboard")
+            wx.MessageBox(_("Unable to open the clipboard"), _("Error"))
 
     def paste(self, evt):
         text_data = wx.TextDataObject()
-        if wx.TheClipboard.Open():
-            success = wx.TheClipboard.GetData(text_data)
-            wx.TheClipboard.Close()
-            if success:
-                txt = text_data.GetText()
-                ret = self.GetTable().paste(json_loads(txt))
-                if "success" in ret:
-                    self.GetTable().refresh(True)
-                    self.ForceRefresh()
-        else:
-            wx.MessageBox(_("Unable to open the clipboard"), _("Error"))
+        success = False
+        try:
+            cb = wx.Clipboard()
+            if not cb.Open():
+                raise RuntimeError("clipboard is locked by another application")
+            try:
+                success = cb.GetData(text_data)
+            finally:
+                cb.Close()
+        except Exception:
+            logger.exception("Unable to open the clipboard")
+            success = False
+        if success:
+            txt = text_data.GetText()
+            ret = self.GetTable().paste(json_loads(txt))
+            if "success" in ret:
+                self.GetTable().refresh(True)
+                self.ForceRefresh()
 
     def on_update_rec_from_form(self, rec):
         row = self.GetGridCursorRow()
         names = self.GetTable().GetColNames()[1:]
         for i in range(len(names)):
             name = names[i]
-            self.GetTable().SetValue(row, i, rec[name])
+            if name in rec:
+                self.GetTable().SetValue(row, i, rec[name])
         self.ForceRefresh()
 
     def accepts_focus(self):
@@ -711,7 +734,6 @@ class SchTableGrid(wx.grid.Grid):
 
     def on_label_left_click(self, evt):
         if evt.GetCol() >= 0:
-            str = self.GetColLabelValue(evt.GetCol())
             if evt.ControlDown():
                 self.GetTable().sort(evt.GetCol(), True)
             else:

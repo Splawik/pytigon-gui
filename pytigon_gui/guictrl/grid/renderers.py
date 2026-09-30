@@ -1,9 +1,15 @@
 """Module contains helper classes for grid renderers"""
 
 import textwrap
+from collections import OrderedDict
+
 import wx
 
 from pytigon_gui.guilib.image import SchImage
+
+# DrawLabel() only understands horizontal alignment flags, so the vertical
+# half returned by GridCellAttr.GetAlignment() must be masked off.
+_HORIZONTAL_ALIGN = wx.ALIGN_LEFT | wx.ALIGN_CENTER | wx.ALIGN_RIGHT
 
 
 class ExtStringRenderer(wx.grid.GridCellRenderer):
@@ -98,12 +104,15 @@ class IconAndStringRenderer(MultiLineStringRenderer):
 
     def __init__(self):
         MultiLineStringRenderer.__init__(self, 64)
-        self.cache = {}
+        self.cache = OrderedDict()
 
     def get_image_from_cache(self, image):
-        if image not in self.cache:
-            if len(self.cache) > 256:
-                self.cache.pop(next(iter(self.cache), None), None)
+        if image in self.cache:
+            self.cache.move_to_end(image)
+        else:
+            if len(self.cache) >= 256:
+                # Evict the least recently used entry, not an arbitrary one.
+                self.cache.popitem(last=False)
             self.cache[image] = SchImage(image)
         return self.cache[image].bmp
 
@@ -186,6 +195,7 @@ class DateTimeRenderer(wx.grid.GridCellRenderer):
         dc.SetPen(wx.TRANSPARENT_PEN)
         dc.DrawRectangle(rect.x, rect.y, rect.width, rect.height)
         (h_align, v_align) = attr.GetAlignment()
+        h_align &= _HORIZONTAL_ALIGN
         dc.SetBackgroundMode(wx.TRANSPARENT)
         if grid.IsEnabled():
             if is_selected:
@@ -200,13 +210,13 @@ class DateTimeRenderer(wx.grid.GridCellRenderer):
         dc.SetFont(attr.GetFont())
 
         d = grid.GetCellValue(row, col)
-        text = d[:16]
-        dc.DrawLabel(text, rect2, alignment=h_align | v_align)
+        text = d[:16] if isinstance(d, str) else ""
+        dc.DrawLabel(text, rect2, alignment=h_align)
 
     def GetBestSize(self, grid, attr, dc, row, col):
         text = grid.GetCellValue(row, col)
         dc.SetFont(attr.GetFont())
-        if text:
+        if isinstance(text, str) and text:
             size = dc.GetTextExtent(text[:16])
             if not self.best_size or size[0] > self.best_size[0]:
                 self.best_size = size

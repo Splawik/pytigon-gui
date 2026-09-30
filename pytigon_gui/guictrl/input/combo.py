@@ -11,10 +11,10 @@ Classes:
     OWNERDRAWNCOMBOBOX
 """
 
-import os
-from pathlib import Path
-from base64 import b64encode
 import logging
+import os
+from base64 import b64encode
+from pathlib import Path
 
 import wx
 from wx import ComboCtrl
@@ -25,6 +25,23 @@ from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 logger = logging.getLogger(__name__)
 from pytigon_gui.guictrl.display import POPUPHTML
 from pytigon_lib.schparser.html_parsers import Td
+
+_WX_ART_IDS = None
+
+
+def _get_wx_art_ids():
+    """Return the sorted list of ``wx.ART_*`` constant names, cached once.
+
+    Scanning ``dir(wx)`` and requesting a 22x22 bitmap for every constant on
+    each combo box is wasteful; the constant list itself never changes.
+
+    Returns:
+        Sorted list of ``wx.ART_*`` attribute names.
+    """
+    global _WX_ART_IDS
+    if _WX_ART_IDS is None:
+        _WX_ART_IDS = sorted(pos for pos in dir(wx) if pos.startswith("ART_"))
+    return _WX_ART_IDS
 
 
 class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
@@ -74,7 +91,7 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
 
     def init_wx_icons(self):
         """Load standard wxArtProvider icons into the combo box."""
-        for art_id in sorted([pos for pos in dir(wx) if pos.startswith("ART_")]):
+        for art_id in _get_wx_art_ids():
             artid = getattr(wx, art_id)
             bmp = wx.ArtProvider.GetBitmap(artid, wx.ART_TOOLBAR, (22, 22))
             if bmp.IsOk():
@@ -405,7 +422,7 @@ class DBCHOICE_EXT(POPUPHTML):
         if len(self.rec_value) > 0:
             id_val = self.rec_value[0]
             if parm == "value":
-                return b64encode(str(id_val).encode("utf-8"))
+                return b64encode(str(id_val).encode("utf-8")).decode("ascii")
             return None
         else:
             return None
@@ -420,7 +437,9 @@ class COMBOBOX(wx.ComboBox, SchBaseCtrl):
 
     Tag arguments:
         value: Initial text value.
-        multiple: If set in param, uses CB_SORT style.
+        sort: If set in param, uses CB_SORT style.
+        multiple: Deprecated alias for 'sort'. wx.ComboBox has no
+            multi-selection, so this never selected more than one item.
         readonly: If set, uses CB_READONLY style.
     """
 
@@ -435,7 +454,13 @@ class COMBOBOX(wx.ComboBox, SchBaseCtrl):
         SchBaseCtrl.__init__(self, parent, kwds)
 
         style = kwds.get("style", 0)
-        if self.param and "multiple" in self.param:
+        if self.param and "sort" in self.param:
+            style |= wx.CB_SORT
+        elif self.param and "multiple" in self.param:
+            logger.warning(
+                "The 'multiple' attribute of ctrlcombobox only ever sorted the "
+                "list; use 'sort' instead."
+            )
             style |= wx.CB_SORT
         if self.readonly:
             style |= wx.CB_READONLY
@@ -462,10 +487,9 @@ class COMBOBOX(wx.ComboBox, SchBaseCtrl):
                 else:
                     self.choice_values.append(row[0].data)
             value = self.GetValue()
-            if value and value in self.choice_values:
-                pass
-            elif self.value and self.value in choices:
-                self.SetValue(self.value)
+            if not (value and value in self.choice_values):
+                if self.value and self.value in choices:
+                    self.SetValue(self.value)
 
     def GetValue(self):
         """Get the current combo box value.
@@ -478,7 +502,8 @@ class COMBOBOX(wx.ComboBox, SchBaseCtrl):
         value = wx.ComboBox.GetValue(self)
         try:
             index = self.FindString(value)
-        except Exception:
+        except TypeError:
+            # FindString requires a str; a non-string cell value can reach here.
             return value
         if index != wx.NOT_FOUND and index < len(self.choice_values):
             return self.choice_values[index]

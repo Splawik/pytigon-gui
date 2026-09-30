@@ -23,8 +23,10 @@ from pytigon_gui.toolbar.basetoolbar import (
 _ = wx.GetTranslation
 
 
+# Use the Windows-MSW look for the ribbon bar.
 MSW_STYLE = True
-ORG_LIKE_PRIMARY = False
+# Saved copy of RB.art_msw.LikePrimary, taken once before Realize() patches it.
+ORG_LIKE_PRIMARY = None
 
 
 def like_primary(primary_hsl, h, s, l, x=None):
@@ -274,7 +276,9 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
 
     def close(self):
         """Close/destroy the ribbon bar."""
-        self.Close()
+        # The ribbon bar is a child window; Close() would only hide it and
+        # leave it alive, so destroy it explicitly.
+        self.Destroy()
 
     def update(self):
         """Force a layout refresh by briefly resizing the bar."""
@@ -354,9 +358,13 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
         """Return the preferred width of the ribbon bar.
 
         Returns:
-            int: Width in pixels (always 2000 for full width).
+            int: Width in pixels. Falls back to the screen width when the bar
+            has not been laid out yet.
         """
-        return 2000
+        width = self.GetSize().GetWidth()
+        if width > 0:
+            return width
+        return wx.SystemSettings.GetMetric(wx.SYS_SCREEN_WIDTH)
 
     def remove_page(self, title):
         """Remove a page from the ribbon bar.
@@ -367,7 +375,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
             title: Title of the page to remove.
         """
         self.SetActivePage(0)
-        for page_info in self._pages:
+        for page_info in list(self._pages):
             if page_info.page.title == title:
                 self._pages.remove(page_info)
         self.Update()
@@ -376,7 +384,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
     def Realize(self):
         if MSW_STYLE:
             global ORG_LIKE_PRIMARY
-            if not ORG_LIKE_PRIMARY:
+            if ORG_LIKE_PRIMARY is None:
                 ORG_LIKE_PRIMARY = RB.art_msw.LikePrimary
                 RB.art_msw.LikePrimary = like_primary
             provider = RB.RibbonMSWArtProvider()

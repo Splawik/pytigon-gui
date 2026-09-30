@@ -52,9 +52,7 @@ class LoginDialog(wx.Dialog):
         sizer = wx.GridBagSizer(5, 2)
 
         self.message = wx.StaticText(self, -1, "")
-        font = wx.Font(
-            10, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD
-        )
+        font = wx.Font(wx.FontInfo(10).Bold())
         self.message.SetFont(font)
 
         label1 = wx.StaticText(self, -1, _("User name:"))

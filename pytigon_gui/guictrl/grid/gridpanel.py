@@ -5,7 +5,6 @@ alongside a configurable toolbar with action buttons (edit, delete,
 view row) and dynamic per-row action buttons.
 """
 
-import collections
 import wx
 
 from pytigon_gui.guilib.image import bitmap_from_href
@@ -27,7 +26,13 @@ class SchGridPanel(wx.Panel):
             "delete": "wx.ART_DELETE",
             "view_row": "wx.ART_INFORMATION",
         }
-        self._menu_buttons = collections.OrderedDict()
+        # submenu label -> tool id owning that submenu
+        self._menu_buttons = {}
+        # tool id -> list of (item id, item label)
+        self._menu_tools = {}
+        # Set by create_toolbar(); None when the grid has no actions and no
+        # toolbar is built.
+        self.toolbar = None
 
     def set_bitmap(self, action, path):
         self._bitmaps[action] = path
@@ -81,9 +86,10 @@ class SchGridPanel(wx.Panel):
                             label2,
                             title,
                         )
-                        self._menu_buttons[label2] = []
+                        self._menu_buttons[label2] = self.lp2
+                        self._menu_tools[self.lp2] = []
                         self.lp2 += 1
-                    tab_menu = self._menu_buttons[label2]
+                    tab_menu = self._menu_tools[self._menu_buttons[label2]]
                     tab_menu.append((self.lp, label1))
                 else:
                     self.toolbar.AddTool(
@@ -166,10 +172,24 @@ class SchGridPanel(wx.Panel):
         self.on_size()
 
     def on_size(self, event=None):
+        """Lay out the grid and the scrolled toolbar pane.
+
+        Args:
+            event: wx.SizeEvent, or None to lay out using the current size.
+        """
         if event:
             panel_size = event.GetSize()
         else:
             panel_size = self.GetSize()
+        if self.toolbar is None:
+            # No actions and no toolbar: the grid fills the whole panel.
+            self.spanel.SetRect(wx.Rect(0, 0, panel_size[0], panel_size[1]))
+            self.grid.SetRect(
+                wx.Rect(0, 0, panel_size[0], (panel_size[1] - 2) - 2)
+            )
+            if event:
+                event.Skip()
+            return
         toolbar_size = self.toolbar.GetSize()
         if self.vertical:
             if toolbar_size[1] >= panel_size[1]:
@@ -193,17 +213,23 @@ class SchGridPanel(wx.Panel):
             event.Skip()
 
     def on_tool_click(self, event):
-        id = event.GetId()
-        if id > 200:
-            id2 = id - 201
-            tab_menu = list(self._menu_buttons.values())[id2]
+        """Dispatch a toolbar click to a command or a submenu.
+
+        Args:
+            event: wx.CommandEvent.
+        """
+        tool_id = event.GetId()
+        if tool_id > 200:
+            tab_menu = self._menu_tools.get(tool_id)
+            if not tab_menu:
+                return
             menu = wx.Menu()
             for pos in tab_menu:
                 menu.Append(pos[0], pos[1])
             self.PopupMenu(menu)
             menu.Destroy()
         else:
-            self.grid.action(self.commands[id - 101])
+            self.grid.action(self.commands[tool_id - 101])
 
     def refresh(self, row):
         if self.grid.GetTable().GetNumberRows() > 0:
@@ -212,7 +238,7 @@ class SchGridPanel(wx.Panel):
             test = False
             if akcje:
                 for action in akcje:
-                    if not "name" in action:
+                    if "name" not in action:
                         continue
                     akcje_dict[action["name"]] = akcje
                     if self._add_action(action):

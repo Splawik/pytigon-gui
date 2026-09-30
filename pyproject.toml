@@ -28,6 +28,13 @@ classifiers = [
 ]
 dynamic = ["dependencies"]
 
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.5",
+    "pytest>=7.0",
+    "mypy>=1.0",
+]
+
 [project.urls]
 homepage = "https://github.com/pytigon/pytigon-gui"
 repository = "https://github.com/pytigon/pytigon-gui"
@@ -44,6 +51,86 @@ filterwarnings = [
     "ignore::DeprecationWarning:pkg_resources.*",
     "ignore:.*ast\\.Ellipsis.*:DeprecationWarning:pscript.*",
 ]
+norecursedirs = [
+    ".kilo",
+    "build",
+    "dist",
+    "*.egg-info",
+    "__pycache__",
+]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+disallow_untyped_defs = false
+check_untyped_defs = true
+warn_return_any = false
+warn_unused_ignores = false
+
+[tool.ruff]
+line-length = 100
+force-exclude = true
+exclude = ["build", "dist"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Re-export modules: the imports exist to make names importable from here.
+"pytigon_gui/guictrl/ctrl.py" = ["F401"]
+"pytigon_gui/guictrl/tag.py" = ["F401"]
+"pytigon_gui/guictrl/__init__.py" = ["F401"]
+"pytigon_gui/guictrl/*/__init__.py" = ["F401"]
+"pytigon_gui/guiframe/__init__.py" = ["F401"]
+"pytigon_gui/guilib/__init__.py" = ["F401"]
+"pytigon_gui/toolbar/__init__.py" = ["F401"]
+# Modules that pull the control-id constants in with a star import, and
+# keep pre-existing local names / loop variables as-is (renaming them is
+# pure churn in code that is otherwise exercised and stable).
+"pytigon_gui/guiframe/*.py" = ["F403", "F405", "E402", "F841", "B007", "E741"]
+"pytigon_gui/toolbar/*.py" = ["F403", "F405", "E402"]
+# The wx/other imports are intentionally placed after argument processing.
+"pytigon_gui/pytigon.py" = ["E402", "F401", "F405", "E741"]
+"pytigon_gui/guictrl/*.py" = ["E402", "E712", "E741", "F841"]
+# The grid/page modules build configuration dicts with dict(...) throughout;
+# rewriting them as literals is a large mechanical diff with no benefit.
+"pytigon_gui/guictrl/grid/*.py" = ["C408", "F841", "E402", "E712", "E741", "F403", "F405", "B007"]
+"pytigon_gui/guictrl/input/*.py" = ["E402", "E712", "E741", "F841"]
+"pytigon_gui/guictrl/button/*.py" = ["E402", "E712", "E741", "F841"]
+"pytigon_gui/guictrl/popup/*.py" = ["E402", "E712", "E741", "F841"]
+"pytigon_gui/guilib/*.py" = ["E402", "E712", "E741", "F841"]
+"pytigon_gui/toolbar/moderntoolbar.py" = ["E741"]
+"pytigon_gui/wxauto.py" = ["UP031"]
+"tests/**/*.py" = ["F401", "F403", "F405", "E402", "E712", "E741", "F811", "E713", "I001", "B007", "F841"]
+# factory.py resolves widget classes by name out of its own globals()
+# (`if cls_name in globals(): globals()[cls_name](...)`), so these imports
+# are reachable by reflection and must not be removed.
+"pytigon_gui/guictrl/factory.py" = ["F401"]
+# page.py imports guilib.events for its control-id constants, then star-
+# imports the same module; the named import is not otherwise referenced.
+"pytigon_gui/guiframe/page.py" = ["F401"]
+# Re-exports autobahn factory/protocol for application code; the test
+# suite imports WebSocketClientFactory from this module.
+"pytigon_gui/guilib/websocket.py" = ["F401"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["pytigon_gui", "pytigon_lib", "pytigon"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
 
 [tool.setuptools.packages.find]
 include = ["pytigon*"]

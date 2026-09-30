@@ -8,11 +8,10 @@ import wx
 from pytigon_gui.guilib.events import *
 from pytigon_gui.toolbar.basetoolbar import (
     ToolbarBar,
+    ToolbarButton,
     ToolbarPage,
     ToolbarPanel,
-    ToolbarButton,
 )
-
 
 _ = wx.GetTranslation
 
@@ -81,7 +80,12 @@ class StandardToolbarPanel(ToolbarPanel):
                 pass
             elif b.kind == ToolbarButton.TYPE_SEPARATOR:
                 self.parent_page.parent_bar.standard_tool_bar.AddSeparator()
+        b.tool_item = item
         return item
+
+    def refresh(self):
+        """Repaint the wx.ToolBar that hosts this panel."""
+        self.parent_page.parent_bar.standard_tool_bar.Refresh()
 
     def create_button(
         self,

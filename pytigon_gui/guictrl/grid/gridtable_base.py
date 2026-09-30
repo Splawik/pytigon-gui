@@ -9,9 +9,6 @@ and cell attribute management.
 import wx
 from wx.grid import (
     GridCellAttr,
-    GridTableMessage,
-    GRIDTABLE_NOTIFY_ROWS_DELETED,
-    GRIDTABLE_NOTIFY_ROWS_APPENDED,
 )
 
 
@@ -37,10 +34,10 @@ class SchGridTableBase(wx.grid.GridTableBase):
         self.attr_update.SetBackgroundColour("WHEAT")
         self.attr_del = GridCellAttr()
         self.attr_del.SetBackgroundColour("RED")
-        self.attr_del.SetFont(wx.Font(8, wx.ROMAN, wx.ITALIC, wx.NORMAL, True))
+        self.attr_del.SetFont(wx.Font(wx.FontInfo(8).Italic()))
         self.attr_sel = GridCellAttr()
         self.attr_sel.SetBackgroundColour(self.sel_colour)
-        self.attr_sel.SetFont(wx.Font(8, wx.ROMAN, wx.ITALIC, wx.NORMAL, True))
+        self.attr_sel.SetFont(wx.Font(wx.FontInfo(8).Italic()))
         self.attr_normal = GridCellAttr()
 
         self.data = []
@@ -115,17 +112,50 @@ class SchGridTableBase(wx.grid.GridTableBase):
                 else:
                     self.tabsort = [col]
 
+    @property
+    def rec_selected(self):
+        """List of selected row indices."""
+        return self._rec_selected
+
+    @rec_selected.setter
+    def rec_selected(self, value):
+        """Replace the selection.
+
+        Keeps the membership set in sync so :meth:`_is_sel` stays O(1).
+
+        Args:
+            value: Iterable of row indices, or None to clear the selection.
+        """
+        self._rec_selected = list(value or [])
+        self._rec_selected_set = set(self._rec_selected)
+
     def _is_sel(self, row):
-        if row in self.rec_selected:
-            return True
-        return False
+        """Return True when *row* is selected.
+
+        Args:
+            row: Row index.
+
+        Returns:
+            True if the row is in the current selection.
+        """
+        return row in self._rec_selected_set
 
     def sel_row(self, row):
+        """Toggle the selection state of *row*.
+
+        Args:
+            row: Row index to toggle.
+
+        Returns:
+            True if the row was toggled, False if it is out of range.
+        """
         if row < self.GetNumberRows():
-            if row in self.rec_selected:
-                self.rec_selected.remove(row)
+            if row in self._rec_selected_set:
+                self._rec_selected.remove(row)
+                self._rec_selected_set.discard(row)
             else:
-                self.rec_selected.append(row)
+                self._rec_selected.append(row)
+                self._rec_selected_set.add(row)
             self.GetView().ForceRefresh()
             return True
         else:

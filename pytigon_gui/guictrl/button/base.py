@@ -18,9 +18,7 @@ Factory functions:
 """
 
 import wx
-from wx.adv import BitmapComboBox
 import wx.lib.platebtn as platebtn
-import wx.lib.buttons as buttons
 
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 from pytigon_gui.guictrl.button.toolbarbutton import BitmapTextButton
@@ -77,25 +75,32 @@ def _make_button_class(
 
             if is_bitmap_button:
                 self._set_bitmap()
-                if base_class in (buttons.GenBitmapButton, BitmapTextButton):
+                if base_class in (wx.BitmapButton, BitmapTextButton):
                     if "style" in kwds:
                         style = kwds["style"] | wx.NO_BORDER
                         kwds["style"] = style
                     else:
                         style = wx.NO_BORDER
                         kwds["style"] = wx.NO_BORDER
-                    kwds["bitmap"] = self.bmp
-                elif base_class == buttons.GenBitmapTextButton:
-                    kwds["bitmap"] = self.bmp
+                    # wx.BitmapButton rejects a None bitmap; GenBitmapButton
+                    # tolerated it, so only pass one when it was loaded.
+                    if self.bmp is not None:
+                        kwds["bitmap"] = self.bmp
                 elif base_class == platebtn.PlateButton:
                     kwds["style"] = (
                         platebtn.PB_STYLE_SQUARE | platebtn.PB_STYLE_GRADIENT
                     )
                     kwds["bmp"] = self.bmp
+                elif base_class == wx.Button:
+                    # wx.Button has no 'bitmap' constructor argument; the
+                    # bitmap is applied with SetBitmap() after construction.
+                    if self.bmp is not None:
+                        kwds["bitmap"] = self.bmp
                 else:
                     if "style" not in kwds:
                         kwds["style"] = 0
-                    kwds["bitmap"] = self.bmp
+                    if self.bmp is not None:
+                        kwds["bitmap"] = self.bmp
 
                 # GenBitmapButton/BitmapTextButton/GenBitmapTextButton
                 # use 'label' kwarg; wx.BitmapButton does not.
@@ -129,7 +134,16 @@ def _make_button_class(
             else:
                 self.fields = None
 
+            # wx.Button has no 'bitmap' constructor argument, so pull it out
+            # before __init__ and apply it with SetBitmap() afterwards.
+            deferred_bitmap = None
+            if is_bitmap_button and base_class == wx.Button:
+                deferred_bitmap = kwds.pop("bitmap", None)
+
             base_class.__init__(self, parent, **kwds)
+
+            if deferred_bitmap is not None:
+                self.SetBitmap(deferred_bitmap)
 
             # Set as default button if configured
             if self.defaultvalue:
@@ -307,13 +321,11 @@ BITMAPBUTTON = _make_button_class(wx.BitmapButton, is_bitmap_button=True)
 PLATEBUTTON = _make_button_class(platebtn.PlateButton, is_bitmap_button=True)
 """Styled plate button with gradient background and bitmap."""
 
-GENBITMAPBUTTON = _make_button_class(buttons.GenBitmapButton, is_bitmap_button=True)
-"""Generic bitmap button with no border."""
+GENBITMAPBUTTON = _make_button_class(wx.BitmapButton, is_bitmap_button=True)
+"""Generic bitmap button with no border (backed by wx.BitmapButton)."""
 
-GENBITMAPTEXTBUTTON = _make_button_class(
-    buttons.GenBitmapTextButton, is_bitmap_button=True
-)
-"""Generic bitmap button with text label."""
+GENBITMAPTEXTBUTTON = _make_button_class(wx.Button, is_bitmap_button=True)
+"""Generic bitmap button with text label (backed by wx.Button)."""
 
 GENBITMAPBUTTONTXT = _make_button_class(BitmapTextButton, is_bitmap_button=True)
 """Bitmap text button (normal icon size)."""
@@ -376,12 +388,14 @@ def _make_menu_button_class(base_class):
             if ldata:
                 menu = wx.Menu()
                 for row in ldata:
-                    label = row[0].replace("-", "").strip()
-                    if label:
+                    # Only a leading "---" marks a separator; hyphens inside
+                    # a label (e.g. "Save-as") must be preserved.
+                    label = row[0].strip()
+                    if label.startswith("---"):
+                        menu.AppendSeparator()
+                    elif label:
                         menu.Append(wx.ID_ANY, label, row[2]["href"])
                         self._href_dict[label] = row[2]
-                    else:
-                        menu.AppendSeparator()
                 self.SetMenu(menu)
 
             self.Bind(wx.EVT_MENU, self._on_menu)

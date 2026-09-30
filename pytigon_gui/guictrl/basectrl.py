@@ -8,14 +8,14 @@ and keyboard event handling.
 Also provides the handle_best_size decorator for auto-sizing widgets.
 """
 
-import wx
 import logging
-
-from pytigon_lib.schhtml.htmlviewer import tdata_from_html
-
 from urllib.parse import unquote
-from pytigon_lib.schparser.html_parsers import TreeParser
+
+import wx
+
 from pytigon_gui.guilib.threads import block_http_pumping
+from pytigon_lib.schhtml.htmlviewer import tdata_from_html
+from pytigon_lib.schparser.html_parsers import TreeParser
 
 logger = logging.getLogger(__name__)
 
@@ -243,7 +243,9 @@ class SchBaseCtrl:
         calls the __ext_init__ hook if present, and signals the parent
         form that this child is ready.
         """
-        self.Bind(wx.EVT_KEY_DOWN, self.on_key_down_base)
+        if not getattr(self, "_key_down_bound", False):
+            self.Bind(wx.EVT_KEY_DOWN, self.on_key_down_base)
+            self._key_down_bound = True
         if self.onload:
             d = {"wx": wx, "self": self}
             try:
@@ -437,6 +439,8 @@ class SchBaseCtrl:
         """
         parent = self.parent
         while parent is not None:
+            # Duck-typed rather than isinstance(): guiframe.form imports this
+            # module at load time, and the parent may be any test double.
             if type(parent).__name__ == "SchForm":
                 return parent
             parent = parent.GetParent()

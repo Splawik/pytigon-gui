@@ -77,20 +77,29 @@ Dependencies
 - **asyncio**: all automation actions are async coroutines.
 """
 
-import sys
-import os
-import traceback
-import logging
 import datetime
 import importlib
-import wx
+import logging
+import os
+import re
+import sys
+import traceback
 from asyncio import sleep
 
-from django.template import Template, Context
+import wx
+from django.template import Context, Template
 
 from pytigon.pytigon_run import run
 
 logger = logging.getLogger(__name__)
+
+
+class ImageNotFoundError(Exception):
+    """Raised when a requested image is not present on screen.
+
+    Dedicated to this condition so callers can distinguish "the image is not
+    visible" from genuine programming errors such as a :class:`TypeError`.
+    """
 
 
 # =============================================================================
@@ -282,7 +291,7 @@ class WxAuto:
                 Path to the PNG image file to search for on screen.
 
         Raises:
-            TypeError:
+            ImageNotFoundError:
                 If the image cannot be found within the search region.
         """
         await sleep(self.sys_time_unit / 2)
@@ -290,7 +299,7 @@ class WxAuto:
         region = self.get_region()
         location = self.pyautogui.locateOnScreen(image_name, region=region)
         if location is None:
-            raise TypeError(
+            raise ImageNotFoundError(
                 "Image '%s' not found on screen (region: %s)" % (image_name, region)
             )
 
@@ -450,7 +459,7 @@ class WxAuto:
         if txt.startswith("@"):
             # Load commands from an external file.
             try:
-                with open(txt[1:], "rt") as f:
+                with open(txt[1:]) as f:
                     txt2 = f.read()
                     # Optionally render Django template variables.
                     if argv:
@@ -474,13 +483,26 @@ class WxAuto:
             else:
                 change_tab2 = list(change_tab)
 
-            # Process in reverse so that nested $references work correctly
-            # (later replacements don't interfere with earlier ones).
-            change_tab2.reverse()
+            replacements = {}
             for item in change_tab2:
                 if ":" in item:
                     key, value = item.split(":", 1)
-                    txt2 = txt2.replace("$" + key, value)
+                    replacements[key] = value
+
+            if replacements:
+                # Substitute only the known keys, so unrelated '$' characters
+                # in the script are left untouched. Applied repeatedly (up to a
+                # bound) so a replacement may itself contain a placeholder.
+                pattern = re.compile(
+                    r"\$(" + "|".join(re.escape(k) for k in replacements) + r")"
+                )
+                for _ in range(10):
+                    new_txt = pattern.sub(
+                        lambda m: replacements[m.group(1)], txt2
+                    )
+                    if new_txt == txt2:
+                        break
+                    txt2 = new_txt
 
         # ---- Step 3: Interpret script line by line ------------------------
         for line in txt2.split("\n"):
@@ -498,7 +520,7 @@ class WxAuto:
             # --- Method call: '^method' or '^method:arg' ---
             # Calls a method on this WxAuto instance dynamically.
             elif stripped.startswith("^"):
-                parts = stripped.split(":")
+                parts = stripped.split(":", 1)
                 try:
                     if len(parts) > 1:
                         # ^method_name:argument
@@ -771,7 +793,7 @@ def autoit(win):
 if __name__ == "__main__":
     # Register the autoit function so that the main application frame
     # can discover and call it after initialization.
-    setattr(wx, "pseudoimport", autoit)
+    wx.pseudoimport = autoit
 
     # Rewrite sys.argv to launch the main pytigon application with
     # video recording, RPC server, and inspection tool enabled.

@@ -8,17 +8,19 @@ Function :func:`~pytigon_gui.pytigon.main` process pytigon command line argument
 - login to server process
 """
 
-import os
-import sys
-from pathlib import Path
-import time
-import platform
-import zipfile
-import getopt
 import configparser
-import logging
-from urllib.parse import urljoin
 import contextlib
+import getopt
+import logging
+import os
+import platform
+import sys
+import time
+import warnings
+import zipfile
+from pathlib import Path
+from urllib.parse import urljoin
+
 import pytigon
 
 logger = logging.getLogger(__name__)
@@ -209,10 +211,6 @@ if _PARAM is None:
     sys.exit(0)
 
 import asyncio
-from asyncio import get_event_loop, set_event_loop_policy
-
-if sys.platform == "win32":
-    set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 from pytigon_lib.schtools.main_paths import get_main_paths
 
@@ -313,15 +311,22 @@ process_adv_argv()
 _ASYNC_APP = "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM
 _ASYNC_LOOP = None
 if _ASYNC_APP:
+    if sys.platform == "win32":
+        # Twisted's asyncio reactor needs a selector-based proactor on
+        # Windows. Set the policy here, next to the loop that actually needs
+        # it, instead of unconditionally at import time.
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     _ASYNC_LOOP = asyncio.new_event_loop()
     asyncio.set_event_loop(_ASYNC_LOOP)
 
 if _ASYNC_APP:
-    try:
-        from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
-    except ImportError:
-        asyncio.futures.CancelledError = asyncio.CancelledError
-        from wxasync import AsyncBind, WxAsyncApp, StartCoroutine
+    # wxasync is not installable from PyPI in this project, so it is vendored
+    # in pytigon.ext_lib and imported as a package module. A bare
+    # `from wxasync import ...` would only resolve if an unrelated
+    # <cwd>/ext_lib happened to be on sys.path.
+    from pytigon.ext_lib.wxasync import AsyncBind, StartCoroutine, WxAsyncApp
 
     class SchAsyncApp(WxAsyncApp):
         async def MainLoop(self):
@@ -339,22 +344,19 @@ if _ASYNC_APP:
                     evtloop.ProcessIdle()
 
 
-from pytigon_gui.guilib import image
-from pytigon_gui.guilib import pytigon_install
-from pytigon_gui.guilib.logindialog import LoginDialog
-from pytigon_gui.guiframe import appframe
-from pytigon_gui.guilib.threadwindow import SchThreadManager
-from pytigon_lib.schfs.vfstools import extractall
-from pytigon_lib.schparser.html_parsers import SimpleTabParser
-from pytigon_gui.guilib.tools import standard_tab_colour, colour_to_html
-from pytigon_lib.schhttptools import httpclient
-from pytigon_gui.guilib.httperror import http_error
-from pytigon_lib.schhttptools.httpclient import HttpResponse
-from pytigon_gui.guiframe import browserframe
-from pytigon_lib.schtools import createparm
-from pytigon_lib.schparser.html_parsers import ShtmlParser
-from pytigon_lib.schtools.schjson import json_dumps, json_loads
 import pytigon_gui.guictrl.tag
+from pytigon_gui.guiframe import appframe, browserframe
+from pytigon_gui.guilib import image, pytigon_install
+from pytigon_gui.guilib.httperror import http_error
+from pytigon_gui.guilib.logindialog import LoginDialog
+from pytigon_gui.guilib.threadwindow import SchThreadManager
+from pytigon_gui.guilib.tools import colour_to_html, standard_tab_colour
+from pytigon_lib.schfs.vfstools import extractall
+from pytigon_lib.schhttptools import httpclient
+from pytigon_lib.schhttptools.httpclient import HttpResponse
+from pytigon_lib.schparser.html_parsers import ShtmlParser, SimpleTabParser
+from pytigon_lib.schtools import createparm
+from pytigon_lib.schtools.schjson import json_dumps, json_loads
 
 if "rpc" in _PARAM or "websocket" in _PARAM:
     import twisted.internet.asyncioreactor
@@ -363,11 +365,11 @@ if "rpc" in _PARAM or "websocket" in _PARAM:
     # otherwise reactor callbacks (RPC, remote websockets) never run.
     twisted.internet.asyncioreactor.install(_ASYNC_LOOP)
 
-    from twisted.internet import reactor
     import twisted
+    from twisted.internet import reactor
 
     if "rpc" in _PARAM:
-        from twisted.web import xmlrpc, server
+        from twisted.web import server, xmlrpc
 
         _APP_CONFIG["rpc"] = True
     if "websocket" in _PARAM:
@@ -412,7 +414,7 @@ if _APP_CONFIG["inspection"]:
                     return
             func_line_no = frame.f_lineno
             func_filename = co.co_filename
-            if not "wx/core" in func_filename:
+            if "wx/core" not in func_filename:
                 return
             caller = frame.f_back
             caller_line_no = caller.f_lineno
@@ -459,9 +461,9 @@ class SchApp(App, _BASE_APP):
 
         self.splash = None
         if (
-            not "no_splash" in _PARAM
-            and not "nogui" in _PARAM
-            and not "server_only" in _PARAM
+            "no_splash" not in _PARAM
+            and "nogui" not in _PARAM
+            and "server_only" not in _PARAM
         ):
             img = wx.svg.SVGimage.CreateFromFile(str(SRC_PATH / "pytigon.svg"))
             bitmap = img.ConvertToBitmap(
@@ -690,7 +692,7 @@ class SchApp(App, _BASE_APP):
         self.mp.close()
 
     async def init_websockets(self):
-        from channels.generic.websocket import WebsocketConsumer, AsyncWebsocketConsumer
+        from channels.generic.websocket import AsyncWebsocketConsumer, WebsocketConsumer
 
         obj = self
         old_init = WebsocketConsumer.__init__
@@ -1057,7 +1059,7 @@ class SchApp(App, _BASE_APP):
             if hasattr(callback, event_name):
                 if "channel" in argv:
                     if hasattr(callback, "accept_channel"):
-                        if not getattr(callback, "accept_channel")(argv["channel"]):
+                        if not callback.accept_channel(argv["channel"]):
                             continue
                 try:
                     getattr(callback, event_name)(**argv)
@@ -1092,9 +1094,18 @@ def login(base_href, auth_type=None, username=None):
     Returns:
         True if login succeeded, False otherwise.
     """
-    dlg = LoginDialog(None, 101, _("Pytigon - login"), username=username)
+    def _attempt(dlg, base_href, auth_type):
+        """Run one authentication attempt against the server.
 
-    while dlg.ShowModal() == wx.ID_OK:
+        Args:
+            dlg: The login dialog holding the entered credentials.
+            base_href: base URL for authentication requests.
+            auth_type: authentication type ('basic' or None for form-based).
+
+        Returns:
+            True if login succeeded, False if it must not be retried, and
+            None if the user should be offered another attempt.
+        """
         try:
             username = dlg.text1.GetValue()
             password = dlg.text2.GetValue()
@@ -1115,35 +1126,50 @@ def login(base_href, auth_type=None, username=None):
 
                 if ret is None:
                     dlg.message.SetLabel(_("Connection error!"))
-                    continue
+                    return None
 
                 ret_str = ret.str()
 
                 if "$$RETURN_OK" in ret_str:
-                    dlg.Destroy()
                     return True
                 else:
                     if "id_password" not in ret_str:
-                        dlg.Destroy()
                         return False
                     else:
                         dlg.message.SetLabel(_("Failed login attempt!"))
+                        return None
             else:
                 result = wx.GetApp().http.get(
                     wx.GetApp(), base_href, credentials=(username, password)
                 )
                 if result is not None and result.ret_code == 200:
-                    dlg.Destroy()
                     return True
                 else:
                     ret_code = result.ret_code if result else "N/A"
                     dlg.message.SetLabel(
-                        _(f"Failed login attempt! http error: {ret_code}")
+                        _("Failed login attempt! http error: %s") % ret_code
                     )
+                    return None
         except Exception as e:
-            dlg.message.SetLabel(_(f"Login error: {str(e)}"))
-    dlg.Destroy()
-    return False
+            dlg.message.SetLabel(_("Login error: %s") % str(e))
+            return None
+
+    # A wx dialog cannot be shown again once EndModal has been called, so a
+    # fresh dialog is built for every retry instead of re-showing the old one.
+    while True:
+        dlg = LoginDialog(None, 101, _("Pytigon - login"), username=username)
+        if dlg.ShowModal() != wx.ID_OK:
+            dlg.Destroy()
+            return False
+        result = _attempt(dlg, base_href, auth_type)
+        if result is True:
+            dlg.Destroy()
+            return True
+        if result is False:
+            dlg.Destroy()
+            return False
+        username = dlg.text1.GetValue()
+        dlg.Destroy()
 
 
 def _setup_app_params():
@@ -1303,6 +1329,7 @@ def _setup_server(address):
         address = "embeded"
     if address == "embeded":
         import socket
+
         from pytigon_lib.schdjangoext.server import run_server
 
         if "server_only" in _PARAM:
@@ -1541,20 +1568,20 @@ def _main_run():
 
         if callable(x):
 
-            def s():
+            def run_import():
                 nonlocal frame, x
                 x(frame)
 
-            wx.CallAfter(s)
+            wx.CallAfter(run_import)
 
     if hasattr(wx, "pseudoimport"):
-        x = getattr(wx, "pseudoimport")
+        x = wx.pseudoimport
 
-        def s():
+        def run_pseudoimport():
             nonlocal frame, x
             x(frame)
 
-        wx.CallAfter(s)
+        wx.CallAfter(run_pseudoimport)
 
     if _ASYNC_LOOP is not None:
         _ASYNC_LOOP.run_until_complete(app.MainLoop())

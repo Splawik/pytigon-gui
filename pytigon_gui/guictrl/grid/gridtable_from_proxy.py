@@ -10,9 +10,10 @@ import copy
 import logging
 
 import wx
+
 import pytigon_lib.schtools.createparm as createparm
-from pytigon_lib.schhttptools import httpclient
 from pytigon_gui.guilib.threads import block_http_pumping
+from pytigon_lib.schhttptools import httpclient
 
 from .gridtable_base import SchGridTableBase
 
@@ -291,7 +292,7 @@ class DataSource(SchGridTableBase):
         x = self.make_exec_cmd(cmd, option)
         if parm:
             x.append(parm)
-        ret = self.proxy.exec(x)
+        ret = self.proxy.run(x)
         return ret
 
     def GetRecAsStr(self, nrRec):
@@ -402,7 +403,9 @@ class DataSource(SchGridTableBase):
 
         if row >= self.rec_count:
             if row not in self.rec_to_instert:
-                (self.rec_to_instert)[row] = copy.copy(self.default_rec)
+                # Deep copy: the default record contains a nested list, which
+                # a shallow copy would share between every inserted row.
+                (self.rec_to_instert)[row] = copy.deepcopy(self.default_rec)
 
             (self.rec_to_instert)[row][col + 1] = value
 
@@ -414,7 +417,10 @@ class DataSource(SchGridTableBase):
                 self.GetView().ProcessTableMessage(msg)
         else:
             if row not in self.rec_to_update:
-                (self.rec_to_update)[row] = self.get_rec(row)
+                # get_rec() hands back a reference into the cached page, so
+                # copy it before mutating or the edit is lost on re-fetch.
+                rec = self.get_rec(row)
+                (self.rec_to_update)[row] = list(rec) if rec else rec
             (self.rec_to_update)[row][col + 1] = value
             if row in self.rec_to_delete:
                 self.rec_to_delete.remove(row)

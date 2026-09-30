@@ -9,9 +9,9 @@ import wx
 from pytigon_gui.guilib.events import *
 from pytigon_gui.toolbar.basetoolbar import (
     ToolbarBar,
+    ToolbarButton,
     ToolbarPage,
     ToolbarPanel,
-    ToolbarButton,
 )
 
 

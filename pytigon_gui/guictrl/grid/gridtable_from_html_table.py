@@ -6,14 +6,16 @@ as HTML and parses it into grid rows. Supports sorting,
 column sizing, cell-level attributes, and copy/paste.
 """
 
-import urllib
-import wx
 import logging
+import urllib
+
+import wx
+
+from pytigon_gui.guilib.tools import colour_to_html
+from pytigon_lib.schhtml.htmlviewer import tdata_from_html
+from pytigon_lib.schhttptools import httpclient
 
 from .gridtable_base import SchGridTableBase
-from pytigon_lib.schhttptools import httpclient
-from pytigon_lib.schhtml.htmlviewer import tdata_from_html
-from pytigon_gui.guilib.tools import colour_to_html
 
 logger = logging.getLogger(__name__)
 
@@ -174,13 +176,13 @@ class PageData:
             self.parent.grid.set_col_width(self.sizes)
 
         if row_h:
+            grid = self.parent.grid
+            default_h = grid.GetDefaultRowSize()
+            heights = list(row_h.items())
 
             def set_h():
-                nonlocal row_h, self
-                for key, value in row_h.items():
-                    self.parent.grid.SetRowSize(
-                        key, value * self.parent.grid.GetDefaultRowSize()
-                    )
+                for key, value in heights:
+                    grid.SetRowSize(key, value * default_h)
 
             wx.CallAfter(set_h)
 
@@ -278,7 +280,7 @@ class SimpleDataTable(SchGridTableBase):
             attrs.append(td.attrs)
             children = td.children
             if children:
-                for sys_id in sorted(list(children)):
+                for sys_id in sorted(children):
                     a = children[sys_id].attrs
                     txt = ""
                     for atom in children[sys_id].atom_list.atom_list:
@@ -328,7 +330,7 @@ class SimpleDataTable(SchGridTableBase):
             return None
 
     def filter_cmp(self, pos, key):
-        if self.filter_id >= 0:
+        if self.filter_id is not None and self.filter_id >= 0:
             if str(pos[self.filter_id].data).upper().startswith(key.upper()):
                 return True
             else:
@@ -400,7 +402,9 @@ class SimpleDataTable(SchGridTableBase):
                 if color:
                     attr.SetTextColour(color)
                 if strong:
-                    font = self.GetView().GetDefaultCellFont()
+                    # Copy: GetDefaultCellFont() is shared by every cell of
+                    # the grid, so mutating it would bold them all.
+                    font = wx.Font(self.GetView().GetDefaultCellFont())
                     font.SetWeight(wx.FONTWEIGHT_BOLD)
                     attr.SetFont(font)
                 self.attrs[key] = attr

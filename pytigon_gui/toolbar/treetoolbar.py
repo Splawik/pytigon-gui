@@ -6,18 +6,16 @@ from wx.lib.agw.
 
 import wx
 from wx.lib.agw import customtreectrl as CT
-from wx.lib.agw.ribbon import art
 
+from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 from pytigon_gui.guilib.events import *
 from pytigon_gui.toolbar.basetoolbar import (
     BaseHtmlPanel,
     ToolbarBar,
+    ToolbarButton,
     ToolbarPage,
     ToolbarPanel,
-    ToolbarButton,
 )
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
-
 
 _ = wx.GetTranslation
 
@@ -137,6 +135,8 @@ class TreeToolbarPanel(ToolbarPanel):
         if item:
             self.parent_page.parent_bar.SetItemHyperText(item, True)
             self.parent_page.parent_bar.SetPyData(item, b.id)
+        b.tool_item = item
+        return item
 
     def create_button(
         self,
@@ -245,10 +245,13 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
         super().__init__(parent, gui_style)
         self.EnableSelectionVista(True)
 
-        self.Bind(wx.EVT_CLOSE, self.on_close)
         self.Bind(CT.EVT_TREE_ITEM_HYPERLINK, self.on_hyper_link)
 
-        wx.GetApp().GetTopWindow().idle_objects.append(self)
+        top_window = wx.GetApp().GetTopWindow()
+        top_window.idle_objects.append(self)
+        # A control is destroyed rather than closed, so EVT_CLOSE is never
+        # delivered to it; deregister on destroy instead.
+        top_window.Bind(wx.EVT_WINDOW_DESTROY, self._on_top_window_destroy)
 
     def append_to_tree(self, parent_elem, title, bitmap=None, ct_type=0):
         """Append a child item to the tree.
@@ -297,14 +300,36 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
         """Return True to indicate this control accepts keyboard focus."""
         return self.CanAcceptFocus()
 
+    def _deregister(self):
+        """Remove this control from the top window's idle object list."""
+        top_window = wx.GetApp().GetTopWindow()
+        if top_window and self in top_window.idle_objects:
+            top_window.idle_objects.remove(self)
+
+    def _on_top_window_destroy(self, event):
+        """Drop references when the top window is destroyed.
+
+        Args:
+            event: wx.WindowDestroyEvent.
+        """
+        if event.GetEventObject() is wx.GetApp().GetTopWindow():
+            self._deregister()
+            try:
+                wx.GetApp().GetTopWindow().Unbind(
+                    wx.EVT_WINDOW_DESTROY, handler=self._on_top_window_destroy
+                )
+            except RuntimeError:
+                # The window is already gone.
+                pass
+        event.Skip()
+
     def on_close(self, event):
         """Handle the close event by removing from idle objects.
 
         Args:
             event: wx.CloseEvent.
         """
-        if self in wx.GetApp().GetTopWindow().idle_objects:
-            wx.GetApp().GetTopWindow().idle_objects.remove(self)
+        self._deregister()
         event.Skip()
 
     def get_max_width(self, respect_expansion_state=True):

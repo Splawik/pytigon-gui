@@ -8,18 +8,19 @@ Classes:
     TABLE, GRID, UPDATEGRIDBUTTON
 """
 
-import wx
 import logging
+
+import wx
 
 logger = logging.getLogger(__name__)
 
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 from pytigon_gui.guictrl.grid import grid, gridtable_from_proxy, tabproxy
-from pytigon_gui.guictrl.grid.gridtable_from_html_table import SimpleDataTable
 from pytigon_gui.guictrl.grid.gridpanel import SchGridPanel
+from pytigon_gui.guictrl.grid.gridtable_from_html_table import SimpleDataTable
 from pytigon_gui.guilib.threads import block_http_pumping
-from pytigon_lib.schtools import createparm
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
+from pytigon_lib.schtools import createparm
 
 
 class TABLE(SchGridPanel, SchBaseCtrl):
@@ -72,7 +73,8 @@ class TABLE(SchGridPanel, SchBaseCtrl):
             style=wx.TAB_TRAVERSAL | wx.FULL_REPAINT_ON_RESIZE,
         )
         self.create_toolbar(self.grid)
-        self.Bind(wx.EVT_CLOSE, self._on_close)
+        # A wx.Panel never receives EVT_CLOSE; it is only destroyed.
+        self.Bind(wx.EVT_WINDOW_DESTROY, self._on_close)
         self._table = table
         for signal_name in ("update_row_ok", "new_row_ok", "delete_row_ok"):
             self.get_parent_page().register_signal(self, signal_name)
@@ -86,9 +88,15 @@ class TABLE(SchGridPanel, SchBaseCtrl):
     table_lp = property(get_table_lp, set_table_lp)
 
     def _on_close(self, event):
-        """Unregister signals on close."""
-        for signal_name in ("update_row_ok", "new_row_ok", "delete_row_ok"):
-            self.get_parent_page().unregister_signal(self, signal_name)
+        """Unregister signals when the panel is destroyed.
+
+        Args:
+            event: wx.WindowDestroyEvent.
+        """
+        page = self.get_parent_page()
+        if page:
+            for signal_name in ("update_row_ok", "new_row_ok", "delete_row_ok"):
+                page.unregister_signal(self, signal_name)
         event.Skip()
 
     def delete_row_ok(self, data):
@@ -229,13 +237,7 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
 
     def __init__(self, parent, **kwds):
         SchBaseCtrl.__init__(self, parent, kwds)
-        parm = createparm.create_parm(self.src, parent.get_parm_obj())
-        if parm:
-            self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(parent), str(parm[0]))
-            self.proxy.set_address_parm(parm[2])
-        else:
-            self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(parent), str(self.src))
-        table = gridtable_from_proxy.DataSource(self.proxy)
+        table = gridtable_from_proxy.DataSource(self._create_proxy(parent, self.src))
 
         if self.readonly:
             kwds["typ"] = self.VIEW
@@ -245,6 +247,35 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
 
         super().__init__(table, self.src, parent, **kwds)
 
+    @staticmethod
+    def _create_proxy(parent, src):
+        """Build a DataProxy for *src*, degrading to an empty one on failure.
+
+        The proxy performs an HTTP request in its constructor.  A failure
+        there would otherwise propagate out of the widget constructor and
+        abort the surrounding HTML parse, so it is logged and an empty proxy
+        is returned instead.
+
+        Args:
+            parent: Window used to look up the application's http client.
+            src: Data source URL, possibly with ``createparm`` placeholders.
+
+        Returns:
+            A :class:`~pytigon_gui.guictrl.grid.tabproxy.DataProxy`, or a
+            :class:`~pytigon_gui.guictrl.grid.tabproxy.NullProxy` on failure.
+        """
+        try:
+            parm = createparm.create_parm(src, parent.get_parm_obj())
+            if parm:
+                proxy = tabproxy.DataProxy(wx.GetApp().get_http(parent), str(parm[0]))
+                proxy.set_address_parm(parm[2])
+            else:
+                proxy = tabproxy.DataProxy(wx.GetApp().get_http(parent), str(src))
+        except Exception:
+            logger.exception("Failed to create grid data proxy for %s", src)
+            return tabproxy.NullProxy(str(src))
+        return proxy
+
     def process_refr_data(self, **kwds):
         """Refresh grid with new data source.
 
@@ -253,13 +284,9 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
         """
         self.init_base(kwds)
 
-        parm = createparm.create_parm(self.src, self.GetParent().get_parm_obj())
-        if parm:
-            self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(self), str(parm[0]))
-            self.proxy.set_address_parm(parm[2])
-        else:
-            self.proxy = tabproxy.DataProxy(wx.GetApp().get_http(self), str(self.src))
-        table = gridtable_from_proxy.DataSource(self.proxy)
+        proxy = self._create_proxy(self.GetParent(), self.src)
+        self.proxy = proxy
+        table = gridtable_from_proxy.DataSource(proxy)
         self.SetTable(table)
 
     def refr_obj(self):
@@ -302,16 +329,56 @@ class UPDATEGRIDBUTTON(wx.Button, SchBaseCtrl):
         self.Bind(wx.EVT_BUTTON, self._on_click)
 
     def _on_click(self, event):
-        """Collect form values and update parent grid.
+        """Collect form values and push them into the parent grid.
 
         Args:
             event: Button click event.
         """
+        grid_ctrl = self.get_parent_grid()
+        if grid_ctrl is None:
+            logger.warning("no parent grid found for %s", self.get_unique_name())
+            return
+
+        table = grid_ctrl.GetTable()
+        # on_update_rec_from_form is written for the +1 primary-key offset used
+        # by gridtable_from_proxy.DataSource. SimpleDataTable (ctrl-table) is
+        # 0-based and its SetValue would overwrite the Td cell objects.
+        if not isinstance(table, gridtable_from_proxy.DataSource):
+            logger.warning(
+                "on_update_rec_from_form is not supported for %s",
+                type(table).__name__,
+            )
+            return
+
+        page = self.get_parent_form().get_parent_page()
+        row = grid_ctrl.GetGridCursorRow()
         rec = {}
-        keys = list(self.GetParent().GetWidgets().keys())
-        for k in keys:
-            ctrl = self.GetParent().GetItem(k)
-            if hasattr(ctrl, "GetValue"):
-                rec[k] = ctrl.GetValue()
-        self.GetParent().GetPrevWin().ActiveCtrl.OnUpRecFromForm(rec)
-        self.GetParent().any_parent_command("OnCancel", None)
+        for i, name in enumerate(table.GetColNames()[1:], start=1):
+            ctrl = page.get_item(name)
+            if ctrl is not None:
+                rec[name] = ctrl.get_form_value()
+            else:
+                # keep the grid's current value for columns the form omits
+                rec[name] = table.GetValue(row, i)
+        grid_ctrl.on_update_rec_from_form(rec)
+        table.commit()
+        self.GetParent().any_parent_command("on_child_form_cancel")
+
+    def get_parent_grid(self):
+        """Return the SchTableGrid on the page above this button's form.
+
+        Returns:
+            The parent grid widget, or None if the button is not on a child
+            page or no grid exists on the parent page.
+        """
+        form = self.get_parent_form()
+        page = form.get_gparent_page() if form is not None else None
+        if page is None:
+            return None
+        for ctrl in page.get_widgets().values():
+            if isinstance(ctrl, grid.SchTableGrid):
+                return ctrl
+            inner = getattr(ctrl, "grid", None)
+            if isinstance(inner, grid.SchTableGrid):
+                return inner
+        return None

@@ -8,10 +8,10 @@ and remote HTTP sources.
 import io
 import logging
 from io import BytesIO
-from PIL import Image
-from wx.svg import SVGimage
 
 import wx
+from PIL import Image
+from wx.svg import SVGimage
 
 _ = wx.GetTranslation
 logger = logging.getLogger(__name__)
@@ -254,7 +254,7 @@ class ArtProviderFromIcon(wx.ArtProvider):
 
         ids_path = str(wx.GetApp().src_path) + "/static/icons/ids.txt"
         try:
-            with open(ids_path, "rt") as ids:
+            with open(ids_path) as ids:
                 for line in ids:
                     line = line.strip()
                     if not line:

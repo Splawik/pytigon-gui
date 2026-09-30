@@ -8,8 +8,8 @@ Classes:
     CALENDAR, DATEPICKER, DATETIMEPICKER, TIME
 """
 
-import platform
 import datetime
+import platform
 
 import wx
 from wx.adv import CalendarCtrl
@@ -36,28 +36,18 @@ class CALENDAR(CalendarCtrl, SchBaseCtrl):
 
         Args:
             parent: Parent window.
-            **kwds: Forwarded to CalendarCtrl with platform-appropriate
-                style flags (wx.adv vs wx.calendar namespace).
+            **kwds: Forwarded to CalendarCtrl with the weekday-first
+                calendar style flags.
         """
         SchBaseCtrl.__init__(self, parent, kwds)
-        try:
-            CalendarCtrl.__init__(
-                self,
-                parent,
-                style=wx.adv.CAL_MONDAY_FIRST
-                | wx.adv.CAL_SHOW_HOLIDAYS
-                | wx.adv.CAL_SEQUENTIAL_MONTH_SELECTION,
-                **kwds,
-            )
-        except AttributeError:
-            CalendarCtrl.__init__(
-                self,
-                parent,
-                style=wx.calendar.CAL_MONDAY_FIRST
-                | wx.calendar.CAL_SHOW_HOLIDAYS
-                | wx.calendar.CAL_SEQUENTIAL_MONTH_SELECTION,
-                **kwds,
-            )
+        CalendarCtrl.__init__(
+            self,
+            parent,
+            style=wx.adv.CAL_MONDAY_FIRST
+            | wx.adv.CAL_SHOW_HOLIDAYS
+            | wx.adv.CAL_SEQUENTIAL_MONTH_SELECTION,
+            **kwds,
+        )
 
         if self.value:
             self.SetValue(self.value)
@@ -206,12 +196,9 @@ else:
             """
             SchBaseCtrl.__init__(self, parent, kwds)
             kwds["size"] = (120, -1)
-            try:
-                kwds["style"] = (
-                    wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY | wx.adv.DP_ALLOWNONE
-                )
-            except AttributeError:
-                kwds["style"] = wx.DP_DROPDOWN | wx.DP_SHOWCENTURY | wx.DP_ALLOWNONE
+            kwds["style"] = (
+                wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY | wx.adv.DP_ALLOWNONE
+            )
             wx.adv.DatePickerCtrl.__init__(self, parent, **kwds)
 
         def SetValue(self, value):
@@ -309,19 +296,25 @@ class DATETIMEPICKER(DataPopupControl, SchBaseCtrl):
     def GetValue(self):
         """Get the current date-time value.
 
+        The value is always returned as a string in ``YYYY-MM-DD HH:MM``
+        format, matching what :meth:`set_rec` stores.
+
         Returns:
-            Date-time string from the record, or parsed from
-            the text control if the record is empty.
+            Date-time string, or None when nothing complete has been
+            entered yet.
         """
         value = self.get_rec()
         value2 = self.GetTextCtrl().GetValue()
         if value2 and value2[0] != " ":
             if value.data:
                 return value.data
-            else:
-                return [
-                    datetime.datetime.strptime(value2, "%Y-%m-%d %H:%M"),
-                ]
+            # The text may still be half-typed, so only report it once it
+            # actually parses.
+            try:
+                datetime.datetime.strptime(value2, "%Y-%m-%d %H:%M")
+            except ValueError:
+                return None
+            return value2
         return None
 
     def GetBestSize(self):

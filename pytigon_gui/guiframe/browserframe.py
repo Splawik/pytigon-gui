@@ -155,9 +155,7 @@ class SchBrowserFrame(SchBaseFrame):
                         url_page = page.split(";")
                         if len(url_page) == 2:
                             if hasattr(self, "_on_html"):
-                                self._on_html(
-                                    _(url_page[0]) + "," + app.base_address + url_page[1]
-                                )
+                                self._on_html(_(url_page[0]) + "," + app.base_address + url_page[1])
                             elif self.ctrl and hasattr(self.ctrl, "on_html"):
                                 self.ctrl.on_html(
                                     _(url_page[0]) + "," + app.base_address + url_page[1]

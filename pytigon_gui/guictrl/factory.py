@@ -10,27 +10,28 @@ Functions:
     SELECT, BUTTON, TEXTAREA, SELECT2, COMPOSITE, COMPONENT
 """
 
-import wx
 import logging
+
+import wx
 
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 from pytigon_gui.guictrl.button.base import (
-    SIMPLE_BUTTON,
     BITMAPBUTTON,
-    PLATEBUTTON,
+    CLOSEBUTTON,
     GENBITMAPBUTTON,
-    GENBITMAPTEXTBUTTON,
     GENBITMAPBUTTONTXT,
     GENBITMAPBUTTONTXT_SMALL,
-    NOBG_BUTTON,
-    NOBG_BUTTON_TXT,
-    CLOSEBUTTON,
+    GENBITMAPTEXTBUTTON,
     MENUBUTTON,
     MENUTOOLBARBUTTON,
+    NOBG_BUTTON,
+    NOBG_BUTTON_TXT,
+    PLATEBUTTON,
+    SIMPLE_BUTTON,
 )
-from pytigon_gui.guictrl.input.text import STYLEDTEXT, AUTOCOMPLETE
 from pytigon_gui.guictrl.input.choice import CHECKLISTBOX
 from pytigon_gui.guictrl.input.combo import DBCHOICE
+from pytigon_gui.guictrl.input.text import AUTOCOMPLETE, STYLEDTEXT
 from pytigon_gui.guictrl.panels import CompositePanel
 from pytigon_gui.guictrl.popup.select2 import Select2Base
 from pytigon_gui.guilib.image import bitmap_from_href

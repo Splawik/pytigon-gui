@@ -8,21 +8,21 @@ Classes:
     CtrlTag, ComponentTag
 """
 
-from urllib.parse import unquote
 import ast
 import logging
+from urllib.parse import unquote
 
 import wx
-from pytigon_lib.schhtml.tags.table_tags import TableTag
+
+import pytigon_gui.guictrl.ctrl as schctrl
 from pytigon_lib.schhtml.basehtmltags import (
     BaseHtmlElemParser,
     register_tag_map,
 )
+from pytigon_lib.schhtml.tags.table_tags import TableTag
 from pytigon_lib.schparser.html_parsers import Td
-from pytigon_lib.schtools.tools import is_null
 from pytigon_lib.schtools.schhtmlgen import make_start_tag
-
-import pytigon_gui.guictrl.ctrl as schctrl
+from pytigon_lib.schtools.tools import is_null
 
 logger = logging.getLogger(__name__)
 
@@ -267,8 +267,6 @@ class CtrlTag(TableTag):
         Returns:
             Result from parent handle_data.
         """
-        if self.tag == "ctrl-checkbox":
-            pass
         return BaseHtmlElemParser.handle_data(self, data)
 
     def handle_starttag(self, parser, tag, attrs):
@@ -286,16 +284,13 @@ class CtrlTag(TableTag):
             A parser instance for the child tag, or None.
         """
         from pytigon_gui.guictrl.tag_parsers import (
-            TreeUl,
-            TreeLi,
-            Data,
-            OptionTag,
-            OptGroupTag,
             CompositeChildTag,
+            Data,
+            OptGroupTag,
+            OptionTag,
+            TreeLi,
+            TreeUl,
         )
-
-        if self.tag == "ctrl-checkbox":
-            pass
 
         if self.tag == "ctrl-composite":
             return CompositeChildTag(self, parser, tag, attrs)

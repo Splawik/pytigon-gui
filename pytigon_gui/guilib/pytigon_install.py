@@ -6,7 +6,7 @@ Provides a wxWizard-based installer for .ptig archive files.
 import wx
 
 try:
-    from wx.adv import Wizard, WizardPageSimple, EVT_WIZARD_PAGE_CHANGING
+    from wx.adv import EVT_WIZARD_PAGE_CHANGING, Wizard, WizardPageSimple
 except ImportError:
     from wx.wizard import Wizard, WizardPageSimple
 
@@ -16,9 +16,9 @@ import configparser
 import logging
 from pathlib import Path
 
-from pytigon_lib.schtools.install import Ptig
 from pytigon_gui.guilib.threads import call_after_if_alive
 from pytigon_gui.guilib.tools import create_desktop_shortcut
+from pytigon_lib.schtools.install import Ptig
 
 _ = wx.GetTranslation
 logger = logging.getLogger(__name__)

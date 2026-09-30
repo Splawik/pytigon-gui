@@ -2,32 +2,54 @@
 footer and panel.  Only the 'body' form is mandatory; the others are
 created on demand from the HTML response."""
 
-import wx
 import logging
 
-try:
-    from pydispatch import dispatcher
-except ImportError:
-    try:
-        from dispatch import dispatcher
-    except ImportError:
-        dispatcher = None
+import wx
 
 logger = logging.getLogger(__name__)
 
-try:
-    from wx.adv import LayoutAlgorithm
-except ImportError:
-    from wx import LayoutAlgorithm
+class _NullDispatcher:
+    """No-op stand-in used when PyDispatcher cannot be imported.
 
+    PyDispatcher 2.x is imported as a *module*
+    (``from pydispatch import dispatcher``) whose ``connect``/``disconnect``
+    are module-level functions and whose ``Any`` is a module-level wildcard
+    sender. The call sites below therefore work unchanged against this shim,
+    which simply drops the registrations instead of failing later.
+    """
+
+    Any = None
+
+    def connect(self, *args, **kwargs):
+        """Ignore the registration."""
+
+    def disconnect(self, *args, **kwargs):
+        """Ignore the removal."""
+
+
+try:
+    # PyDispatcher 2.x renamed the top-level package from "dispatcher" to
+    # "pydispatch", and exposes module-level functions rather than the 1.x
+    # "dispatcher" singleton. "from dispatcher import dispatcher" therefore
+    # always failed here, silently disabling every application signal.
+    from pydispatch import dispatcher
+except ImportError:  # pragma: no cover - PyDispatcher is a declared dependency
+    dispatcher = _NullDispatcher()
+    logger.warning(
+        "PyDispatcher could not be imported; application signals are disabled",
+        exc_info=True,
+    )
+
+from wx.adv import LayoutAlgorithm
+
+from pytigon_gui.guiframe.form import SchForm
 from pytigon_gui.guilib import events
+from pytigon_gui.guilib.events import *
 from pytigon_gui.guilib.signal import Signal
 from pytigon_gui.guilib.threads import block_http_pumping, call_after_if_alive
-from pytigon_lib.schtools import createparm
-from pytigon_lib.schparser.html_parsers import ShtmlParser
 from pytigon_lib.schhttptools.httpclient import HttpResponse
-from pytigon_gui.guiframe.form import SchForm
-from pytigon_gui.guilib.events import *
+from pytigon_lib.schparser.html_parsers import ShtmlParser
+from pytigon_lib.schtools import createparm
 
 
 class SchPage(wx.Window, Signal):
@@ -297,9 +319,6 @@ class SchPage(wx.Window, Signal):
             win.Destroy()
         self._ctrl_dict_old = {}
 
-    def __getitem__(self, key):
-        return self._ctrl_dict[key]
-
     def get_widgets(self):
         """Return the current widget dictionary."""
         return self._ctrl_dict
@@ -448,6 +467,9 @@ class SchPage(wx.Window, Signal):
 
         for handler in self._signal_handlers:
             dispatcher.disconnect(handler[0], handler[1], sender=dispatcher.Any)
+        # Drop the closures too: they hold a reference to self and would keep
+        # the page alive after it has been closed.
+        self._signal_handlers = []
 
         return True
 

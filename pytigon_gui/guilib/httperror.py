@@ -4,8 +4,9 @@ Provides a dialog for displaying HTTP error responses to the user,
 with options to continue or break the application.
 """
 
-import wx
 import logging
+
+import wx
 
 import pytigon_gui.guictrl.ctrl
 
@@ -41,13 +42,8 @@ class HttpErrorDialog(wx.Dialog):
             style: Dialog style flags.
             use_metal: Use metal look on macOS.
         """
-        try:
-            pre = wx.PreDialog()
-            pre.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
-            pre.Create(parent, wx.ID_ANY, title, pos, size, style)
-            self.PostCreate(pre)
-        except (AttributeError, TypeError):
-            wx.Dialog.__init__(self, parent, wx.ID_ANY, title, pos, size, style)
+        wx.Dialog.__init__(self, parent, wx.ID_ANY, title, pos, size, style)
+        self.SetExtraStyle(wx.DIALOG_EX_CONTEXTHELP)
 
         if "wxMac" in wx.PlatformInfo and use_metal:
             self.SetExtraStyle(wx.DIALOG_EX_METAL)

@@ -20,7 +20,6 @@ Functions:
 
 import logging
 
-import wx
 from pytigon_lib.schhtml.basehtmltags import register_tag_preprocess_map
 from pytigon_lib.schhtml.htmltools import Td
 from pytigon_lib.schtools.tools import is_null
@@ -84,7 +83,7 @@ SEMANTIC_TAG_MAP = {
     "article": "div",
     "nav": "div",
     # "main": "div",
-    # "aside": "div",
+    "aside": "div",
     "address": "div",
     "figure": "div",
     "figcaption": "span",

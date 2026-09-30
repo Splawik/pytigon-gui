@@ -6,13 +6,15 @@ Extends aui.AuiNotebook with custom page activation, closing,
 splitting, and wiki-based help lookup.
 """
 
+import logging
+
 import wx
 import wx.lib.agw.aui as aui
 from wx.lib.agw.aui import framemanager
-import logging
-from pytigon_lib.schtools.wiki import wiki_from_str
+from wx.lib.agw.aui.aui_constants import AUI_NB_DEFAULT_STYLE, AuiBaseTabCtrlId
+
 from pytigon_gui.guiframe.manager import SChAuiBaseManager
-from wx.lib.agw.aui.aui_constants import *
+from pytigon_lib.schtools.wiki import wiki_from_str
 
 logger = logging.getLogger(__name__)
 

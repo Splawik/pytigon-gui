@@ -11,6 +11,8 @@ Aliases:
     AUTOCOMPLETE, STANDARDSTYLEDTEXT
 """
 
+import sys
+
 import wx
 from wx.lib import masked
 
@@ -59,8 +61,10 @@ class TEXT(SchBaseCtrl, wx.TextCtrl):
         """
         if isinstance(value, str):
             return wx.TextCtrl.SetValue(self, value)
-        else:
+        elif isinstance(value, bytes):
             return wx.TextCtrl.SetValue(self, value.decode("utf-8"))
+        else:
+            return wx.TextCtrl.SetValue(self, "" if value is None else str(value))
 
     def GetValue(self):
         """Get the current text value.
@@ -130,21 +134,18 @@ class SEARCH(wx.SearchCtrl, SchBaseCtrl):
                 size and optional TE_PROCESS_ENTER style.
         """
         SchBaseCtrl.__init__(self, parent, kwds)
-        if wx.Platform in ("__WXGTK__",):
+        if sys.platform.startswith("linux"):
             kwds["size"] = (200, 28)
         else:
             kwds["size"] = (200, -1)
         if self.param and "process_enter" in self.param:
-            kwds["style"] = wx.TE_PROCESS_ENTER
+            kwds["style"] = kwds.get("style", 0) | wx.TE_PROCESS_ENTER
 
         wx.SearchCtrl.__init__(self, parent, **kwds)
 
-        # Bind key-down on the internal TextCtrl child so that
-        # Escape/Tab navigation works on every platform.
-        for child in list(self.GetChildren()):
-            if isinstance(child, wx.TextCtrl):
-                child.Bind(wx.EVT_KEY_DOWN, self.on_key_down_base)
-                break
+        # NOTE: no key-down binding here. after_create() (basectrl.py) already
+        # binds on_key_down_base on the control itself; binding it here as well
+        # on the internal TextCtrl would handle Tab/Escape twice on GTK.
         if self.param and "placeholder" in self.param:
             self.SetDescriptiveText(self.param["placeholder"])
 

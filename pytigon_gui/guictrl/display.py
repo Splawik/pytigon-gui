@@ -13,27 +13,38 @@ Classes:
     STATICLINE, HYPERLINK
 """
 
+import logging
 import os
 from pathlib import Path
-import logging
 
 import wx
+import wx.adv
+import wx.lib.imagebrowser
+from django.utils.translation import gettext_lazy as _
 from wx.lib import colourselect, filebrowsebutton
 from wx.lib.agw.hypertreelist import HyperTreeList as TreeListCtrl
-import wx.lib.imagebrowser
 
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
 from pytigon_gui.guictrl.button.toolbarbutton import BitmapTextButton
 from pytigon_gui.guictrl.popup.popuphtml import DataPopupControl
 from pytigon_gui.guilib.image import bitmap_from_href
-from pytigon_lib.schhtml.wxdc import DcDc
 from pytigon_lib.schhtml.htmlviewer import HtmlViewerParser
+from pytigon_lib.schhtml.wxdc import DcDc
 from pytigon_lib.schhttptools import httpclient
-from pytigon_lib.schparser.html_parsers import ShtmlParser
-
-from django.utils.translation import gettext_lazy as _
 
 logger = logging.getLogger(__name__)
+
+# Explicit dialogtype -> wx file dialog mode mapping.  Resolving an arbitrary
+# attribute off the wx module with getattr() would let server input pick any
+# wx constant.
+_FILE_DIALOG_MODES = {
+    "file": wx.FD_OPEN,
+    "save": wx.FD_SAVE,
+    "dir": wx.FD_OPEN,
+}
+
+# HyperTreeList spells it AddColumn(); resolved once instead of per column.
+_append_column = getattr(TreeListCtrl, "AppendColumn", None) or TreeListCtrl.AddColumn
 
 
 # ---------------------------------------------------------------------------
@@ -286,10 +297,7 @@ class TREELIST(TreeListCtrl, SchBaseCtrl):
 
         columns = self.label.split("||")
         for col_title in columns:
-            try:
-                self.AppendColumn(col_title)
-            except AttributeError:
-                self.AddColumn(col_title)
+            _append_column(self, col_title)
         self.SetColumnWidth(0, 175)
         self.root = self.AddRoot("/")
 
@@ -382,15 +390,22 @@ class FILEBROWSEBUTTON(filebrowsebutton.FileBrowseButton, SchBaseCtrl):
 
     Tag arguments:
         value: Initial file path.
+        dialogtype: One of 'file', 'save' or 'dir'.
     """
 
     def __init__(self, parent, **kwds):
+        self._browse_dir = False
         SchBaseCtrl.__init__(self, parent, kwds)
         kwds["labelText"] = ""
         kwds["buttonText"] = str(_("Browse"))
         kwds["size"] = (400, -1)
         if self.param and "dialogtype" in self.param:
-            kwds["dialogType"] = getattr(wx, self.param["dialogtype"].upper(), wx.OPEN)
+            # filebrowsebutton.FileBrowseButton honours 'fileMode'; there is no
+            # 'dialogType' argument, so map the documented names explicitly
+            # instead of resolving an arbitrary attribute off the wx module.
+            mode = str(self.param["dialogtype"]).lower()
+            kwds["fileMode"] = _FILE_DIALOG_MODES.get(mode, wx.FD_OPEN)
+            self._browse_dir = mode == "dir"
         if self.param and "wildcard" in self.param:
             kwds["wildcard"] = self.param["wildcard"]
         elif self.param and "fileMask" in self.param:
@@ -399,9 +414,34 @@ class FILEBROWSEBUTTON(filebrowsebutton.FileBrowseButton, SchBaseCtrl):
             kwds["startDirectory"] = self.param["startDirectory"]
         filebrowsebutton.FileBrowseButton.__init__(self, parent, **kwds)
 
+    def OnBrowse(self, event=None):
+        """Open the browse dialog.
+
+        Uses a directory picker when dialogtype='dir'; otherwise delegates to
+        the file dialog provided by the base class.
+
+        Args:
+            event: Browse button event (optional).
+        """
+        if not self._browse_dir:
+            return filebrowsebutton.FileBrowseButton.OnBrowse(self, event)
+        current = self.GetValue()
+        default_path = current if os.path.isdir(current) else os.path.dirname(current)
+        dlg = wx.DirDialog(
+            self,
+            message=self.dialogTitle,
+            defaultPath=default_path or self.startDirectory,
+            style=wx.DD_DIR_MUST_EXIST,
+        )
+        try:
+            if dlg.ShowModal() == wx.ID_OK:
+                self.SetValue(dlg.GetPath())
+        finally:
+            dlg.Destroy()
+
     def GetValue(self):
         """Return the file path prefixed with '@'."""
-        return "@" + super(FILEBROWSEBUTTON, self).GetValue()
+        return "@" + super().GetValue()
 
 
 class IMAGEBROWSEBUTTON(FILEBROWSEBUTTON, SchBaseCtrl):
@@ -469,6 +509,7 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         self.choices = []
         self.getItemFunct = None
         self.h = None
+        self._layout_cache = {}
 
         if self.param and "multiple" in self.param:
             style = kwds.get("style", 0)
@@ -521,14 +562,49 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         self.Refresh()
 
     def GetValue(self):
-        """Return selected item IDs (multi-select only)."""
+        """Return the selected item IDs.
+
+        A single-select list yields a one-element list, so callers can treat
+        both modes uniformly.
+
+        Returns:
+            List of selected item ids (empty when nothing is selected).
+        """
         ret = []
         if self.HasMultipleSelection():
             item, cookie = self.GetFirstSelected()
             while item != wx.NOT_FOUND:
                 ret.append(self.choices[item][0])
                 item, cookie = self.GetNextSelected(cookie)
+        else:
+            selection = self.GetSelection()
+            if selection != wx.NOT_FOUND:
+                ret.append(self.choices[selection][0])
         return ret
+
+    def _item_size(self, n, width):
+        """Return the cached layout size of item *n* at the given width.
+
+        Parsing the item HTML is expensive, so the measured size is cached
+        per (value, width) pair and reused by OnMeasureItem/OnDrawItem.
+
+        Args:
+            n: Item index.
+            width: Available width in pixels.
+
+        Returns:
+            (width, height) tuple.
+        """
+        key = (self.choices[n][2], width)
+        size = self._layout_cache.get(key)
+        if size is None:
+            dc = wx.ClientDC(self)
+            size = self._calc_or_draw(n, dc, None, True)
+            if len(self._layout_cache) >= 256:
+                self._layout_cache.clear()
+            self._layout_cache[key] = size
+        self.h = max(self.h or 0, size[1])
+        return size
 
     def _calc_or_draw(self, n, dc, rect, calc_only):
         """Measure or render item n.
@@ -561,23 +637,31 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         try:
             p.feed(value)
         except Exception:
-            logger.error("ERROR: %s", value)
+            logger.exception("ERROR: %s", value)
         finally:
             httpclient.IN_PAINT -= 1
 
-        w2, h2 = p.get_max_sizes()
-        if not self.h:
-            self.h = h2
-        return w2, h2
+        return p.get_max_sizes()
 
     def OnMeasureItem(self, n):
-        """Measure item n height."""
-        dc = wx.ClientDC(self)
-        w, h = self._calc_or_draw(n, dc, None, True)
-        return h
+        """Measure item n height.
+
+        Args:
+            n: Item index.
+
+        Returns:
+            Height of the item in pixels.
+        """
+        return self._item_size(n, self.GetSize()[0])[1]
 
     def OnDrawItem(self, dc, rect, n):
-        """Draw item n."""
+        """Draw item n.
+
+        Args:
+            dc: wx.DC to draw on.
+            rect: Drawing rectangle.
+            n: Item index.
+        """
         self._calc_or_draw(n, dc, rect, False)
 
     def CanAcceptFocus(self):
@@ -603,6 +687,8 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
         """Refresh from new data."""
         self.init_base(kwds)
         self.choices = []
+        self.h = None
+        self._layout_cache = {}
         tdata = self.get_tdata()
         if tdata:
             for row in tdata:

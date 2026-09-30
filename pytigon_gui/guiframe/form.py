@@ -5,25 +5,23 @@ custom wxDC backend, and manages interactive widgets defined by
 the HTML markup.
 """
 
-import gc
-import sys
-import traceback
-import types
-import math
 import logging
+import math
+import types
+import weakref
 
 import wx
 
 logger = logging.getLogger(__name__)
-from wx.lib.scrolledpanel import ScrolledPanel
 import wx.lib.agw.ribbon as RB
+from wx.lib.scrolledpanel import ScrolledPanel
 
-from pytigon_lib.schtools import createparm
-from pytigon_lib.schparser.html_parsers import ShtmlParser
-from pytigon_lib.schtools.tools import clean_href, is_null
-from pytigon_lib.schhtml.wxdc import DcDc
+from pytigon_gui.guilib.threads import block_http_pumping, call_after_if_alive
 from pytigon_lib.schhtml.htmlviewer import HtmlViewerParser
-from pytigon_gui.guilib.threads import call_after_if_alive, block_http_pumping
+from pytigon_lib.schhtml.wxdc import DcDc
+from pytigon_lib.schparser.html_parsers import ShtmlParser
+from pytigon_lib.schtools import createparm
+from pytigon_lib.schtools.tools import clean_href, is_null
 
 _ = wx.GetTranslation
 
@@ -52,9 +50,9 @@ def _get_css():
     """
     global _INIT_CSS_STR
     if _INIT_CSS_STR is None:
-        with open(str(wx.GetApp().src_path) + "/appdata/icss/_core.icss", "r") as f:
+        with open(str(wx.GetApp().src_path) + "/appdata/icss/_core.icss") as f:
             _INIT_CSS_STR = f.read()
-        with open(str(wx.GetApp().src_path) + "/appdata/icss/wx.icss", "r") as f:
+        with open(str(wx.GetApp().src_path) + "/appdata/icss/wx.icss") as f:
             _INIT_CSS_STR += f.read()
     return _INIT_CSS_STR
 
@@ -116,7 +114,8 @@ class SchForm(ScrolledPanel):
         self.init_css_str = None
         self.evt_ind = -1
         self.closing = False
-        self.acc_tabs = {}
+        # Weak keys: destroyed windows must not be kept alive by this form.
+        self.acc_tabs = weakref.WeakKeyDictionary()
         self.acc_tab = None
         self.acc_tab_bind = False
         self.last_clicked = None
@@ -672,7 +671,9 @@ class SchForm(ScrolledPanel):
             self.on_close()
         for x in self.websockets:
             app.remove_websocket_callback(x[0], x[1])
-        gc.collect()
+        # acc_tabs is a WeakKeyDictionary, so destroyed windows are released
+        # as soon as they are collected; an explicit gc.collect() here is no
+        # longer needed.
 
     def any_parent_command(self, command, *args, **kwds):
         """Walk up the parent hierarchy to find and call *command*.
@@ -794,7 +795,7 @@ class SchForm(ScrolledPanel):
             page_and_script: list or touple, 0: html page content, 1: script
             parameters: parameters forwarded to http server in request
         """
-        if self.page and self.page.exists == False:
+        if self.page is not None and self.page.IsBeingDeleted():
             return False
 
         self.page_source = self.pre_process_page(page_and_script[0])
@@ -821,7 +822,7 @@ class SchForm(ScrolledPanel):
 
                 for key in d:
                     if not key.startswith("__"):
-                        if hasattr(d[key], "__call__"):
+                        if callable(d[key]):
                             fun = d[key]
                             try:
                                 method = types.MethodType(d[key], self, self.__class__)
@@ -1178,10 +1179,10 @@ class SchForm(ScrolledPanel):
                     self.any_parent_command("on_child_form_ok")
                     return
                 if target == "message":
-                    dlg = wx.MessageDialog(
+                    with wx.MessageDialog(
                         self, s, is_null(mp.title, title), style=wx.OK
-                    )
-                    dlg.ShowModal()
+                    ) as dlg:
+                        dlg.ShowModal()
                     return
 
                 if target == "code":
@@ -1239,7 +1240,7 @@ class SchForm(ScrolledPanel):
             obj = to_win
         else:
             obj = self
-        for win in self.acc_tabs.keys():
+        for win in list(self.acc_tabs.keys()):
             tab = []
             for pos in self.acc_tabs[win]:
                 tab += pos
