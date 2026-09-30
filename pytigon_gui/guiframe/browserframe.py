@@ -12,13 +12,9 @@ import os
 import wx
 
 import pytigon_gui.guictrl.ctrl
-
+from pytigon.pytigon_request import init, request
 from pytigon_gui.guiframe.baseframe import SchBaseFrame
 from pytigon_gui.guilib.threads import call_after_if_alive
-
-from django.conf import settings
-
-from pytigon.pytigon_request import init, request
 from pytigon_lib.schtools.env import get_environ
 
 logger = logging.getLogger(__name__)

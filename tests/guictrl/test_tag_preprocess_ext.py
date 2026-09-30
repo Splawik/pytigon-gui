@@ -299,13 +299,16 @@ class TestSemanticTags:
     def test_all_semantic_tags_map(self):
         from pytigon_gui.guictrl import tag_preprocess as tp
 
-        assert tp.SEMANTIC_TAG_MAP["section"] == "div"
-        assert tp.SEMANTIC_TAG_MAP["main"] == "div"
         assert tp.SEMANTIC_TAG_MAP["figure"] == "div"
         assert tp.SEMANTIC_TAG_MAP["mark"] == "span"
         assert tp.SEMANTIC_TAG_MAP["dt"] == "b"
         assert tp.SEMANTIC_TAG_MAP["dd"] == "div"
         assert tp.SEMANTIC_TAG_MAP["summary"] == "b"
+        # section and main are deliberately NOT mapped: rewriting them to a div
+        # broke the page layout, so they are handled by the renderer instead.
+        assert "section" not in tp.SEMANTIC_TAG_MAP
+        assert "main" not in tp.SEMANTIC_TAG_MAP
+        # header/footer are reserved for printed page headers/footers.
         assert "header" not in tp.SEMANTIC_TAG_MAP
         assert "footer" not in tp.SEMANTIC_TAG_MAP
 
@@ -362,11 +365,18 @@ class TestRegistrations:
             assert tmap.get_handler(tag) is fn
 
     def test_semantic_tags_registered(self):
+        import pytigon_gui.guictrl.tag_preprocess  # noqa: F401 - registers the map
+
         from pytigon_lib.schhtml.basehtmltags import get_tag_preprocess_map
 
         tmap = get_tag_preprocess_map()
-        for tag in ("section", "article", "nav", "main", "aside", "figure", "mark"):
+        for tag in ("article", "nav", "aside", "figure", "mark"):
             assert tmap.get_handler(tag) is not None
+        # section and main are not remapped on purpose: rewriting them to a div
+        # broke the page layout, so they must stay unregistered here and be
+        # left to the renderer.
+        for tag in ("section", "main"):
+            assert tmap.get_handler(tag) is None, f"{tag} should not be remapped"
 
 
 class TestWidgetBases:

@@ -5,15 +5,12 @@ Provides the core SchBaseFrame from which both SchAppFrame (desktop)
 and SchBrowserFrame (webview) inherit.
 """
 
-import os
-import sys
-import traceback
 import logging
+import os
+import traceback
 from pathlib import Path
 
 import wx
-
-import pytigon_gui.guictrl.ctrl
 
 logger = logging.getLogger(__name__)
 
