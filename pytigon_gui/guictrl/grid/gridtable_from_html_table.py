@@ -270,11 +270,18 @@ class PageData:
                         if j not in row_h or row_h[j] < h:
                             row_h[j] = h
             j += 1
-        if refresh_if_changed and changed:
-            self.parent.grid.set_col_width(self.sizes)
+        # self.parent.grid does not exist yet when PageData is constructed from
+        # SimpleDataTable.__init__ (grids.py builds the table at line 62 and
+        # assigns self.grid at line 68), so the widget calls below must be
+        # skipped in that case. The sizes computed above are kept regardless,
+        # and get_page() re-applies them with refresh_if_changed=True once the
+        # grid exists (i.e. during paint).
+        grid = getattr(self.parent, "grid", None)
 
-        if row_h:
-            grid = self.parent.grid
+        if refresh_if_changed and changed and grid is not None:
+            grid.set_col_width(self.sizes)
+
+        if row_h and grid is not None:
             default_h = grid.GetDefaultRowSize()
             heights = list(row_h.items())
 
