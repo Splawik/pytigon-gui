@@ -216,10 +216,11 @@ def _make_button_class(
 
             if is_bitmap_button:
                 self._set_bitmap()
-                if base_class == platebtn.PlateButton:
-                    kwds["bmp"] = self.bmp
-                else:
-                    kwds["bitmap"] = self.bmp
+                # The previous code wrote self.bmp into the local kwds dict,
+                # which init_base had already consumed, so every refresh
+                # re-decoded the icon and the button kept a stale bitmap.
+                if self.bmp is not None:
+                    self.SetBitmap(self.bmp)
 
             if "fields" in kwds:
                 self.fields = kwds["fields"]

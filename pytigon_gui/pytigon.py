@@ -944,6 +944,7 @@ class SchApp(App, _BASE_APP):
                             with open(str(zip_path), "wb") as x:
                                 x.write(z_data)
                             try:
+                                zip_handle = None
                                 zip_handle = zipfile.ZipFile(str(zip_path))
                                 for member in zip_handle.infolist():
                                     if member.filename.endswith(("/", "\\")):
@@ -967,6 +968,12 @@ class SchApp(App, _BASE_APP):
                                 logger.error(
                                     "Error extracting plugin %s: %s", plugin, e
                                 )
+                            finally:
+                                # close() was only reached on the success path,
+                                # abandoning the handle (and its fd) for the
+                                # rest of the process on any extraction error.
+                                if zip_handle is not None:
+                                    zip_handle.close()
             except Exception as e:
                 logger.error("Error installing plugin %s: %s", plugin, e)
 
@@ -1354,6 +1361,9 @@ def _setup_server(address):
                 s = None
                 test = False
             except OSError:
+                # Close before retrying: the half-bound socket was otherwise
+                # dropped on the floor, leaking an fd per occupied port.
+                s.close()
                 port += 1
 
         if "extra" in _PARAM:

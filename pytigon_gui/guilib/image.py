@@ -5,12 +5,12 @@ as well as functions to load bitmaps from ArtProviders, local files, fonts,
 and remote HTTP sources.
 """
 
+import functools
 import io
 import logging
 from io import BytesIO
 
 import wx
-from PIL import Image
 from wx.svg import SVGimage
 
 _ = wx.GetTranslation
@@ -111,6 +111,12 @@ def pil_to_image(pil, alpha=True):
 
 def image_to_pil(image):
     """Convert wx.Image to PIL Image."""
+    # Imported here rather than at module scope: Pillow costs ~6 MB of RSS and
+    # this module is imported by every control via guictrl/basectrl.py. These
+    # four converters have no production callers, and pdfdc.py already keeps
+    # its own PIL imports function-local.
+    from PIL import Image
+
     w, h = image.GetWidth(), image.GetHeight()
     return Image.frombytes("RGB", (w, h), image.GetData())
 
@@ -133,11 +139,62 @@ def bitmap_from_art_id(art_id, size):
     return wx.ArtProvider.GetBitmap(art_id, wx.ART_OTHER, size)
 
 
+@functools.lru_cache(maxsize=512)
+def _cached_local_bitmap(path, adjust_channels=None):
+    """Decode a bitmap from a local file, memoised on disk.
+
+    bitmap_from_href runs once per control instantiation and once per grid
+    action, so the same few hundred icons were repeatedly read from disk and
+    PNG-decoded. wx.Bitmap is reference-counted/copy-on-write, so handing the
+    same instance to several widgets is safe.
+
+    Args:
+        path: Absolute path to the image file.
+        adjust_channels: Optional AdjustChannels argument tuple.
+
+    Returns:
+        wx.Bitmap. An invalid wx.Bitmap if the file cannot be decoded.
+    """
+    try:
+        image = wx.Image(path)
+        if adjust_channels is not None:
+            image = image.AdjustChannels(*adjust_channels)
+        return wx.Bitmap(image)
+    except Exception:
+        logger.warning("Cannot load image: %s", path)
+        return wx.Bitmap()
+
+
+@functools.lru_cache(maxsize=128)
+def _cached_bitmaps_from_art_id(art_id, width, height):
+    """ArtProvider pair for a constant id/size, memoised per process."""
+    bitmap = wx.ArtProvider.GetBitmap(art_id, wx.ART_OTHER, (width, height))
+    img = bitmap.ConvertToImage()
+    bitmap_disabled = wx.Bitmap(img.ConvertToGreyscale().AdjustChannels(1, 1, 1, 0.3))
+    return (bitmap, bitmap_disabled)
+
+
+def clear_bitmap_caches():
+    """Release every memoised bitmap (up to ~3 MB).
+
+    Worth calling on startup or under memory pressure. Note that
+    _cached_local_bitmap memoises decode *failures* too (a missing icon is
+    cached as an invalid wx.Bitmap for the life of the process), so this is
+    also the way to recover after icons are installed at runtime.
+    """
+    _cached_local_bitmap.cache_clear()
+    _cached_bitmaps_from_art_id.cache_clear()
+
+
 def bitmaps_from_art_id(art_id, size):
     """Get a tuple of two bitmaps from ArtProvider.
 
     The first is the standard bitmap, the second is the same bitmap
     converted to grayscale to emulate a disabled state.
+
+    The toolbar calls this ~20 times with constant ids and a constant 32x32,
+    and each call did a bitmap->image conversion plus a full greyscale pass,
+    so the result is memoised on (art_id, width, height).
 
     Args:
         art_id: Bitmap id in ArtProvider.
@@ -146,10 +203,11 @@ def bitmaps_from_art_id(art_id, size):
     Returns:
         (bitmap, bitmap_disabled) tuple.
     """
-    bitmap = wx.ArtProvider.GetBitmap(art_id, wx.ART_OTHER, size)
-    img = bitmap.ConvertToImage()
-    bitmap_disabled = wx.Bitmap(img.ConvertToGreyscale().AdjustChannels(1, 1, 1, 0.3))
-    return (bitmap, bitmap_disabled)
+    if isinstance(size, (tuple, list)):
+        width, height = size[0], size[1]
+    else:
+        width, height = size.GetWidth(), size.GetHeight()
+    return _cached_bitmaps_from_art_id(art_id, width, height)
 
 
 def bitmap_from_href(href, size_type=SIZE_DEFAULT):
@@ -196,29 +254,26 @@ def bitmap_from_href(href, size_type=SIZE_DEFAULT):
                 wx.ART_MISSING_IMAGE, wx.ART_TOOLBAR, (icon_size, icon_size)
             )
     elif href.startswith("client://"):
-        image = wx.Image(
-            str(wx.GetApp().src_path) + f"/static/icons/{icon_size}x{icon_size}/" + href2[9:]
+        bmp = _cached_local_bitmap(
+            str(wx.GetApp().src_path)
+            + f"/static/icons/{icon_size}x{icon_size}/"
+            + href2[9:]
         )
-        bmp = wx.Bitmap(image)
     elif href.startswith("png://"):
-        image = wx.Image(
-            str(wx.GetApp().src_path) + f"/static/icons/{icon_size}x{icon_size}/" + href2[6:]
+        bmp = _cached_local_bitmap(
+            str(wx.GetApp().src_path)
+            + f"/static/icons/{icon_size}x{icon_size}/"
+            + href2[6:]
         )
-        bmp = wx.Bitmap(image)
     elif href.startswith("fa://"):
         suffix = "" if ".png" in href.lower() else ".png"
-        try:
-            image = wx.Image(
-                str(wx.GetApp().src_path)
-                + f"/static/fonts/fork-awesome/fonts/{icon_size}x{icon_size}/"
-                + href2[5:].replace("fa-", "")
-                + suffix
-            )
-            image = image.AdjustChannels(1, 1, 1, 0.55)
-            bmp = wx.Bitmap(image)
-        except Exception:
-            logger.warning("Cannot load image: %s", href2)
-            bmp = wx.Bitmap()
+        bmp = _cached_local_bitmap(
+            str(wx.GetApp().src_path)
+            + f"/static/fonts/fork-awesome/fonts/{icon_size}x{icon_size}/"
+            + href2[5:].replace("fa-", "")
+            + suffix,
+            (1, 1, 1, 0.55),
+        )
     elif href.startswith("data:image/svg+xml"):
         x = href.split(",", 1)
         svg_code = x[1]

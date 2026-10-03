@@ -39,6 +39,22 @@ from pytigon_lib.schtools.tools import is_null
 
 logger = logging.getLogger(__name__)
 
+# Built once: this dict was previously rebuilt inside BUTTON() for every
+# single button created.
+BUTTON_CLASS_MAP = {
+    "SIMPLE_BUTTON": SIMPLE_BUTTON,
+    "BITMAPBUTTON": BITMAPBUTTON,
+    "PLATEBUTTON": PLATEBUTTON,
+    "GENBITMAPBUTTON": GENBITMAPBUTTON,
+    "GENBITMAPBUTTONTXT": GENBITMAPBUTTONTXT,
+    "GENBITMAPBUTTONTXT_SMALL": GENBITMAPBUTTONTXT_SMALL,
+    "NOBG_BUTTON": NOBG_BUTTON,
+    "NOBG_BUTTON_TXT": NOBG_BUTTON_TXT,
+    "CLOSEBUTTON": CLOSEBUTTON,
+    "MENUBUTTON": MENUBUTTON,
+    "MENUTOOLBARBUTTON": MENUTOOLBARBUTTON,
+}
+
 
 def SELECT(parent, **kwds):
     """Dispatch function for ctrlselect tag.
@@ -109,21 +125,8 @@ def BUTTON(parent, **kwds):
     """
     if "param" in kwds and "btn-class" in kwds["param"]:
         btn_class = kwds["param"]["btn-class"]
-        class_map = {
-            "SIMPLE_BUTTON": SIMPLE_BUTTON,
-            "BITMAPBUTTON": BITMAPBUTTON,
-            "PLATEBUTTON": PLATEBUTTON,
-            "GENBITMAPBUTTON": GENBITMAPBUTTON,
-            "GENBITMAPBUTTONTXT": GENBITMAPBUTTONTXT,
-            "GENBITMAPBUTTONTXT_SMALL": GENBITMAPBUTTONTXT_SMALL,
-            "NOBG_BUTTON": NOBG_BUTTON,
-            "NOBG_BUTTON_TXT": NOBG_BUTTON_TXT,
-            "CLOSEBUTTON": CLOSEBUTTON,
-            "MENUBUTTON": MENUBUTTON,
-            "MENUTOOLBARBUTTON": MENUTOOLBARBUTTON,
-        }
-        if btn_class in class_map:
-            return class_map[btn_class](parent, **kwds)
+        if btn_class in BUTTON_CLASS_MAP:
+            return BUTTON_CLASS_MAP[btn_class](parent, **kwds)
 
     if "src" in kwds:
         return BITMAPBUTTON(parent, **kwds)

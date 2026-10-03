@@ -7,6 +7,7 @@ focus tracking, and plugin import functionality.
 import importlib
 import logging
 import sys
+import weakref
 from pathlib import Path
 
 import wx
@@ -157,6 +158,11 @@ def create_desktop_shortcut(app_name, title=None, parameters=""):
         )
 
 
+# A weakref.ref to the last focused control, or None. A strong reference here
+# transitively pinned the whole SchForm (ctrl.parent is the form), including
+# its W*H*4 back buffer, whenever the frame exited without going through
+# CanClose() - the invalidation below only fires when parent.closing is set,
+# which happens solely in SchForm._on_close.
 LAST_FOCUS_CTRL_IN_FORM = None
 
 
@@ -176,22 +182,23 @@ def find_focus_in_form():
     win = win_focus
     while win:
         if win.__class__.__name__ == "SchForm":
-            LAST_FOCUS_CTRL_IN_FORM = win_focus
+            LAST_FOCUS_CTRL_IN_FORM = weakref.ref(win_focus)
             return win_focus
         win = win.GetParent()
 
-    if LAST_FOCUS_CTRL_IN_FORM and (
-        not hasattr(LAST_FOCUS_CTRL_IN_FORM, "parent")
-        or not LAST_FOCUS_CTRL_IN_FORM.parent
+    ctrl = LAST_FOCUS_CTRL_IN_FORM() if LAST_FOCUS_CTRL_IN_FORM else None
+    if ctrl is not None and (
+        not hasattr(ctrl, "parent")
+        or not ctrl.parent
         or (
-            hasattr(LAST_FOCUS_CTRL_IN_FORM.parent, "closing")
-            and LAST_FOCUS_CTRL_IN_FORM.parent.closing
+            hasattr(ctrl.parent, "closing")
+            and ctrl.parent.closing
         )
     ):
         LAST_FOCUS_CTRL_IN_FORM = None
         return None
 
-    return LAST_FOCUS_CTRL_IN_FORM
+    return ctrl
 
 
 def import_plugin(plugin_name, prj_name=None):

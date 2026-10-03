@@ -21,6 +21,10 @@ from wx import ComboCtrl
 from wx.adv import BitmapComboBox
 
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guilib.image import (
+    _cached_bitmaps_from_art_id,
+    _cached_local_bitmap,
+)
 
 logger = logging.getLogger(__name__)
 from pytigon_gui.guictrl.display import POPUPHTML
@@ -93,7 +97,7 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
         """Load standard wxArtProvider icons into the combo box."""
         for art_id in _get_wx_art_ids():
             artid = getattr(wx, art_id)
-            bmp = wx.ArtProvider.GetBitmap(artid, wx.ART_TOOLBAR, (22, 22))
+            bmp = _cached_bitmaps_from_art_id(artid, 22, 22)[0]
             if bmp.IsOk():
                 self.Append(art_id, bmp, art_id)
 
@@ -140,9 +144,11 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
                 else:
                     if ".png" in ff.lower():
                         try:
-                            path = str(dirname / ff)
-                            image = wx.Image(path)
-                            bmp = wx.Bitmap(image)
+                            # Cached: this walked the whole icon tree (515
+                            # PNGs for the embedded + fork-awesome sets) and
+                            # decoded each one per widget, bypassing the
+                            # shared bitmap cache.
+                            bmp = _cached_local_bitmap(str(dirname / ff))
                             if subpath:
                                 icon_id = prefix + subpath + "/" + ff
                             else:

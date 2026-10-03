@@ -10,7 +10,7 @@ Classes:
 
 import wx
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SchBaseCtrl, to_bool
 
 
 class CHECKBOX(wx.CheckBox, SchBaseCtrl):
@@ -104,9 +104,19 @@ class CHECKBOX(wx.CheckBox, SchBaseCtrl):
         """Set the checkbox state.
 
         Args:
-            value: If bool, sets the check state directly.
-                Otherwise stores as the custom value.
+            value: If bool (or a string/number that reads as one, such as the
+                "1"/"true" the HTML parser produces), sets the check state
+                directly. Otherwise stores as the custom value.
         """
+        # Form values arrive from the HTML parser as strings and
+        # set_form_value forwards them unchanged, so "1" used to be stored as
+        # a custom value and left the box visually unchecked. Only values that
+        # actually read as booleans drive the check state; anything else keeps
+        # the original custom-value behaviour.
+        if not isinstance(value, bool):
+            converted = to_bool(value, None)
+            if isinstance(converted, bool):
+                value = converted
         if isinstance(value, bool):
             return wx.CheckBox.SetValue(self, value)
         else:

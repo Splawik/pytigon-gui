@@ -90,6 +90,8 @@ class SchForm(ScrolledPanel):
         self._dc_buf = None
         self._dc_buf_x = 0
         self._dc_buf_y = 0
+        self._dc_buf_w = 0
+        self._dc_buf_h = 0
         self._lock = False
 
         self.no_vscrollbar = not vscroll
@@ -344,6 +346,16 @@ class SchForm(ScrolledPanel):
         if self._block:
             return
         self._block = True
+        try:
+            self._draw_background(refresh_all, size)
+        finally:
+            # Without this, any exception raised while parsing server HTML or
+            # building widgets left _block True and every later repaint returned
+            # early, blanking the form for the lifetime of the window.
+            self._block = False
+
+    def _draw_background(self, refresh_all=False, size=None):
+        """Render the html page onto the client DC (see draw_background)."""
         if not self.wxdc:
             self.Scroll(0, 0)
         (xv, yv) = self.GetViewStart()
@@ -351,15 +363,26 @@ class SchForm(ScrolledPanel):
         (x, y) = (xv * dx, yv * dy)
         self._act_scroll_xy = (x, y)
         dc = wx.ClientDC(self)
-        if self.wxdc and self._dc_buf and self._dc_buf_x == x and self._dc_buf_y == y:
+        rect = self.GetRect()
+        if (
+            self.wxdc
+            and self._dc_buf
+            and self._dc_buf_x == x
+            and self._dc_buf_y == y
+            # Size-aware: the buffer holds a W*H*4 wx.Bitmap, so reusing it
+            # after a resize would blit a wrongly-sized region.
+            and self._dc_buf_w == rect.GetWidth()
+            and self._dc_buf_h == rect.GetHeight()
+        ):
             dc.SetDeviceOrigin(-1 * x, -1 * y)
-            rect = self.GetRect()
             dc.Blit(x, y, rect.GetWidth(), rect.GetHeight(), self._dc_buf, x, y)
         else:
-            rect = self.GetRect()
             if rect.GetWidth() < 1 or rect.GetHeight() < 1:
                 rect = wx.Rect(0, 0, 1, 1)  # width=1, height=1)
             dc.SetDeviceOrigin(-1 * x, -1 * y)
+            # Drop the previous buffer *before* allocating the new one: it is a
+            # W*H*4 wx.Bitmap, so holding both at once doubles the peak.
+            self._release_dc_buf()
             bitmap = wx.Bitmap(rect.GetWidth(), rect.GetHeight())
             dc2 = wx.MemoryDC(bitmap)
             dc2.SetBackground(
@@ -379,7 +402,23 @@ class SchForm(ScrolledPanel):
             self._dc_buf = dc2
             self._dc_buf_x = x
             self._dc_buf_y = y
-        self._block = False
+            self._dc_buf_w = rect.GetWidth()
+            self._dc_buf_h = rect.GetHeight()
+
+    def _release_dc_buf(self):
+        """Drop the W*H*4 back buffer (the wx.MemoryDC owns the wx.Bitmap).
+
+        Called before a new buffer is allocated, when the page is deactivated
+        (see SchPage.deactivate_page), and on close. Without this every open
+        page pinned a full-window RGBA bitmap for its whole lifetime - 7.7 MB at
+        1920x1000, per tab. Safe to call at any time: _draw_background()
+        re-allocates and re-plays self.wxdc when the buffer is None.
+        """
+        self._dc_buf = None
+        self._dc_buf_x = 0
+        self._dc_buf_y = 0
+        self._dc_buf_w = 0
+        self._dc_buf_h = 0
 
     def on_erase_background(self, event):
         self.draw_background()
@@ -667,6 +706,8 @@ class SchForm(ScrolledPanel):
         # Stop timers before the page/children are destroyed, otherwise a
         # pending timer can fire on a dead window.
         self._stop_timers()
+        self._release_dc_buf()
+        self.wxdc = None
         if hasattr(self, "on_close"):
             self.on_close()
         for x in self.websockets:
@@ -1249,6 +1290,11 @@ class SchForm(ScrolledPanel):
 
     def _set_acc_key_tab(self, tabs):
         tab2 = []
+        # Rebuilt from scratch on every page refresh. Without this reset the
+        # list only ever grew, so on_acc_key_down (which scans it on every key
+        # press) walked N duplicate entries after N refreshes.
+        if wx.Platform != "__WXMSW__":
+            self.acc_tab = []
 
         for tab_pos in tabs:
             win = tab_pos[0]
@@ -1276,8 +1322,6 @@ class SchForm(ScrolledPanel):
 
                 win.Bind(wx.EVT_MENU, make_fun(tab, id_start))
             else:
-                if not self.acc_tab:
-                    self.acc_tab = []
                 for pos in tab:
                     self.acc_tab.append(
                         list(pos)

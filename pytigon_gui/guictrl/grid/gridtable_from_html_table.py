@@ -7,17 +7,74 @@ column sizing, cell-level attributes, and copy/paste.
 """
 
 import logging
+import os
+import sys
 import urllib
+from collections import OrderedDict
 
 import wx
 
 from pytigon_gui.guilib.tools import colour_to_html
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
 from pytigon_lib.schhttptools import httpclient
+from pytigon_lib.schhtml.htmltools import Td
 
 from .gridtable_base import SchGridTableBase
 
 logger = logging.getLogger(__name__)
+
+# Upper bound on the memory held by one PageData's cached pages.
+#
+# self.count comes from the server, so scrolling a long table used to cache
+# every page ever visited - permanently, since only sort() cleared it. A
+# 300x15 page is ~1.9 MB, so scrolling a 60k-row grid accumulated ~374 MB that
+# could never be reclaimed.
+#
+# The budget is deliberately generous so ordinary scrolling never re-fetches.
+# At the 128 MB default a 300-row page is ~1.9 MB, so tables up to roughly
+# 20,000 rows stay fully cached and a scroll-back costs no extra requests;
+# beyond that the least-recently-used pages are dropped.
+#
+# Override with PYTIGON_GRID_PAGE_CACHE_MB, e.g. "512" for very large tables or
+# "0" to disable eviction and keep the original unbounded behaviour.
+_PAGE_CACHE_BYTES = int(os.environ.get("PYTIGON_GRID_PAGE_CACHE_MB", "128")) * 1024 * 1024
+
+# Never evict below this many pages, whatever the budget, so that a short
+# scroll-back can never turn into extra round-trips to the server.
+_PAGE_CACHE_MIN_PAGES = 8
+
+
+# Calibrated against tracemalloc: the walk below reports 1.32 MB for a page that
+# actually occupies 1.87 MB, so scale up to keep the byte budget meaningful.
+_PAGE_BYTES_CALIBRATION = 1.4
+
+
+def _page_bytes(page):
+    """Approximate the memory retained by one page of grid rows.
+
+    Specialised for Td (which has __slots__): strings are charged by length
+    rather than by object header, and the rare non-empty children list is
+    approximated. Costs ~1.5 ms for a 300x15 page, i.e. negligible next to the
+    HTTP round trip and HTML parse that produced it.
+    """
+    total = 56  # the page list itself
+    for row in page:
+        total += 56
+        for td in row:
+            if type(td) is not Td:
+                total += sys.getsizeof(td)
+                continue
+            total += 56  # Td object with __slots__
+            data = td.data
+            if type(data) is str:
+                total += 49 + len(data)
+            elif data is not None:
+                total += sys.getsizeof(data)
+            if td.attrs:
+                total += 64 + 100 * len(td.attrs)
+            if td.children:
+                total += 56 + 56 * len(td.children)
+    return int(total * _PAGE_BYTES_CALIBRATION)
 
 
 class KeyForRec:
@@ -52,14 +109,47 @@ class PageData:
     def __init__(self, parent, page_len, count, titles, first_page):
         self.count = count
         self.page_len = page_len
-        self.pages = {}
+        self.pages = OrderedDict()
+        self.pages_bytes = 0
+        self._page_sizes = {}
         self.pages[0] = first_page
+        self._page_sizes[0] = _page_bytes(first_page) if first_page else 0
+        self.pages_bytes = self._page_sizes[0]
         self.parent = parent
         self.titles = titles
         self.inserted = []
         self.sizes = []
         if first_page:
             self.calculate_sizes(titles, 0, first_page)
+
+    def _cache_page(self, page, data):
+        """Store a fetched page and evict old pages to stay inside the budget."""
+        # A page may already be held (re-fetch after an eviction); don't
+        # double-count it.
+        if page in self.pages:
+            self.pages_bytes -= self._page_sizes.pop(page)
+            del self.pages[page]
+        size = _page_bytes(data)
+        self.pages[page] = data
+        self.pages.move_to_end(page)
+        self._page_sizes[page] = size
+        self.pages_bytes += size
+        self._evict_pages()
+
+    def _evict_pages(self):
+        """Drop least-recently-used pages until inside the byte budget.
+
+        Stops at _PAGE_CACHE_MIN_PAGES so that a short scroll-back never
+        costs an extra round-trip to the server.
+        """
+        if not _PAGE_CACHE_BYTES:
+            return  # eviction disabled by configuration
+        while (
+            self.pages_bytes > _PAGE_CACHE_BYTES
+            and len(self.pages) > _PAGE_CACHE_MIN_PAGES
+        ):
+            old_page, _ = self.pages.popitem(last=False)
+            self.pages_bytes -= self._page_sizes.pop(old_page, 0)
 
     def get_page(self, nr):
         href = self.parent.GetParent().get_parm_obj().address
@@ -70,7 +160,12 @@ class PageData:
         html = self.parent.load_data_from_server(addr).decode("utf-8")
         tab = tdata_from_html(html, wx.GetApp().http)
         if tab:
-            self.calculate_sizes(tab[0], nr, tab[1:], True)
+            # calculate_sizes() takes a GLOBAL row index (it seeds j =
+            # start_id - 1, treats that row as the header and stores the rest
+            # in row_h[j] before calling grid.SetRowSize(j, ...)). nr is the
+            # 0-based page index, and __getitem__ maps a row to
+            # "page = id // page_len", so page nr starts at nr * page_len.
+            self.calculate_sizes(tab[0], nr * self.page_len, tab[1:], True)
             return tab[1:]
         else:
             return []
@@ -86,6 +181,7 @@ class PageData:
         page = id // self.page_len
         id2 = id % self.page_len
         if page in self.pages:
+            self.pages.move_to_end(page)  # mark recently used
             try:
                 ret = self.pages[page][id2]
             except (KeyError, IndexError):
@@ -99,7 +195,7 @@ class PageData:
             httpclient.IN_PAINT += 1
             try:
                 data = self.get_page(page)
-                self.pages[page] = data
+                self._cache_page(page, data)
             finally:
                 httpclient.IN_PAINT -= 1
                 wx.EndBusyCursor()
@@ -110,8 +206,10 @@ class PageData:
         for i in range(0, self.count):
             data.append(self.__getitem__(i))
         data.sort(key=key)
-        self.pages = {}
+        self.pages = OrderedDict()
+        self._page_sizes = {0: _page_bytes(data)}
         self.pages[0] = data
+        self.pages_bytes = self._page_sizes[0]
         self.page_len = self.count
 
     def __len__(self):

@@ -1,7 +1,7 @@
 """Module contains helper classes for grid renderers"""
 
+import functools
 import textwrap
-from collections import OrderedDict
 
 import wx
 
@@ -10,6 +10,16 @@ from pytigon_gui.guilib.image import SchImage
 # DrawLabel() only understands horizontal alignment flags, so the vertical
 # half returned by GridCellAttr.GetAlignment() must be masked off.
 _HORIZONTAL_ALIGN = wx.ALIGN_LEFT | wx.ALIGN_CENTER | wx.ALIGN_RIGHT
+
+
+@functools.lru_cache(maxsize=8)
+def _art_bitmap(art_id, client, width, height):
+    """Memoised ArtProvider lookup.
+
+    Draw() runs once per visible cell per paint, so asking the provider for
+    the same '+' bitmap on every repaint was pure repeated work.
+    """
+    return wx.ArtProvider.GetBitmap(art_id, client, (width, height))
 
 
 class ExtStringRenderer(wx.grid.GridCellRenderer):
@@ -99,22 +109,25 @@ class MultiLineStringRenderer(ExtStringRenderer):
             return ExtStringRenderer.GetBestSize(self, grid, attr, dc, row, col)
 
 
+@functools.lru_cache(maxsize=256)
+def _shared_sprite(src):
+    """Process-wide sprite-sheet cache.
+
+    The old per-instance LRU was rebuilt for every SchTableGrid (grids.py
+    constructs a new IconAndStringRenderer), so N grids each held their own
+    copy of the same sheets - a sheet is sheetW * sheetH * 4 bytes.
+    """
+    return SchImage(src).bmp
+
+
 class IconAndStringRenderer(MultiLineStringRenderer):
     """String renderer extended for rendering icons"""
 
     def __init__(self):
         MultiLineStringRenderer.__init__(self, 64)
-        self.cache = OrderedDict()
 
     def get_image_from_cache(self, image):
-        if image in self.cache:
-            self.cache.move_to_end(image)
-        else:
-            if len(self.cache) >= 256:
-                # Evict the least recently used entry, not an arbitrary one.
-                self.cache.popitem(last=False)
-            self.cache[image] = SchImage(image)
-        return self.cache[image].bmp
+        return _shared_sprite(image)
 
     def get_image(self, grid, row, col):
         children = grid.GetTable().get_children(row, col)
@@ -133,9 +146,7 @@ class IconAndStringRenderer(MultiLineStringRenderer):
         if not image:
             text = grid.GetCellValue(row, col)
             if text == "+":
-                image2 = wx.ArtProvider.GetBitmap(
-                    wx.ART_ADD_BOOKMARK, wx.ART_TOOLBAR, (24, 24)
-                )
+                image2 = _art_bitmap(wx.ART_ADD_BOOKMARK, wx.ART_TOOLBAR, 24, 24)
                 if image2:
                     image = image2
         if image:

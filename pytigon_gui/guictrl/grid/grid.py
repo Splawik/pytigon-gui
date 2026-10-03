@@ -147,7 +147,9 @@ class SchTableGrid(wx.grid.Grid):
         self.Bind(wx.grid.EVT_GRID_CMD_CELL_RIGHT_CLICK, self.on_cell_right_click)
         self.Bind(wx.EVT_MENU, self.begin_edit)
         self.Bind(wx.grid.EVT_GRID_CMD_CELL_CHANGED, self.on_cell_change)
-        self.Bind(wx.grid.EVT_GRID_CELL_CHANGING, self.on_cell_change)
+        # Only the post-commit event. Binding EVT_GRID_CELL_CHANGING to the
+        # same handler made a single edit fire two identical synchronous
+        # auto_update HTTP POSTs.
         self.Bind(wx.EVT_KEY_DOWN, self.on_key_down)
 
         column_label_window = self.GetGridColLabelWindow()
@@ -246,17 +248,15 @@ class SchTableGrid(wx.grid.Grid):
     def on_cell_change(self, evt):
         row = evt.GetRow()
         col = evt.GetCol()
-        name = self.GetTable().GetColNames()[evt.GetCol() + 1]
-        autocols = self.GetTable().GetAutoCols()
-        if name in autocols:
-            value = self.GetCellValue(evt.GetRow(), evt.GetCol())
-            names = self.GetTable().GetColNames()[1:]
-            rec = []
-            for i in range(len(names)):
-                rec.append(self.GetTable().GetValue(row, i))
-            rec2 = self.GetTable().auto_update(name, names, rec)
+        table = self.GetTable()
+        names_all = table.GetColNames()
+        name = names_all[col + 1]
+        if name in table.GetAutoCols():
+            names = names_all[1:]
+            rec = [table.GetValue(row, i) for i in range(len(names))]
+            rec2 = table.auto_update(name, names, rec)
             for i in range(len(rec2) - 1):
-                self.GetTable().SetValue(row, i, rec2[i])
+                table.SetValue(row, i, rec2[i])
         evt.Skip()
 
     def on_navigate(self, evt):
@@ -291,17 +291,24 @@ class SchTableGrid(wx.grid.Grid):
         tot_col_size = -self.GetViewStart()[0] * self.GetScrollPixelsPerUnit()[0]
         fs = font.GetPointSize()
         fs2 = int(0.8 * fs)
+        sort_brush = wx.Brush(self.SORT_COLOR, wx.TRANSPARENT)
+        sort_solid_brush = wx.Brush(self.SORT_COLOR, wx.SOLID)
+        grey_pen = wx.Pen(wx.GREY_PEN)
+        white_pen = wx.Pen(wx.WHITE_PEN)
+        black_pen = wx.Pen(wx.BLACK_PEN)
+        small_font = wx.Font(wx.SMALL_FONT)
+        table = self.GetTable()
         for col in range(self.GetNumberCols()):
-            dc.SetBrush(wx.Brush(self.SORT_COLOR, wx.TRANSPARENT))
+            dc.SetBrush(sort_brush)
             dc.SetTextForeground(wx.BLACK)
             col_size = self.GetColSize(col)
             rect = (tot_col_size, 0, col_size, 32)
-            dc.SetPen(wx.GREY_PEN)
+            dc.SetPen(grey_pen)
             dc.DrawLine(rect[0], rect[1], rect[0] + rect[2], rect[1])
-            dc.SetPen(wx.WHITE_PEN)
+            dc.SetPen(white_pen)
             dc.DrawLine(rect[0], rect[1] + 1, rect[0] + rect[2], rect[1] + 1)
             dc.DrawLine(rect[0], rect[1] + 1, rect[0], rect[1] + rect[3])
-            dc.SetPen(wx.GREY_PEN)
+            dc.SetPen(grey_pen)
             dc.DrawLine(
                 rect[0],
                 (rect[1] + rect[3]) - 1,
@@ -314,14 +321,15 @@ class SchTableGrid(wx.grid.Grid):
                 (rect[0] + rect[2]) - 1,
                 rect[1] + rect[3],
             )
-            dc.SetPen(wx.BLACK_PEN)
+            dc.SetPen(black_pen)
             tot_col_size += col_size
-            srt = self.GetTable().get_sort_nr(col)
+            label = self.GetColLabelValue(col)
+            srt = table.get_sort_nr(col)
             if srt != 0:
                 font.SetWeight(wx.BOLD)
                 left = rect[0] + 3
                 top = rect[1] + 3
-                dc.SetBrush(wx.Brush(self.SORT_COLOR, wx.SOLID))
+                dc.SetBrush(sort_solid_brush)
                 if srt > 0:
                     dc.DrawPolygon([(left, top), (left + 6, top), (left + 3, top + 4)])
                 else:
@@ -330,25 +338,20 @@ class SchTableGrid(wx.grid.Grid):
                     )
                 if srt < 0:
                     srt = srt * -1
-                dc.SetFont(wx.SMALL_FONT)
+                dc.SetFont(small_font)
                 dc.DrawText(str(srt), left + 8, top)
                 rect = (rect[0], top + 2, rect[2], rect[3])
-                s = self.GetColLabelValue(col)
-                if s.find("\n") >= 0:
+                if label.find("\n") >= 0:
                     font.SetPointSize(fs2)
                 else:
                     font.SetPointSize(fs)
                 dc.SetFont(font)
-                dc.DrawLabel(
-                    f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER
-                )
+                dc.DrawLabel(label, rect, alignment=wx.ALIGN_CENTER)
             else:
                 font.SetWeight(wx.NORMAL)
                 font.SetPointSize(fs)
                 dc.SetFont(font)
-                dc.DrawLabel(
-                    f"{self.GetColLabelValue(col)}", rect, alignment=wx.ALIGN_CENTER
-                )
+                dc.DrawLabel(label, rect, alignment=wx.ALIGN_CENTER)
 
     def on_select_cell(self, evt):
         newrow = evt.GetRow()

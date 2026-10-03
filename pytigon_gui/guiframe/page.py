@@ -317,6 +317,14 @@ class SchPage(wx.Window, Signal):
         """Destroy all widgets from the previous lifecycle."""
         for name, win in list(self._ctrl_dict_old.items()):
             win.Destroy()
+            # append_ctrl() also does setattr(form, name, ctrl); Destroy()
+            # frees the C++ window but not the Python wrapper or its dicts, so
+            # without this the form's __dict__ pinned every widget it had ever
+            # held (and, transitively, the form's W*H*4 back buffer).
+            # Identity comparison is safe: a bound method is never the widget.
+            for form in (self.body, self.header, self.footer, self.panel):
+                if form is not None and getattr(form, name, None) is win:
+                    delattr(form, name)
         self._ctrl_dict_old = {}
 
     def get_widgets(self):
@@ -717,6 +725,23 @@ class SchPage(wx.Window, Signal):
     def deactivate_page(self):
         """Deactivate this page."""
         self._active = False
+        # Release the back buffers while this page is not the active one: each
+        # is a full-window W*H*4 wx.Bitmap (7.7 MB at 1920x1000), and without
+        # this every open tab held one for as long as the frame lived.
+        # SchNotebook.on_changed() calls Refresh() on the page being left, so
+        # the buffer is rebuilt when the page comes back.
+        self.release_dc_buf()
+
+    def release_dc_buf(self):
+        """Release the back buffers of this page's forms.
+
+        Best-effort: a page that has no forms yet (or a partially built one)
+        simply has nothing to release.
+        """
+        for name in ("body", "header", "footer", "panel"):
+            release = getattr(getattr(self, name, None), "_release_dc_buf", None)
+            if release is not None:
+                release()
 
     def is_active(self):
         """Return whether this page is active."""

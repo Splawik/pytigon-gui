@@ -37,6 +37,31 @@ _RECORD_VIDEO_STRUCT = None
 _RECORD_VIDEO_OUT = None
 _RECORD_VIDEO_MONITOR = None
 
+_FILENAME_FALLBACK = "data.dat"
+
+
+def _filename_from_content_disposition(cd):
+    """Extract a safe local filename from a Content-Disposition header.
+
+    The header is server-supplied, so the result is reduced to a bare
+    basename: a value like ``../../.bashrc`` must not be able to steer the
+    write outside the target directory. A missing ``filename=`` parameter
+    (``inline``, or RFC 5987 ``filename*=``) yields the fallback instead of
+    raising IndexError.
+
+    Args:
+        cd: Raw Content-Disposition header value, or None.
+
+    Returns:
+        str: A safe file name with no directory component.
+    """
+    if not cd or "filename=" not in cd:
+        return _FILENAME_FALLBACK
+    name = cd.split("filename=", 1)[1].split(";")[0].strip().strip('"')
+    # basename() collapses both POSIX and Windows separators.
+    name = os.path.basename(name.replace("\\", "/"))
+    return name or _FILENAME_FALLBACK
+
 
 def save_video_frame(win):
     global _RECORD_VIDEO_STRUCT, _RECORD_VIDEO_OUT, _RECORD_VIDEO_MONITOR
@@ -975,6 +1000,12 @@ class SchAppFrame(SchBaseFrame):
         return id
 
     def _create_bars(self, bar, tab):
+        # The previous bar's commands are dead once it is rebuilt: the old
+        # ToolbarPanels are destroyed with it, but their entries (and the
+        # wx.Window.NewControlId() values, which are never reused) stayed in
+        # self.command for the life of the frame - one leaked entry per button
+        # per ID_RESET.
+        self.command = {}
         page = None
         panel = None
         for row in tab:
@@ -1298,10 +1329,7 @@ class SchAppFrame(SchBaseFrame):
             parameters: Optional parameters (unused).
         """
         cd = response.response.headers.get("content-disposition")
-        if cd:
-            name = cd.split("filename=")[1].replace('"', "")
-        else:
-            name = "data.dat"
+        name = _filename_from_content_disposition(cd)
 
         p = response.ptr()
         path = gettempdir()
@@ -1346,10 +1374,7 @@ class SchAppFrame(SchBaseFrame):
             True on success.
         """
         cd = response.response.headers.get("content-disposition")
-        if cd:
-            name = cd.split("filename=")[1].replace('"', "")
-        else:
-            name = "data.dat"
+        name = _filename_from_content_disposition(cd)
 
         p = response.ptr()
 
