@@ -4,17 +4,16 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytigon-gui"
-version = "0.261002"
+version = "0.261004"
 description = "Pytigon GUI"
 authors = [{name = "Sławomir Chołaj", email = "slawomir.cholaj@gmail.com"}]
-license = {text = "LGPL-2.1"}
+license = "LGPL-2.1-or-later"
 readme = "README.md"
 requires-python = ">=3.12"
 keywords = ["pytigon", "gui", "wxpython", "django", "desktop", "framework"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: GNU Lesser General Public License v2 (LGPLv2)",
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
@@ -32,6 +31,9 @@ dynamic = ["dependencies"]
 dev = [
     "ruff>=0.5",
     "pytest>=7.0",
+    "pytest-cov>=4.0",
+    "pytest-timeout>=2.0",
+    "pre-commit>=3.0",
     "mypy>=1.0",
 ]
 
@@ -47,6 +49,9 @@ ptigw = "pytigon_gui.pytigon:main"
 dependencies = {file = ["requirements.txt"]}
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+timeout = 300
 filterwarnings = [
     "ignore::DeprecationWarning:pkg_resources.*",
     "ignore:.*ast\\.Ellipsis.*:DeprecationWarning:pscript.*",
@@ -135,3 +140,20 @@ skip-magic-trailing-comma = false
 [tool.setuptools.packages.find]
 include = ["pytigon*"]
 exclude = ["pytigon_lib*", "**/__pycache__", "__pycache__", "*.pyc"]
+
+[tool.setuptools.package-data]
+# py.typed marks the package as typed (PEP 561); the compiled catalogues are
+# loaded at runtime by pytigon.py (_main_run) through wx.Locale.
+pytigon_gui = [
+    "py.typed",
+    "locale/*/*.po",
+    "locale/*/*.mo",
+]
+
+[tool.coverage.run]
+source = ["pytigon_gui"]
+
+[tool.coverage.report]
+# Measured ~21% for the current suite. Raise as coverage grows; this floor only
+# prevents silent regressions.
+fail_under = 18

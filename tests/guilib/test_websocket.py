@@ -1,96 +1,80 @@
 """Tests for pytigon_gui.guilib.websocket - WebSocket client protocol."""
 
-import pytest
-from unittest.mock import MagicMock, patch
+import logging
+from unittest.mock import MagicMock
+
+LOGGER_NAME = "pytigon_gui.guilib.websocket"
+
+
+def _protocol():
+    """Create a MyClientProtocol with a mock factory/reactor."""
+    from pytigon_gui.guilib.websocket import MyClientProtocol
+
+    proto = MyClientProtocol()
+    proto.factory = MagicMock()
+    proto.factory.reactor = MagicMock()
+    return proto
 
 
 class TestMyClientProtocol:
     """Tests for MyClientProtocol WebSocket client."""
 
-    def test_class_imports(self):
-        """MyClientProtocol can be imported."""
-        from pytigon_gui.guilib.websocket import MyClientProtocol
-
-        assert MyClientProtocol is not None
-
     def test_inheritance(self):
         """MyClientProtocol extends WebSocketClientProtocol."""
-        from pytigon_gui.guilib.websocket import MyClientProtocol
         from autobahn.twisted.websocket import WebSocketClientProtocol
+
+        from pytigon_gui.guilib.websocket import MyClientProtocol
 
         assert issubclass(MyClientProtocol, WebSocketClientProtocol)
 
-    @patch("pytigon_gui.guilib.websocket.WebSocketClientProtocol")
-    def test_on_connect(self, mock_base):
-        """onConnect logs the connection."""
-        from pytigon_gui.guilib.websocket import MyClientProtocol
+    def test_on_connect_logs_peer(self, caplog):
+        """onConnect logs the peer address."""
+        proto = _protocol()
+        response = MagicMock()
+        response.peer = "tcp4:127.0.0.1:9000"
 
-        proto = MyClientProtocol()
-        proto.factory = MagicMock()
-        proto.factory.reactor = MagicMock()
+        with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+            proto.onConnect(response)
 
-        mock_response = MagicMock()
-        mock_response.peer = "tcp4:127.0.0.1:9000"
+        assert "tcp4:127.0.0.1:9000" in caplog.text
 
-        proto.onConnect(mock_response)
-        # Should not raise
-
-    @patch("pytigon_gui.guilib.websocket.WebSocketClientProtocol")
-    def test_on_open_starts_loop(self, mock_base):
-        """onOpen starts a periodic message send loop."""
-        from pytigon_gui.guilib.websocket import MyClientProtocol
-
-        proto = MyClientProtocol()
-        proto.factory = MagicMock()
-        proto.factory.reactor = MagicMock()
+    def test_on_open_starts_keepalive_loop(self):
+        """onOpen sends one text and one binary message and schedules the loop."""
+        proto = _protocol()
         proto.sendMessage = MagicMock()
 
         proto.onOpen()
 
-        # Verify sendMessage was called
         assert proto.sendMessage.call_count == 2
-        # Verify callLater was scheduled
         proto.factory.reactor.callLater.assert_called_once()
 
-    @patch("pytigon_gui.guilib.websocket.WebSocketClientProtocol")
-    def test_on_message_text(self, mock_base):
-        """onMessage handles text messages."""
-        from pytigon_gui.guilib.websocket import MyClientProtocol
+    def test_on_message_text_logs_payload(self, caplog):
+        """onMessage decodes and logs a text message."""
+        proto = _protocol()
 
-        proto = MyClientProtocol()
-        proto.factory = MagicMock()
+        with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+            proto.onMessage(b"hello", isBinary=False)
 
-        proto.onMessage(b"hello", isBinary=False)
-        # Should not raise
+        assert "hello" in caplog.text
 
-    @patch("pytigon_gui.guilib.websocket.WebSocketClientProtocol")
-    def test_on_message_binary(self, mock_base):
-        """onMessage handles binary messages."""
-        from pytigon_gui.guilib.websocket import MyClientProtocol
+    def test_on_message_binary_logs_length(self, caplog):
+        """onMessage logs the byte length of a binary message."""
+        proto = _protocol()
 
-        proto = MyClientProtocol()
-        proto.factory = MagicMock()
+        with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+            proto.onMessage(b"\x00\x01\x02", isBinary=True)
 
-        proto.onMessage(b"\x00\x01\x02", isBinary=True)
-        # Should not raise
+        assert "3 bytes" in caplog.text
 
-    @patch("pytigon_gui.guilib.websocket.WebSocketClientProtocol")
-    def test_on_close(self, mock_base):
-        """onClose logs the close reason."""
-        from pytigon_gui.guilib.websocket import MyClientProtocol
+    def test_on_close_cancels_keepalive_and_logs(self, caplog):
+        """onClose stops the keepalive loop and logs the reason."""
+        proto = _protocol()
+        keepalive = MagicMock()
+        proto._keepalive = keepalive
 
-        proto = MyClientProtocol()
-        proto.factory = MagicMock()
+        with caplog.at_level(logging.INFO, logger=LOGGER_NAME):
+            proto.onClose(wasClean=True, code=1000, reason="Normal closure")
 
-        proto.onClose(wasClean=True, code=1000, reason="Normal closure")
-        # Should not raise
-
-
-class TestMyClientFactory:
-    """Tests for WebSocketClientFactory usage."""
-
-    def test_factory_imports(self):
-        """WebSocketClientFactory can be imported."""
-        from pytigon_gui.guilib.websocket import WebSocketClientFactory
-
-        assert WebSocketClientFactory is not None
+        keepalive.cancel.assert_called_once()
+        assert proto._keepalive is None
+        assert "Normal closure" in caplog.text

@@ -1,6 +1,6 @@
 # Pytigon GUI
 
-**Version:** 0.260707 · **License:** LGPL 2.1 · **Author:** Sławomir Chołaj
+**Version:** 0.260707 · **License:** LGPL-2.1 · **Author:** Sławomir Chołaj
 
 ---
 

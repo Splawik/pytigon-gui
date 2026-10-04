@@ -18,7 +18,6 @@ dist
 */.gradle/
 migrations/
 
-*.mo
 *.pkl
 *.pid
 *.log
@@ -46,3 +45,20 @@ pytigon/prj/*
 
 # Katalogi ukryte (np. .kilo) sa ignorowane, ale CI musi byc w repo
 !.github/
+
+# Secrets and local configuration (never commit)
+env
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+id_rsa*
+*.sqlite3
+*.db
+
+# Test/coverage artifacts
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
