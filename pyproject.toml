@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pytigon-gui"
-version = "0.261004"
+version = "0.261006"
 description = "Pytigon GUI"
 authors = [{name = "Sławomir Chołaj", email = "slawomir.cholaj@gmail.com"}]
 license = "LGPL-2.1-or-later"
@@ -20,6 +20,7 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Desktop Environment",
     "Topic :: Software Development :: Libraries :: Application Frameworks",
     "Topic :: Software Development :: Libraries :: Python Modules",
