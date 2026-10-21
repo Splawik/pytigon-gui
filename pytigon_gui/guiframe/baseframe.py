@@ -8,13 +8,13 @@ and SchBrowserFrame (webview) inherit.
 import logging
 import os
 import traceback
+import importlib
 from pathlib import Path
 
+from pytigon_gui.guilib.tools import force_base_path
 import wx
 
 logger = logging.getLogger(__name__)
-
-from pytigon_gui.guilib.tools import import_plugin
 
 
 class SchBaseFrame(wx.Frame):
@@ -66,19 +66,14 @@ class SchBaseFrame(wx.Frame):
         desktop notebook, frame manager, menu bar, toolbar interface,
         and accelerator table.
         """
-        home_dir = wx.GetApp().get_working_dir()
-        app_plugins = Path(wx.GetApp().cwd) / "plugins"
         dirnames = [
             Path(wx.GetApp().pytigon_path) / "appdata" / "plugins",
-            Path(wx.GetApp().data_path) / "plugins",
-            app_plugins,
+            Path(wx.GetApp().data_path) / "plugins_cache",
         ]
 
         auto_plugins = []
         try:
-            auto_plugins = (
-                wx.GetApp().config["Global settings"].get("auto_plugins", "").split(";")
-            )
+            auto_plugins = wx.GetApp().config["Global settings"].get("auto_plugins", "").split(";")
         except (KeyError, AttributeError):
             pass
 
@@ -106,12 +101,13 @@ class SchBaseFrame(wx.Frame):
                     if not (
                         ff == "auto"
                         or (wx.GetApp().plugins and x in wx.GetApp().plugins)
+                        or (wx.GetApp().plugins and x.replace("plug_", "") in wx.GetApp().plugins)
                         or x in auto_plugins
                     ):
                         continue
 
                     try:
-                        mod = import_plugin(mod_name)
+                        mod = importlib.import_module(mod_name)
                     except Exception:
                         logger.exception("Error importing plugin: %s", mod_name)
                         continue

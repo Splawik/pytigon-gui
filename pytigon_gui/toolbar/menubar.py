@@ -125,3 +125,38 @@ class MenuToolbarBar(ToolbarBar, wx.MenuBar):
             obj: The wx.Frame to attach the menu bar to.
         """
         obj.SetMenuBar(self)
+
+
+
+class MenuPopup(ToolbarBar, wx.Menu):
+    """The top-level menu bar, combining ToolbarBar and wx.MenuBar."""
+
+    def __init__(self, parent, gui_style):
+        """Initialize the menu bar.
+
+        Args:
+            parent: Parent wx.Frame.
+            gui_style: GUI style string for standard button creation.
+        """
+        wx.Menu.__init__(self)
+        ToolbarBar.__init__(self, parent, gui_style)
+
+    def create_page(self, title, kind):
+        """Create a new top-level menu page.
+
+        Returns:
+            MenuToolbarPage: The newly created page.
+        """
+        return MenuToolbarPage(self, title, kind)
+
+    def update_bar(self, obj):
+        """Apply this menu bar to the given frame/window.
+
+        Args:
+            obj: The wx.Frame to attach the menu bar to.
+        """
+        #obj.SetMenuBar(self)
+        pass
+
+    def Append(self, submenu, text):
+        return self.AppendSubMenu(submenu, text)

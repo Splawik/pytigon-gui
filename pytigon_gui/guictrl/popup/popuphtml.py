@@ -378,11 +378,7 @@ class DataPopupControl(ComboCtrl):
         """
         from pytigon_gui.guiframe.page import SchPage
 
-        href = (
-            self.href + "dialog/|value"
-            if self.dialog_with_value
-            else self.href + "dialog/"
-        )
+        href = self.href + "dialog/|value" if self.dialog_with_value else self.href + "dialog/"
         self.html = SchPage(parent, href, self)
         self.html.body.parent_combo = self
         return self.html

@@ -563,6 +563,8 @@ class SchNotebookPage(wx.Window):
             h.parent_page = self.get_page(-1)
 
         title2 = title if title else h.get_title()
+        if title2:
+            h.SetName(title2)
         self.add_page(h)
 
         def init_page():

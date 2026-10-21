@@ -66,6 +66,106 @@ def like_primary(primary_hsl, h, s, l, x=None):
     return wx.Colour(x1, x2, x3)
 
 
+class PytigonProvider(RB.RibbonMSWArtProvider):
+    def __init__(self, *argi, **argv):
+        super().__init__(*argi, **argv)
+        self._tab_separation_size = 1
+
+    def DrawTab(self, dc, wnd, tab):
+        if tab.rect.height <= 2:
+            return
+
+        if tab.active or tab.hovered:
+            if tab.active:
+                background = wx.Rect(*tab.rect)
+                background.x += 2
+                background.y += 2
+                background.width -= 4
+                background.height -= 2
+
+                dc.GradientFillLinear(
+                    background,
+                    self._tab_active_background_colour,
+                    self._tab_active_background_gradient_colour,
+                    wx.SOUTH,
+                )
+
+            elif tab.hovered:
+                background = wx.Rect(*tab.rect)
+                background.x += 2
+                background.y += 2
+                background.width -= 4
+                background.height -= 3
+                h = background.height
+                background.height //= 2
+                dc.GradientFillLinear(
+                    background,
+                    self._tab_hover_background_top_colour,
+                    self._tab_hover_background_top_gradient_colour,
+                    wx.SOUTH,
+                )
+
+                background.y += background.height
+                background.height = h - background.height
+                dc.GradientFillLinear(
+                    background,
+                    self._tab_hover_background_colour,
+                    self._tab_hover_background_gradient_colour,
+                    wx.SOUTH,
+                )
+
+            border_points = [wx.Point() for i in range(4)]
+            border_points[0] = wx.Point(0, tab.rect.height - 1)
+            border_points[1] = wx.Point(0, 3)
+            border_points[2] = wx.Point(tab.rect.width - 1, 3)
+            border_points[3] = wx.Point(tab.rect.width - 1, tab.rect.height - 1)
+
+            dc.SetPen(self._tab_border_pen)
+            dc.DrawLines(border_points, tab.rect.x, tab.rect.y)
+
+            if tab.active:
+                dc.DrawPoint(tab.rect.x, tab.rect.y + tab.rect.height - 2)
+                dc.DrawPoint(tab.rect.x + tab.rect.width - 1, tab.rect.y + tab.rect.height - 2)
+
+                p = wx.Pen(self._tab_active_background_gradient_colour)
+                dc.SetPen(p)
+
+        if self._flags & RIBBON_BAR_SHOW_PAGE_ICONS:
+            icon = tab.page.GetIcon()
+
+            if icon.IsOk():
+                x = tab.rect.x + 4
+                if self._flags & RIBBON_BAR_SHOW_PAGE_LABELS == 0:
+                    x = tab.rect.x + (tab.rect.width - icon.GetWidth()) // 2
+
+                dc.DrawBitmap(
+                    icon, x, tab.rect.y + 1 + (tab.rect.height - 1 - icon.GetHeight()) // 2, True
+                )
+
+        if self._flags & RIBBON_BAR_SHOW_PAGE_LABELS:
+            label = tab.page.GetLabel()
+            if label.strip():
+                dc.SetFont(self._tab_label_font)
+                dc.SetTextForeground(self._tab_label_colour)
+                dc.SetBackgroundMode(wx.TRANSPARENT)
+
+                text_width, text_height = dc.GetTextExtent(label)
+                width = tab.rect.width - 5
+                x = tab.rect.x + 3
+
+                if self._flags & RIBBON_BAR_SHOW_PAGE_ICONS:
+                    x += 3 + tab.page.GetIcon().GetWidth()
+                    width -= 3 + tab.page.GetIcon().GetWidth()
+
+                y = tab.rect.y + (tab.rect.height - text_height) // 2
+
+                if width <= text_width:
+                    dc.SetClippingRegion(x, tab.rect.y, width, tab.rect.height)
+                    dc.DrawText(label, x, y)
+                else:
+                    dc.DrawText(label, x + (width - text_width) // 2 + 1, y)
+
+
 class ModernHtmlPanel(BaseHtmlPanel):
     """HTML panel wrapper for the modern ribbon toolbar."""
 
@@ -202,9 +302,7 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
         Returns:
             ModernToolbarButton: The separator button object.
         """
-        b = ModernToolbarButton(
-            self, 0, "", None, None, kind=ToolbarButton.TYPE_SEPARATOR
-        )
+        b = ModernToolbarButton(self, 0, "", None, None, kind=ToolbarButton.TYPE_SEPARATOR)
         self.Append(b)
         return b
 
@@ -253,6 +351,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
         """
         RB.RibbonBar.__init__(self, parent, wx.ID_ANY)
         super().__init__(parent, gui_style)
+        self.SetTabCtrlMargins(40, 0)
 
     def create_page(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
         """Create a new ribbon page.
@@ -387,7 +486,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
             if ORG_LIKE_PRIMARY is None:
                 ORG_LIKE_PRIMARY = RB.art_msw.LikePrimary
                 RB.art_msw.LikePrimary = like_primary
-            provider = RB.RibbonMSWArtProvider()
+            provider = PytigonProvider()
             (dummy, secondary, tertiary) = provider.GetColourScheme(None, 1, 1)
             colour = wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE)
             colour2 = wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNTEXT)
@@ -407,9 +506,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
         if numtabs == 0:
             return
 
-        width = (
-            self.GetSize().GetWidth() - self._tab_margin_left - self._tab_margin_right
-        )
+        width = self.GetSize().GetWidth() - self._tab_margin_left - self._tab_margin_right
         tabsep = self._art.GetMetric(RIBBON_ART_TAB_SEPARATION_SIZE)
         x = self._tab_margin_left
         y = 0
@@ -446,9 +543,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
                 self._art.GetScrollButtonMinimumSize(
                     temp_dc,
                     self,
-                    RIBBON_SCROLL_BTN_LEFT
-                    | RIBBON_SCROLL_BTN_NORMAL
-                    | RIBBON_SCROLL_BTN_FOR_TABS,
+                    RIBBON_SCROLL_BTN_LEFT | RIBBON_SCROLL_BTN_NORMAL | RIBBON_SCROLL_BTN_FOR_TABS,
                 ).GetWidth()
             )
             self._tab_scroll_left_button_rect.SetHeight(self._tab_height)
@@ -458,9 +553,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
                 self._art.GetScrollButtonMinimumSize(
                     temp_dc,
                     self,
-                    RIBBON_SCROLL_BTN_RIGHT
-                    | RIBBON_SCROLL_BTN_NORMAL
-                    | RIBBON_SCROLL_BTN_FOR_TABS,
+                    RIBBON_SCROLL_BTN_RIGHT | RIBBON_SCROLL_BTN_NORMAL | RIBBON_SCROLL_BTN_FOR_TABS,
                 ).GetWidth()
             )
             self._tab_scroll_right_button_rect.SetHeight(self._tab_height)
@@ -540,16 +633,11 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
                         # Sneaky obj array trickery to not copy the tab descriptors
                         sorted_pages.append(info)
 
-                    sorted_pages.sort(
-                        key=cmp_to_key(self.OrderPageTabInfoBySmallWidthAsc)
-                    )
+                    sorted_pages.sort(key=cmp_to_key(self.OrderPageTabInfoBySmallWidthAsc))
                     width -= tabsep * (numtabs - 1)
 
                     for i, info in enumerate(self._pages):
-                        if (
-                            info.small_must_have_separator_width * (numtabs - i)
-                            <= width
-                        ):
+                        if info.small_must_have_separator_width * (numtabs - i) <= width:
                             info.rect.width = info.small_must_have_separator_width
                         else:
                             info.rect.width = width // (numtabs - i)
@@ -567,9 +655,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
                     # Do (3)
                     total_small_width = (smallest_tab_width + tabsep) * numtabs - tabsep
                     total_delta = total_small_width - self._tabs_total_width_minimum
-                    total_small_width = self._tabs_total_width_minimum - tabsep * (
-                        numtabs - 1
-                    )
+                    total_small_width = self._tabs_total_width_minimum - tabsep * (numtabs - 1)
                     width -= tabsep * (numtabs - 1)
 
                     for info in self._pages:
@@ -577,8 +663,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
                         info.rect.x = x
                         info.rect.y = y
                         info.rect.width = (
-                            info.minimum_width
-                            + delta * (width - total_small_width) // total_delta
+                            info.minimum_width + delta * (width - total_small_width) // total_delta
                         )
                         info.rect.height = self._tab_height
 

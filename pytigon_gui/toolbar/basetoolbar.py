@@ -525,9 +525,9 @@ class ToolbarBar:
             e: Event type; defaults to wx.EVT_MENU if not specified.
         """
         if e:
-            self.parent.Unbind(e, id=id)
+            self.parent.Unbind(e)
         else:
-            self.parent.Unbind(wx.EVT_MENU, id=id)
+            self.parent.Unbind(wx.EVT_MENU)
 
     def create_html_win(
         self, toolbar_page, address_or_parser, parameters, callback=None

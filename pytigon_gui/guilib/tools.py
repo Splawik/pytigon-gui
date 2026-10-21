@@ -4,16 +4,16 @@ Includes color manipulation helpers, desktop shortcut creation,
 focus tracking, and plugin import functionality.
 """
 
-import importlib
 import logging
 import sys
 import weakref
+import importlib
+import contextlib
 from pathlib import Path
 
 import wx
 
 import pytigon
-from pytigon_lib.schtools.main_paths import get_main_paths
 
 try:
     from pyshortcuts import make_shortcut
@@ -190,10 +190,7 @@ def find_focus_in_form():
     if ctrl is not None and (
         not hasattr(ctrl, "parent")
         or not ctrl.parent
-        or (
-            hasattr(ctrl.parent, "closing")
-            and ctrl.parent.closing
-        )
+        or (hasattr(ctrl.parent, "closing") and ctrl.parent.closing)
     ):
         LAST_FOCUS_CTRL_IN_FORM = None
         return None
@@ -201,48 +198,17 @@ def find_focus_in_form():
     return ctrl
 
 
-def import_plugin(plugin_name, prj_name=None):
-    """Import a plugin module by name, searching standard plugin paths.
-
-    Lookup order depends on whether *prj_name* is given:
-      - With project: prj_cfg, then prj_cfg_alt.
-      - Without project: pytigon_cfg, then data_cfg.
-
-    Args:
-        plugin_name: Dotted module name (e.g. 'plugins.myplugin').
-        prj_name: Optional project name for project-specific plugins.
-
-    Returns:
-        The imported module, or None if not found or import failed.
-    """
-    cfg = get_main_paths()
-    pytigon_cfg = [cfg["PYTIGON_PATH"], "appdata", "plugins"]
-    data_cfg = [cfg["DATA_PATH"], "plugins"]
-    prj_cfg = [cfg["PRJ_PATH"], prj_name, "applib"]
-    prj_cfg_alt = [cfg["PRJ_PATH_ALT"], prj_name, "applib"]
-
-    if prj_name:
-        folders = [prj_cfg, prj_cfg_alt]
-    else:
-        folders = [pytigon_cfg, data_cfg]
-
-    path = None
-    for folder in folders:
-        plugins_path = Path(folder[0]).joinpath(*folder[1:])
-        if prj_name:
-            plugin_path = Path(plugins_path).joinpath(*plugin_name.split(".")[:-1])
-        else:
-            plugin_path = Path(plugins_path).joinpath(*plugin_name.split("."))
-        if Path(plugin_path).exists():
-            path = plugins_path
-            break
-
-    if not path:
-        logger.warning("Plugin path not found: %s", plugin_name)
-        return None
-
+@contextlib.contextmanager
+def force_base_path(path):
+    # Insert the path at the very beginning for the highest priority
+    tmp = sys.path
+    sys.path = [
+        path,
+    ]
     try:
-        return importlib.import_module(plugin_name, package=None)
-    except ImportError as e:
-        logger.error("Failed to import plugin '%s': %s", plugin_name, e)
-        return None
+        yield
+    finally:
+        # Remove the path after the 'with' block to keep sys.path clean
+        # if path in sys.path:
+        #    sys.path.remove(path)
+        sys.path = tmp

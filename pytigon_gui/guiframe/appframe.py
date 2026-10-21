@@ -195,6 +195,7 @@ class SchAppFrame(SchBaseFrame):
         # on_command is bound on the frame, so both the menu bar and the tool
         # bar would otherwise register the same handler twice.
         self._command_bound = False
+        self.popup_menu = None
 
         self.destroy_fun_tab = []
         self.after_init = False
@@ -238,6 +239,7 @@ class SchAppFrame(SchBaseFrame):
 
             self.tbIcon = _TaskBarIcon()
             self.tbIcon.SetIcon(icon, "Pytigon")
+            # wx.CallAfter(self.Hide)
         else:
             self.tbIcon = None
 
@@ -273,15 +275,40 @@ class SchAppFrame(SchBaseFrame):
                 self.toolbar_interface.create()
             self._sizer.Add(self._panel, 1, wx.EXPAND)
             self._mgr.Update()
+
         elif "modern" in gui_style:
             from pytigon_gui.toolbar.moderntoolbar import ModernToolbarBar
+            from pytigon_gui.toolbar.menubar import MenuPopup
+            import wx.lib.buttons as buttons
 
             self.toolbar_interface = ModernToolbarBar(self, gui_style)
             self._create_tool_bar()
-            # self.toolbar_interface.realize_bar()
             self.toolbar_interface.create()
             self._sizer.Add(self.toolbar_interface, 0, wx.EXPAND)
             self._sizer.Add(self._panel, 1, wx.EXPAND)
+            button_1 = buttons.GenButton(
+                self, label="\u2630", pos=(1, 4), size=(39, 22), style=wx.BORDER_NONE
+            )
+            button_1.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT))
+            button_1.SetForegroundColour(wx.WHITE)
+            font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+            button_1.SetFont(font)
+            button_1.SetUseFocusIndicator(False)
+
+            def on_button(event):
+                if not self.popup_menu:
+                    if self._menu_bar_lp > 0:
+                        lp = self._menu_bar_lp
+                    else:
+                        lp = 1
+                    tab = wx.GetApp().get_tab(lp)[1:]
+                    self.popup_menu = MenuPopup(self, gui_style)
+                    self._create_bars(self.popup_menu, tab, bind=False)
+                    self.popup_menu.Bind(wx.EVT_MENU, self.on_command)
+                self.PopupMenu(self.popup_menu)
+
+            self.Bind(wx.EVT_BUTTON, on_button, button_1)
+
         elif "tree" in gui_style:
             from pytigon_gui.toolbar.treetoolbar import TreeToolbarBar
 
@@ -451,7 +478,8 @@ class SchAppFrame(SchBaseFrame):
         wx.CallAfter(self.UpdateWindowUI)
         self.Layout()
         wx.CallAfter(self.Bind, wx.EVT_IDLE, self.on_idle)
-        wx.CallAfter(self.Show)
+        if not self.tbIcon:
+            wx.CallAfter(self.Show)
 
     def setup_frame(self):
         self.SetMinSize(wx.Size(800, 600))
@@ -490,11 +518,11 @@ class SchAppFrame(SchBaseFrame):
 
                 def start_pages():
                     for page in app.start_pages:
-                        url_page = page.split(";")
+                        url_page = page.split(",")
                         if len(url_page) == 2:
-                            self._on_html(_(url_page[0]) + "," + app.base_path + "/" + url_page[1])
+                            self._on_html(_(url_page[0]) + "," + url_page[1])
                         elif len(url_page) == 1:
-                            self._on_html("," + app.base_path + "/" + url_page[0])
+                            self._on_html("," + url_page[0])
 
                 wx.CallAfter(start_pages)
 
@@ -539,9 +567,15 @@ class SchAppFrame(SchBaseFrame):
             | aui.AUI_NB_TAB_SPLIT
             | aui.AUI_NB_WINDOWLIST_BUTTON
         )
+
         n = SchNotebook(self._panel, wx.Point(0, 0), wx.Size(0, 0), style=style)
         n.SetAGWWindowStyleFlag(style)
         n.SetArtProvider(aui.VC71TabArt())
+
+        # if hideSingleTab:
+        #    current_style = n.GetAGWWindowStyleFlag()
+        #    n.SetAGWWindowStyleFlag(current_style | aui.AUI_NB_HIDE_ON_SINGLE_TAB)
+
         return n
 
     def _create_pane_info(self, name, caption):
@@ -888,6 +922,7 @@ class SchAppFrame(SchBaseFrame):
             return None
 
         page = SchNotebookPage(n)
+        page.SetName(title)
         if panel == "desktop2":
             if title is None:
                 if isinstance(address_or_parser, str):
@@ -920,6 +955,17 @@ class SchAppFrame(SchBaseFrame):
 
         if refr:
             self._mgr.GetPane(panel).Show()
+
+        if "dialog" in self.gui_style or "one_form" in self.gui_style:
+            if n.GetPageCount() > 1:
+                current_style = n.GetAGWWindowStyleFlag()
+                if current_style & aui.AUI_NB_HIDE_ON_SINGLE_TAB:
+                    n.SetAGWWindowStyleFlag(current_style & ~aui.AUI_NB_HIDE_ON_SINGLE_TAB)
+            else:
+                current_style = n.GetAGWWindowStyleFlag()
+                if not current_style & aui.AUI_NB_HIDE_ON_SINGLE_TAB:
+                    n.SetAGWWindowStyleFlag(current_style | aui.AUI_NB_HIDE_ON_SINGLE_TAB)
+
         self._mgr.Update()
 
         return page.new_child_page(address_or_parser, None, parameters)
@@ -995,17 +1041,20 @@ class SchAppFrame(SchBaseFrame):
                 logger.debug("process manager unavailable", exc_info=True)
 
     def _append_command(self, typ, command):
+        for item in self.command.items():
+            if typ == item[1][0] and command == item[1][1]:
+                return item[0]
         id = wx.Window.NewControlId()
         self.command[id] = (typ, command)
         return id
 
-    def _create_bars(self, bar, tab):
+    def _create_bars(self, bar, tab, bind=True):
         # The previous bar's commands are dead once it is rebuilt: the old
         # ToolbarPanels are destroyed with it, but their entries (and the
         # wx.Window.NewControlId() values, which are never reused) stayed in
         # self.command for the life of the frame - one leaked entry per button
         # per ID_RESET.
-        self.command = {}
+        # self.command = {}
         page = None
         panel = None
         for row in tab:
@@ -1042,9 +1091,10 @@ class SchAppFrame(SchBaseFrame):
                     bitmap = (wx.GetApp().images)[0]
                 idn = self._append_command(row[5].data, row[6].data)
                 panel.append(idn, row[2].data, bitmap)
-        if not self._command_bound:
+        # if not self._command_bound:
+        if bind:
             bar.bind(self.on_command)
-            self._command_bound = True
+        #    self._command_bound = True
 
     def _create_menu_bar(self):
         tab = wx.GetApp().get_tab(self._menu_bar_lp)[1:]
@@ -1158,7 +1208,6 @@ class SchAppFrame(SchBaseFrame):
         try:
             exec(command)
         except Exception:
-
             logger.error("Error executing python command: %s", command, exc_info=True)
 
     def _on_sys(self, command):
