@@ -351,7 +351,7 @@ class ModernToolbarBar(ToolbarBar, RB.RibbonBar):
         """
         RB.RibbonBar.__init__(self, parent, wx.ID_ANY)
         super().__init__(parent, gui_style)
-        self.SetTabCtrlMargins(40, 0)
+        self.SetTabCtrlMargins(60, 0)
 
     def create_page(self, title, kind=ToolbarPage.TYPE_PAGE_NORMAL):
         """Create a new ribbon page.

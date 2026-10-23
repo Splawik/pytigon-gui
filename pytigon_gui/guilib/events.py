@@ -31,6 +31,7 @@ ID_SELALL = wx.Window.NewControlId()
 ID_HELP = wx.Window.NewControlId()
 
 # ---- Panel/view navigation ----
+ID_MENU = wx.Window.NewControlId()
 ID_GOTOHEADER = wx.Window.NewControlId()
 ID_GOTOPANEL = wx.Window.NewControlId()
 ID_GOTOFOOTER = wx.Window.NewControlId()

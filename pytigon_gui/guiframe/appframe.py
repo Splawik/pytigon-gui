@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 # import wx.html2
 from wx.lib.agw import aui
+import wx.lib.buttons as buttons
 
 from pytigon_gui.guiframe.baseframe import SchBaseFrame
 from pytigon_gui.guiframe.manager import SChAuiManager
@@ -98,6 +99,11 @@ def finish_video():
         _RECORD_VIDEO_OUT.release()
         _RECORD_VIDEO_OUT = None
     _RECORD_VIDEO_STRUCT = None
+
+
+class MenuButton(buttons.GenButton):
+    def Realize(self, *args, **kwargs):
+        pass
 
 
 class _SChMainPanel(wx.Window):
@@ -196,6 +202,7 @@ class SchAppFrame(SchBaseFrame):
         # bar would otherwise register the same handler twice.
         self._command_bound = False
         self.popup_menu = None
+        self.popup_menu_button = None
 
         self.destroy_fun_tab = []
         self.after_init = False
@@ -279,16 +286,20 @@ class SchAppFrame(SchBaseFrame):
         elif "modern" in gui_style:
             from pytigon_gui.toolbar.moderntoolbar import ModernToolbarBar
             from pytigon_gui.toolbar.menubar import MenuPopup
-            import wx.lib.buttons as buttons
 
             self.toolbar_interface = ModernToolbarBar(self, gui_style)
             self._create_tool_bar()
             self.toolbar_interface.create()
             self._sizer.Add(self.toolbar_interface, 0, wx.EXPAND)
             self._sizer.Add(self._panel, 1, wx.EXPAND)
-            button_1 = buttons.GenButton(
-                self, label="\u2630", pos=(1, 4), size=(39, 22), style=wx.BORDER_NONE
+            button_1 = MenuButton(
+                self.toolbar_interface,
+                label="\u2630  ▾",
+                pos=(1, 3),
+                size=(59, 23),
+                style=wx.BORDER_NONE,
             )
+            self.popup_menu_button = button_1
             button_1.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT))
             button_1.SetForegroundColour(wx.WHITE)
             font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
@@ -305,9 +316,14 @@ class SchAppFrame(SchBaseFrame):
                     self.popup_menu = MenuPopup(self, gui_style)
                     self._create_bars(self.popup_menu, tab, bind=False)
                     self.popup_menu.Bind(wx.EVT_MENU, self.on_command)
-                self.PopupMenu(self.popup_menu)
+
+                btn_pos = self.popup_menu_button.GetPosition()
+                btn_height = self.popup_menu_button.GetSize().height
+                popup_pos = (btn_pos.x, btn_pos.y + btn_height)
+                self.PopupMenu(self.popup_menu, popup_pos)
 
             self.Bind(wx.EVT_BUTTON, on_button, button_1)
+            self.Bind(wx.EVT_CONTEXT_MENU, on_button)
 
         elif "tree" in gui_style:
             from pytigon_gui.toolbar.treetoolbar import TreeToolbarBar
@@ -446,6 +462,7 @@ class SchAppFrame(SchBaseFrame):
         self.bind_command(self.on_prev_page, id=ID_PREVPAGE)
         self.bind_command(self.on_close_tab, id=ID_CLOSETAB)
         self.bind_command(self.on_refresh_tab, id=ID_REFRESHTAB)
+        self.bind_command(self.on_menu, id=ID_MENU)
 
         self.bind_command(self.on_goto_desktop, id=ID_GOTODESKTOP)
         self.bind_command(self.on_goto_head, id=ID_GOTOHEADER)
@@ -505,6 +522,7 @@ class SchAppFrame(SchBaseFrame):
             (wx.ACCEL_ALT, ord("j"), ID_NEXTPAGE),
             (wx.ACCEL_ALT, wx.WXK_BACK, ID_WEB_BACK),
             (0, wx.WXK_F5, ID_REFRESHTAB),
+            (0, wx.WXK_F10, ID_MENU),
         ]
 
     def on_idle(self, event):
@@ -603,6 +621,16 @@ class SchAppFrame(SchBaseFrame):
                     return
             else:
                 parent = parent.GetParent()
+
+    def on_menu(self, evt):
+        self.popup_menu_button.SetFocus()
+        self.popup_menu_button.Command(
+            wx.CommandEvent(wx.wxEVT_BUTTON, self.popup_menu_button.GetId())
+        )
+        # print("F10")
+        # evt = wx.ContextMenuEvent(wx.wxEVT_CONTEXT_MENU, self.popup_menu_button.GetId())
+        # evt.SetEventObject(self.popup_menu_button)
+        # wx.PostEvent(self.popup_menu_button, evt)
 
     def on_next_page(self, evt):
         """scroll active form one page down"""
