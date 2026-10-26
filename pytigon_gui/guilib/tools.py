@@ -10,6 +10,7 @@ import weakref
 import importlib
 import contextlib
 from pathlib import Path
+import os
 
 import wx
 
@@ -17,6 +18,7 @@ import pytigon
 
 try:
     from pyshortcuts import make_shortcut
+    # from pyshortcuts.utils import get_desktop
 except ImportError:
     make_shortcut = None
 
@@ -84,9 +86,7 @@ def colour_to_html(colour):
     Returns:
         HTML color string.
     """
-    return wx.Colour(colour.Red(), colour.Green(), colour.Blue()).GetAsString(
-        wx.C2S_HTML_SYNTAX
-    )
+    return wx.Colour(colour.Red(), colour.Green(), colour.Blue()).GetAsString(wx.C2S_HTML_SYNTAX)
 
 
 def get_colour(wx_id, proc=None):
@@ -138,7 +138,7 @@ def standard_tab_colour():
     )
 
 
-def create_desktop_shortcut(app_name, title=None, parameters=""):
+def create_desktop_shortcut(app_name, title=None, parameters="", desktop=True, startmenu=True):
     """Create a desktop shortcut for launching a Pytigon application.
 
     Args:
@@ -147,14 +147,18 @@ def create_desktop_shortcut(app_name, title=None, parameters=""):
         parameters: Additional command-line parameters.
     """
     pytigon_init_path = Path(pytigon.__file__).resolve()
-    ico_path = pytigon_init_path.replace("__init__.py", "pytigon.ico")
-    ptig_path = pytigon_init_path.replace("__init__.py", "ptig.py")
+    ico_path = str(pytigon_init_path).replace("__init__.py", "pytigon.ico")
+    ptig_path = str(pytigon_init_path).replace("__init__.py", "ptig.pyw")
+    name = title if title else app_name
 
     if "python" in sys.executable and make_shortcut:
         make_shortcut(
             ptig_path + " " + app_name,
-            name=title if title else app_name,
+            name=name,
             icon=ico_path,
+            terminal=False,
+            desktop=desktop,
+            startmenu=startmenu,
         )
 
 

@@ -76,7 +76,9 @@ def save_video_frame(win):
 
             # fourcc = cv2.VideoWriter_fourcc(*'MJPG')
             fourcc = cv2.VideoWriter_fourcc(*"XVID")
-            _RECORD_VIDEO_OUT = cv2.VideoWriter(win._video, fourcc, 4, (size.width, size.height))
+            _RECORD_VIDEO_OUT = cv2.VideoWriter(
+                win._video, fourcc, 4, (size.width, size.height)
+            )
             _RECORD_VIDEO_MONITOR = {
                 "top": pos.y,
                 "left": pos.x,
@@ -268,7 +270,9 @@ class SchAppFrame(SchBaseFrame):
             if len(wx.GetApp().get_tab(self._toolbar_bar_lp)) > 1:
                 from pytigon_gui.toolbar import standardtoolbar
 
-                self.toolbar_interface = standardtoolbar.StandardToolbarBar(self, gui_style)
+                self.toolbar_interface = standardtoolbar.StandardToolbarBar(
+                    self, gui_style
+                )
                 self._create_tool_bar()
                 self.toolbar_interface.create()
             self._sizer.Add(self._panel, 1, wx.EXPAND)
@@ -277,7 +281,9 @@ class SchAppFrame(SchBaseFrame):
             if len(wx.GetApp().get_tab(self._toolbar_bar_lp)) > 1:
                 from pytigon_gui.toolbar import generictoolbar
 
-                self.toolbar_interface = generictoolbar.GenericToolbarBar(self, gui_style)
+                self.toolbar_interface = generictoolbar.GenericToolbarBar(
+                    self, gui_style
+                )
                 self._create_tool_bar()
                 self.toolbar_interface.create()
             self._sizer.Add(self._panel, 1, wx.EXPAND)
@@ -294,15 +300,19 @@ class SchAppFrame(SchBaseFrame):
             self._sizer.Add(self._panel, 1, wx.EXPAND)
             button_1 = MenuButton(
                 self.toolbar_interface,
-                label="\u2630  ▾",
+                label="\u2630",
                 pos=(1, 3),
                 size=(59, 23),
                 style=wx.BORDER_NONE,
             )
             self.popup_menu_button = button_1
-            button_1.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT))
+            button_1.SetBackgroundColour(
+                wx.SystemSettings.GetColour(wx.SYS_COLOUR_HOTLIGHT)
+            )
             button_1.SetForegroundColour(wx.WHITE)
-            font = wx.Font(14, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD)
+            font = wx.Font(
+                12, wx.FONTFAMILY_DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_BOLD
+            )
             button_1.SetFont(font)
             button_1.SetUseFocusIndicator(False)
 
@@ -323,7 +333,7 @@ class SchAppFrame(SchBaseFrame):
                 self.PopupMenu(self.popup_menu, popup_pos)
 
             self.Bind(wx.EVT_BUTTON, on_button, button_1)
-            self.Bind(wx.EVT_CONTEXT_MENU, on_button)
+            #sself.Bind(wx.EVT_CONTEXT_MENU, on_button)
 
         elif "tree" in gui_style:
             from pytigon_gui.toolbar.treetoolbar import TreeToolbarBar
@@ -438,7 +448,9 @@ class SchAppFrame(SchBaseFrame):
 
         self.Bind(wx.EVT_TIMER, self.on_timer, self.t1)
         self.Bind(aui.EVT_AUI_PANE_ACTIVATED, self.on_pane_activated)
-        self.Bind(wx.EVT_MENU_RANGE, self.on_show_elem, id=ID_SHOWHEADER, id2=ID_SHOWTOOLBAR2)
+        self.Bind(
+            wx.EVT_MENU_RANGE, self.on_show_elem, id=ID_SHOWHEADER, id2=ID_SHOWTOOLBAR2
+        )
 
         if "tray" in gui_style:
             self.Bind(wx.EVT_CLOSE, self.on_taskbar_hide)
@@ -610,7 +622,10 @@ class SchAppFrame(SchBaseFrame):
                     return
                 else:
                     y = parent.GetViewStart()[1] * parent.GetScrollPixelsPerUnit()[1]
-                    dy = parent.GetScrollPageSize(wx.VERTICAL) * parent.GetScrollPixelsPerUnit()[1]
+                    dy = (
+                        parent.GetScrollPageSize(wx.VERTICAL)
+                        * parent.GetScrollPixelsPerUnit()[1]
+                    )
                     y = y + direction * dy
                     if y < 0:
                         y = 0
@@ -761,7 +776,10 @@ class SchAppFrame(SchBaseFrame):
         if "application/" in response.ret_content_type:
             return self.download_data(response, title, parameters)
 
-        if "video/" in response.ret_content_type or "audio/" in response.ret_content_type:
+        if (
+            "video/" in response.ret_content_type
+            or "audio/" in response.ret_content_type
+        ):
             return self.show_document(response, title, parameters)
 
         # "image/"
@@ -875,7 +893,10 @@ class SchAppFrame(SchBaseFrame):
 
         if not address.startswith("^") and (
             (not view_in or view_in.startswith("browser"))
-            or (address.startswith("http") and not address.startswith(wx.GetApp().base_address))
+            or (
+                address.startswith("http")
+                and not address.startswith(wx.GetApp().base_address)
+            )
         ):
             if view_in and "_" in view_in:
                 panel = view_in.split("_")[1]
@@ -928,7 +949,9 @@ class SchAppFrame(SchBaseFrame):
                     name[1:], address_or_parser, parameters
                 )
             else:
-                return self.toolbar_interface.create_html_win(None, address_or_parser, parameters)
+                return self.toolbar_interface.create_html_win(
+                    None, address_or_parser, parameters
+                )
         if panel == "desktop2":
             n = self._mgr.GetPane("desktop").window
         else:
@@ -988,11 +1011,15 @@ class SchAppFrame(SchBaseFrame):
             if n.GetPageCount() > 1:
                 current_style = n.GetAGWWindowStyleFlag()
                 if current_style & aui.AUI_NB_HIDE_ON_SINGLE_TAB:
-                    n.SetAGWWindowStyleFlag(current_style & ~aui.AUI_NB_HIDE_ON_SINGLE_TAB)
+                    n.SetAGWWindowStyleFlag(
+                        current_style & ~aui.AUI_NB_HIDE_ON_SINGLE_TAB
+                    )
             else:
                 current_style = n.GetAGWWindowStyleFlag()
                 if not current_style & aui.AUI_NB_HIDE_ON_SINGLE_TAB:
-                    n.SetAGWWindowStyleFlag(current_style | aui.AUI_NB_HIDE_ON_SINGLE_TAB)
+                    n.SetAGWWindowStyleFlag(
+                        current_style | aui.AUI_NB_HIDE_ON_SINGLE_TAB
+                    )
 
         self._mgr.Update()
 
@@ -1194,7 +1221,9 @@ class SchAppFrame(SchBaseFrame):
         self._exit()
 
     def on_show_elem(self, event):
-        name = ["header", "panel", "footer", "tb1", "tb2"][event.GetId() - ID_SHOWHEADER]
+        name = ["header", "panel", "footer", "tb1", "tb2"][
+            event.GetId() - ID_SHOWHEADER
+        ]
         panel = self._mgr.GetPane(name)
         panel.Show(not panel.IsShown())
         self._mgr.Update()
@@ -1262,7 +1291,9 @@ class SchAppFrame(SchBaseFrame):
                 self._create_tool_bar()
                 self.toolbar_interface.realize_bar()
                 sizer.Replace(old_toolbar.get_bar(), self.toolbar_interface.get_bar())
-                self.toolbar_interface.get_bar().SetSize(old_toolbar.get_bar().GetSize())
+                self.toolbar_interface.get_bar().SetSize(
+                    old_toolbar.get_bar().GetSize()
+                )
                 old_bar = old_toolbar.get_bar()
                 old_bar.Enable(False)
                 old_bar.Show(False)
@@ -1355,7 +1386,9 @@ class SchAppFrame(SchBaseFrame):
         with schfs.open_file(temp_filename, "wb") as f:
             f.write(response.ptr())
 
-        form_frame = self.new_main_page("file://" + temp_filename, temp_filename, view_in="browser")
+        form_frame = self.new_main_page(
+            "file://" + temp_filename, temp_filename, view_in="browser"
+        )
 
         def _after_init():
             if not form_frame:

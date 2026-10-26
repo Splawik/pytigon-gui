@@ -30,7 +30,6 @@ class BitmapTextButton(buttons.GenBitmapButton):
         """Constructor"""
 
         self._art = RB.RibbonMSWArtProvider()
-        # self._art = RB.RibbonArtProvider()
         buttons.GenBitmapButton.__init__(
             self, parent, id, bitmap, pos, size, style | wx.BU_EXACTFIT, validator, name
         )
@@ -41,7 +40,9 @@ class BitmapTextButton(buttons.GenBitmapButton):
         image = self.bmpLabel.ConvertToImage()
         imageutils.grayOut(image)
         self.bmpLabel2 = wx.Bitmap(image)
-        self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_3DFACE))
+
+    def GetBackgroundBrush(self, dc):
+        return wx.TRANSPARENT_BRUSH
 
     def _GetLabelSize(self):
         s = (self.bmpLabel.GetWidth(), self.bmpLabel.GetHeight())
@@ -60,6 +61,7 @@ class BitmapTextButton(buttons.GenBitmapButton):
     def DrawLabel(self, dc, width, height, dx=0, dy=0):
         label = self.GetLabel()
         state = art.RIBBON_BUTTONBAR_BUTTON_LARGE
+
         if self.IsEnabled() and self.GetParent().IsEnabled():
             if self.enter_state:
                 state |= art.RIBBON_BUTTONBAR_BUTTON_NORMAL_HOVERED

@@ -343,6 +343,7 @@ NOBG_BUTTON = GENBITMAPBUTTONTXT
 NOBG_BUTTON_TXT = GENBITMAPBUTTONTXT
 """Alias for a text button without background."""
 
+
 CLOSEBUTTON = _make_button_class(
     BitmapTextButton, is_bitmap_button=True, is_close_button=True
 )
