@@ -154,6 +154,9 @@ def create_desktop_shortcut(app_name, title=None, parameters="", desktop=True, s
     if "python" in sys.executable and make_shortcut:
         make_shortcut(
             ptig_path + " " + app_name,
+            executable=sys.executable
+            if os.name == "posix"
+            else sys.executable.replace("python.exe", "pythonw.exe"),
             name=name,
             icon=ico_path,
             terminal=False,
