@@ -21,13 +21,11 @@ import wx
 import wx.lib.platebtn as platebtn
 
 from pytigon_gui.guictrl.basectrl import SchBaseCtrl
-from pytigon_gui.guictrl.button.toolbarbutton import BitmapTextButton
+from pytigon_gui.guictrl.button.toolbarbutton import BitmapTextButton, BitmapTextButtonTransparent
 from pytigon_gui.guilib.image import bitmap_from_href
 
 
-def _make_button_class(
-    base_class, is_bitmap_button=False, is_close_button=False, icon_size=2
-):
+def _make_button_class(base_class, is_bitmap_button=False, is_close_button=False, icon_size=2):
     """Create a button widget class dynamically.
 
     This factory generates a class that inherits from both a wxPython
@@ -75,7 +73,7 @@ def _make_button_class(
 
             if is_bitmap_button:
                 self._set_bitmap()
-                if base_class in (wx.BitmapButton, BitmapTextButton):
+                if base_class in (wx.BitmapButton, BitmapTextButton, BitmapTextButtonTransparent):
                     if "style" in kwds:
                         style = kwds["style"] | wx.NO_BORDER
                         kwds["style"] = style
@@ -87,9 +85,7 @@ def _make_button_class(
                     if self.bmp is not None:
                         kwds["bitmap"] = self.bmp
                 elif base_class == platebtn.PlateButton:
-                    kwds["style"] = (
-                        platebtn.PB_STYLE_SQUARE | platebtn.PB_STYLE_GRADIENT
-                    )
+                    kwds["style"] = platebtn.PB_STYLE_SQUARE | platebtn.PB_STYLE_GRADIENT
                     kwds["bmp"] = self.bmp
                 elif base_class == wx.Button:
                     # wx.Button has no 'bitmap' constructor argument; the
@@ -161,7 +157,7 @@ def _make_button_class(
                 self.Bind(wx.EVT_BUTTON, self._on_click, self)
 
             # Additional tooltip for BitmapTextButton
-            if self.label and base_class == BitmapTextButton:
+            if self.label and base_class in (BitmapTextButton, BitmapTextButtonTransparent):
                 self.SetToolTip(wx.ToolTip(self.label.replace("&", "")))
 
             # Register accelerator key from '&' prefix in label
@@ -331,9 +327,7 @@ GENBITMAPTEXTBUTTON = _make_button_class(wx.Button, is_bitmap_button=True)
 GENBITMAPBUTTONTXT = _make_button_class(BitmapTextButton, is_bitmap_button=True)
 """Bitmap text button (normal icon size)."""
 
-GENBITMAPBUTTONTXT_SMALL = _make_button_class(
-    BitmapTextButton, is_bitmap_button=True, icon_size=1
-)
+GENBITMAPBUTTONTXT_SMALL = _make_button_class(BitmapTextButton, is_bitmap_button=True, icon_size=1)
 """Bitmap text button (small icon size)."""
 
 # Aliases for compatibility
@@ -345,7 +339,7 @@ NOBG_BUTTON_TXT = GENBITMAPBUTTONTXT
 
 
 CLOSEBUTTON = _make_button_class(
-    BitmapTextButton, is_bitmap_button=True, is_close_button=True
+    BitmapTextButtonTransparent, is_bitmap_button=True, is_close_button=True
 )
 """Close button that cancels the child form when clicked."""
 

@@ -231,7 +231,7 @@ class ModernToolbarPanel(ToolbarPanel, RB.RibbonPanel):
         ToolbarPanel.__init__(self, parent_page, title, kind)
 
         if self.kind == ToolbarPanel.TYPE_PANEL_TOOLBAR:
-            self.toolbar = RB.RibbonToolBar(self)
+            self.toolbar = RB.RibbonToolBar(self, size=(0, 0))
         elif self.kind == ToolbarPanel.TYPE_PANEL_BUTTONBAR:
             self.toolbar = RB.RibbonButtonBar(self)
 

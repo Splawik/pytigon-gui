@@ -41,9 +41,6 @@ class BitmapTextButton(buttons.GenBitmapButton):
         imageutils.grayOut(image)
         self.bmpLabel2 = wx.Bitmap(image)
 
-    def GetBackgroundBrush(self, dc):
-        return wx.TRANSPARENT_BRUSH
-
     def _GetLabelSize(self):
         s = (self.bmpLabel.GetWidth(), self.bmpLabel.GetHeight())
         ret = self._art.GetButtonBarButtonSize(
@@ -105,3 +102,8 @@ class BitmapTextButton(buttons.GenBitmapButton):
 
             wx.CallAfter(_refresh)
         event.Skip()
+
+
+class BitmapTextButtonTransparent(BitmapTextButton):
+    def GetBackgroundBrush(self, dc):
+        return wx.TRANSPARENT_BRUSH
