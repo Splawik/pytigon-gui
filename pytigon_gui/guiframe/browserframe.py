@@ -82,7 +82,7 @@ class SchBrowserFrame(SchBaseFrame):
 
         size = wx.GetApp().app_size
         wx.CallAfter(self.SetSize, (size[0], size[1]))
-        wx.CallAfter(self.Show)
+        wx.CallLater(1000, self.Show)
         wx.CallAfter(self.Bind, wx.EVT_IDLE, self.on_idle)
         call_after_if_alive(self, self._create_browser_ctrl)
 
