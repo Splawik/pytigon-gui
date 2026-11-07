@@ -166,29 +166,29 @@ def create_desktop_shortcut(app_name, title=None, parameters="", desktop=True, s
 
 
 # A weakref.ref to the last focused control, or None. A strong reference here
-# transitively pinned the whole SchForm (ctrl.parent is the form), including
+# transitively pinned the whole SChForm (ctrl.parent is the form), including
 # its W*H*4 back buffer, whenever the frame exited without going through
 # CanClose() - the invalidation below only fires when parent.closing is set,
-# which happens solely in SchForm._on_close.
+# which happens solely in SChForm._on_close.
 LAST_FOCUS_CTRL_IN_FORM = None
 
 
 def find_focus_in_form():
-    """Find the currently focused control that belongs to a SchForm.
+    """Find the currently focused control that belongs to a SChForm.
 
     Walks up the window hierarchy from the current focus to locate a
-    SchForm parent. Caches the last known focused control and invalidates
+    SChForm parent. Caches the last known focused control and invalidates
     it if the parent form is closing.
 
     Returns:
-        The focused wx.Window inside a SchForm, or None.
+        The focused wx.Window inside a SChForm, or None.
     """
     global LAST_FOCUS_CTRL_IN_FORM
 
     win_focus = wx.Window.FindFocus()
     win = win_focus
     while win:
-        if win.__class__.__name__ == "SchForm":
+        if win.__class__.__name__ == "SChForm":
             LAST_FOCUS_CTRL_IN_FORM = weakref.ref(win_focus)
             return win_focus
         win = win.GetParent()

@@ -26,7 +26,7 @@ Concrete toolbars and menus based on these abstract classes:
 
 import wx
 
-from pytigon_gui.guiframe.page import SchPage
+from pytigon_gui.guiframe.page import SChPage
 from pytigon_gui.guilib.events import *
 from pytigon_gui.guilib.threads import call_after_if_alive
 from pytigon_gui.toolbar.standardtoolbarbuttons import StandardButtons
@@ -89,7 +89,7 @@ class BaseHtmlPanel:
         Otherwise the new page is added to the sizer.
 
         Args:
-            html_page: The new SchPage (or wx.Window) to display.
+            html_page: The new SChPage (or wx.Window) to display.
         """
         if self.html_page:
             self.sizer.Replace(self.html_page, html_page)
@@ -545,7 +545,7 @@ class ToolbarBar:
             callback: Optional callback invoked after initialization.
 
         Returns:
-            SchPage or None: The created page, or None on failure.
+            SChPage or None: The created page, or None on failure.
         """
         page = None
         if not toolbar_page:
@@ -574,7 +574,7 @@ class ToolbarBar:
             # dx = panel.get_width() + 3
             dy = panel.get_height() - 15  # + 5
 
-            page2 = SchPage(
+            page2 = SChPage(
                 panel.get_window(),
                 address_or_parser,
                 parameters,

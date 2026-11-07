@@ -49,18 +49,18 @@ class TestExtractKwarg:
 
 
 class TestSchBaseCtrlInitBase:
-    """Tests for SchBaseCtrl.init_base() method."""
+    """Tests for SChBaseCtrl.init_base() method."""
 
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_init_base_extracts_href(self, mock_wx):
         """init_base extracts href from kwds."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({"href": "/test/page", "label": "Page"})
 
         assert ctrl.href == "/test/page"
@@ -69,13 +69,13 @@ class TestSchBaseCtrlInitBase:
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_init_base_extracts_id(self, mock_wx):
         """init_base extracts id as nr_id."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({"id": "mycontrol"})
 
         assert ctrl.nr_id == "mycontrol"
@@ -83,13 +83,13 @@ class TestSchBaseCtrlInitBase:
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_init_base_defaults(self, mock_wx):
         """init_base sets sensible defaults."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({})
 
         assert ctrl.href == ""
@@ -103,13 +103,13 @@ class TestSchBaseCtrlInitBase:
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_init_base_readonly_true(self, mock_wx):
         """init_base sets readonly when kwarg present."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({"readonly": True})
 
         assert ctrl.readonly == True
@@ -117,13 +117,13 @@ class TestSchBaseCtrlInitBase:
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_init_base_hidden(self, mock_wx):
         """init_base sets hidden when kwarg present."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({"hidden": True})
 
         assert ctrl.hidden == True
@@ -131,13 +131,13 @@ class TestSchBaseCtrlInitBase:
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_init_base_length_values(self, mock_wx):
         """init_base converts length/maxlength to int."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({"length": "30", "maxlength": "100"})
 
         assert ctrl.length == 30
@@ -146,13 +146,13 @@ class TestSchBaseCtrlInitBase:
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_init_base_data_unquoted(self, mock_wx):
         """init_base URL-decodes data attribute."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({"data": "hello%20world"})
 
         assert ctrl.data == "hello world"
@@ -160,13 +160,13 @@ class TestSchBaseCtrlInitBase:
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_init_base_tag_from_param(self, mock_wx):
         """init_base extracts tag from param dict."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({"param": {"tag": "ctrltext"}})
 
         assert ctrl.tag == "ctrltext"
@@ -174,7 +174,7 @@ class TestSchBaseCtrlInitBase:
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_init_base_hooks_called(self, mock_wx):
         """init_base calls registered ctrl_process hooks for the tag."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         hook_called = []
 
@@ -185,7 +185,7 @@ class TestSchBaseCtrlInitBase:
         mock_app.ctrl_process = {"my_tag": [my_hook]}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({"param": {"tag": "my_tag"}})
 
         assert len(hook_called) == 1
@@ -193,18 +193,18 @@ class TestSchBaseCtrlInitBase:
 
 
 class TestSchBaseCtrlMethods:
-    """Tests for SchBaseCtrl utility methods."""
+    """Tests for SChBaseCtrl utility methods."""
 
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_set_and_get_unique_name(self, mock_wx):
         """unique_name can be set and retrieved."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({})
 
         ctrl.set_unique_name("test_ctrl_001")
@@ -212,20 +212,20 @@ class TestSchBaseCtrlMethods:
 
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_get_parent_form(self, mock_wx):
-        """get_parent_form walks up to find SchForm."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        """get_parent_form walks up to find SChForm."""
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
         mock_wx.GetApp.return_value = mock_app
 
         mock_form = MagicMock()
-        mock_form.__class__.__name__ = "SchForm"
+        mock_form.__class__.__name__ = "SChForm"
 
         mock_intermediate = MagicMock()
         mock_intermediate.GetParent.return_value = mock_form
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({})
         ctrl.parent = mock_intermediate
 
@@ -234,8 +234,8 @@ class TestSchBaseCtrlMethods:
 
     @patch("pytigon_gui.guictrl.basectrl.wx")
     def test_get_parent_form_none(self, mock_wx):
-        """get_parent_form returns None when no SchForm ancestor."""
-        from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+        """get_parent_form returns None when no SChForm ancestor."""
+        from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
         mock_app = MagicMock()
         mock_app.ctrl_process = {}
@@ -245,7 +245,7 @@ class TestSchBaseCtrlMethods:
         mock_window.__class__.__name__ = "wxPanel"
         mock_window.GetParent.return_value = None
 
-        ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+        ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
         ctrl.init_base({})
         ctrl.parent = mock_window
 
@@ -383,9 +383,9 @@ class TestSchBaseCtrlHtml5Attrs:
             mock_app = MagicMock()
             mock_app.ctrl_process = {}
             mock_wx.GetApp.return_value = mock_app
-            from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+            from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
-            ctrl = SchBaseCtrl.__new__(SchBaseCtrl)
+            ctrl = SChBaseCtrl.__new__(SChBaseCtrl)
             ctrl.init_base({"param": param})
         return ctrl
 
@@ -435,20 +435,20 @@ class TestSchBaseCtrlHtml5Attrs:
 
 
 class TestApplyCommonAttrs:
-    """Tests for SchBaseCtrl._apply_common_attrs()."""
+    """Tests for SChBaseCtrl._apply_common_attrs()."""
 
     def test_applies_placeholder_title_disabled(self):
         from unittest.mock import MagicMock, patch
 
         with patch("pytigon_gui.guictrl.basectrl.wx"):
-            from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+            from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
             ctrl = MagicMock()
             ctrl.placeholder = "hint"
             ctrl.title_attr = "tip"
             ctrl.disabled = True
             ctrl.autofocus = False
-            SchBaseCtrl._apply_common_attrs(ctrl)
+            SChBaseCtrl._apply_common_attrs(ctrl)
 
         ctrl.SetHint.assert_called_once_with("hint")
         ctrl.SetToolTip.assert_called_once_with("tip")
@@ -458,7 +458,7 @@ class TestApplyCommonAttrs:
         from unittest.mock import MagicMock, patch
 
         with patch("pytigon_gui.guictrl.basectrl.wx") as mock_wx:
-            from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+            from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
             ctrl = MagicMock()
             ctrl.placeholder = None
@@ -467,7 +467,7 @@ class TestApplyCommonAttrs:
             ctrl.autofocus = True
             ctrl.IsBeingDeleted.return_value = False
             ctrl.CanAcceptFocus.return_value = False
-            SchBaseCtrl._apply_common_attrs(ctrl)
+            SChBaseCtrl._apply_common_attrs(ctrl)
 
             # Focus is deferred, so CallAfter is registered...
             mock_wx.CallAfter.assert_called_once()
@@ -481,7 +481,7 @@ class TestApplyCommonAttrs:
         from unittest.mock import MagicMock, patch
 
         with patch("pytigon_gui.guictrl.basectrl.wx") as mock_wx:
-            from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+            from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
             ctrl = MagicMock()
             ctrl.placeholder = None
@@ -490,7 +490,7 @@ class TestApplyCommonAttrs:
             ctrl.autofocus = True
             ctrl.IsBeingDeleted.return_value = False
             ctrl.CanAcceptFocus.return_value = True
-            SchBaseCtrl._apply_common_attrs(ctrl)
+            SChBaseCtrl._apply_common_attrs(ctrl)
 
             mock_wx.CallAfter.call_args[0][0]()
             ctrl.SetFocus.assert_called_once()

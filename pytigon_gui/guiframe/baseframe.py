@@ -1,8 +1,8 @@
 """
 Base frame class for Pytigon application windows.
 
-Provides the core SchBaseFrame from which both SchAppFrame (desktop)
-and SchBrowserFrame (webview) inherit.
+Provides the core SChBaseFrame from which both SChAppFrame (desktop)
+and SChBrowserFrame (webview) inherit.
 """
 
 import logging
@@ -17,7 +17,7 @@ import wx
 logger = logging.getLogger(__name__)
 
 
-class SchBaseFrame(wx.Frame):
+class SChBaseFrame(wx.Frame):
     """
     Base main window for Pytigon applications.
 

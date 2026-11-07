@@ -1,5 +1,5 @@
 """
-SchNotebook object used as a top-level container in panels:
+SChNotebook object used as a top-level container in panels:
 'desktop', 'panel', 'header' and 'footer'.
 
 Extends aui.AuiNotebook with custom page activation, closing,
@@ -19,7 +19,7 @@ from pytigon_lib.schtools.wiki import wiki_from_str
 logger = logging.getLogger(__name__)
 
 
-class SchNotebook(aui.AuiNotebook):
+class SChNotebook(aui.AuiNotebook):
     """Custom AUI notebook for Pytigon applications.
 
     Manages tab pages within desktop, panel, header, and footer
@@ -34,7 +34,7 @@ class SchNotebook(aui.AuiNotebook):
         size=wx.DefaultSize,
         style=wx.BORDER_NONE | wx.TAB_TRAVERSAL | wx.WANTS_CHARS,
     ):
-        """Construct a SchNotebook.
+        """Construct a SChNotebook.
 
         Args:
             parent: Parent window.
@@ -60,7 +60,7 @@ class SchNotebook(aui.AuiNotebook):
 
         # Deliberately call wx.Panel.__init__ instead of AuiNotebook's
         # to keep control over the initialization sequence.
-        wx.Panel.__init__(self, parent, wx.ID_ANY, pos, size, style, name="SchNotebook")
+        wx.Panel.__init__(self, parent, wx.ID_ANY, pos, size, style, name="SChNotebook")
         self._mgr = SChAuiBaseManager()
 
         self._tabs = aui.AuiTabContainer(self)
@@ -201,7 +201,7 @@ class SchNotebook(aui.AuiNotebook):
         """Activate *page* and deactivate the previously active one.
 
         Args:
-            page: The SchNotebookPage to activate, or None.
+            page: The SChNotebookPage to activate, or None.
         """
         if self.last_active:
             self.last_active.deactivate_page()
@@ -213,7 +213,7 @@ class SchNotebook(aui.AuiNotebook):
         """Add a page and split the notebook window.
 
         Args:
-            page: SchNotebookPage to add.
+            page: SChNotebookPage to add.
             title: Caption for the new tab.
             direction: wx.LEFT, wx.TOP, wx.RIGHT, or wx.BOTTOM.
         """

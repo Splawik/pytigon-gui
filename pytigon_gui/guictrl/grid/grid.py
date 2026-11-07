@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 _ = wx.GetTranslation
 
 
-class SchTableGrid(wx.grid.Grid):
+class SChTableGrid(wx.grid.Grid):
     SORT_COLOR = "ORANGE"
 
     GET_ID = 0
@@ -190,7 +190,7 @@ class SchTableGrid(wx.grid.Grid):
     def get_html_parent(self):
         parent = self.GetParent()
         while parent is not None:
-            if parent.__class__.__name__ == "SchForm":
+            if parent.__class__.__name__ == "SChForm":
                 return parent
             parent = parent.GetParent()
         return None

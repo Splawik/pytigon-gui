@@ -5,7 +5,7 @@ import textwrap
 
 import wx
 
-from pytigon_gui.guilib.image import SchImage
+from pytigon_gui.guilib.image import SChImage
 
 # DrawLabel() only understands horizontal alignment flags, so the vertical
 # half returned by GridCellAttr.GetAlignment() must be masked off.
@@ -113,11 +113,11 @@ class MultiLineStringRenderer(ExtStringRenderer):
 def _shared_sprite(src):
     """Process-wide sprite-sheet cache.
 
-    The old per-instance LRU was rebuilt for every SchTableGrid (grids.py
+    The old per-instance LRU was rebuilt for every SChTableGrid (grids.py
     constructs a new IconAndStringRenderer), so N grids each held their own
     copy of the same sheets - a sheet is sheetW * sheetH * 4 bytes.
     """
-    return SchImage(src).bmp
+    return SChImage(src).bmp
 
 
 class IconAndStringRenderer(MultiLineStringRenderer):

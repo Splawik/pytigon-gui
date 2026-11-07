@@ -1,7 +1,7 @@
 """
-Choice/selection widget classes for the SchForm GUI framework.
+Choice/selection widget classes for the SChForm GUI framework.
 
-Provides wxPython selection controls integrated with SchBaseCtrl:
+Provides wxPython selection controls integrated with SChBaseCtrl:
 checkbox, checklistbox, listbox, list control, radiobox, radio button.
 
 Classes:
@@ -10,10 +10,10 @@ Classes:
 
 import wx
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl, to_bool
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl, to_bool
 
 
-class CHECKBOX(wx.CheckBox, SchBaseCtrl):
+class CHECKBOX(wx.CheckBox, SChBaseCtrl):
     """Checkbox control with optional custom value.
 
     Handles ctrlcheckbox tag. When the checkbox is checked,
@@ -35,7 +35,7 @@ class CHECKBOX(wx.CheckBox, SchBaseCtrl):
                 present, the checkbox starts checked. If no label
                 is provided, adds ALIGN_RIGHT style.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if "checked" in kwds:
             del kwds["checked"]
             checked = True
@@ -123,7 +123,7 @@ class CHECKBOX(wx.CheckBox, SchBaseCtrl):
             self.value = value
 
 
-class CHECKLISTBOX(wx.CheckListBox, SchBaseCtrl):
+class CHECKLISTBOX(wx.CheckListBox, SChBaseCtrl):
     """Check list box allowing multiple selections with checkboxes.
 
     Handles ctrlchecklistbox tag. Provides a list where each item
@@ -143,7 +143,7 @@ class CHECKLISTBOX(wx.CheckListBox, SchBaseCtrl):
             parent: Parent window.
             **kwds: Forwarded to wx.CheckListBox with WANTS_CHARS style.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
 
         if "style" in kwds:
             kwds["style"] |= wx.WANTS_CHARS
@@ -214,7 +214,7 @@ class CHECKLISTBOX(wx.CheckListBox, SchBaseCtrl):
         return ret
 
 
-class LISTBOX(wx.ListBox, SchBaseCtrl):
+class LISTBOX(wx.ListBox, SChBaseCtrl):
     """Standard list box for single or multiple selection.
 
     Handles ctrllistbox tag. Supports multiple selection mode
@@ -234,7 +234,7 @@ class LISTBOX(wx.ListBox, SchBaseCtrl):
             **kwds: Forwarded to wx.ListBox. Enables LB_MULTIPLE
                 if 'multiple' is in the param dict.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         self._norefresh = False
 
         if self.param and "multiple" in self.param:
@@ -316,7 +316,7 @@ class LISTBOX(wx.ListBox, SchBaseCtrl):
         return ret
 
 
-class LIST(wx.ListCtrl, SchBaseCtrl):
+class LIST(wx.ListCtrl, SChBaseCtrl):
     """List control with multiple columns (report view).
 
     Handles ctrllist tag. Displays tabular data in report mode
@@ -339,7 +339,7 @@ class LIST(wx.ListCtrl, SchBaseCtrl):
             parent: Parent window.
             **kwds: Forwarded to wx.ListCtrl with LC_REPORT style.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
 
         self._virtual = bool(self.param and "virtual" in self.param)
 
@@ -488,7 +488,7 @@ class CHECKLIST(LIST):
         return (400, 48)
 
 
-class RADIOBOX(wx.RadioBox, SchBaseCtrl):
+class RADIOBOX(wx.RadioBox, SChBaseCtrl):
     """Radio box with a group of mutually exclusive choices.
 
     Handles ctrlradiobox tag. Choices are populated from tdata.
@@ -505,7 +505,7 @@ class RADIOBOX(wx.RadioBox, SchBaseCtrl):
             **kwds: Forwarded to wx.RadioBox with 'choices'
                 populated from tdata.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         tdata = self.get_tdata()
         if tdata:
             choices = []
@@ -529,7 +529,7 @@ class RADIOBOX(wx.RadioBox, SchBaseCtrl):
                 self.Append(row[0].data)
 
 
-class RADIOBUTTON(wx.RadioButton, SchBaseCtrl):
+class RADIOBUTTON(wx.RadioButton, SChBaseCtrl):
     """Individual radio button for use in radio groups.
 
     Handles ctrlradiobutton tag. The first button with a given
@@ -550,7 +550,7 @@ class RADIOBUTTON(wx.RadioButton, SchBaseCtrl):
                 style if this is the first button with this name
                 prefix (before '__').
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if "name" in kwds:
             name = kwds["name"]
             # If no sibling with same name group exists, make this the group start

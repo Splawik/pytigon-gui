@@ -1,7 +1,7 @@
 """
-Date and time widget classes for the SchForm GUI framework.
+Date and time widget classes for the SChForm GUI framework.
 
-Provides wxPython date/time controls integrated with SchBaseCtrl:
+Provides wxPython date/time controls integrated with SChBaseCtrl:
 calendar, date picker (platform-specific), date-time picker, and time control.
 
 Classes:
@@ -15,12 +15,12 @@ import wx
 from wx.adv import CalendarCtrl
 from wx.lib import masked
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guictrl.popup.popuphtml import DataPopupControl
 from pytigon_lib.schparser.html_parsers import Td
 
 
-class CALENDAR(CalendarCtrl, SchBaseCtrl):
+class CALENDAR(CalendarCtrl, SChBaseCtrl):
     """Calendar control for date selection.
 
     Handles ctrlcalendar tag. Displays a monthly calendar grid
@@ -39,7 +39,7 @@ class CALENDAR(CalendarCtrl, SchBaseCtrl):
             **kwds: Forwarded to CalendarCtrl with the weekday-first
                 calendar style flags.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         CalendarCtrl.__init__(
             self,
             parent,
@@ -75,7 +75,7 @@ class CALENDAR(CalendarCtrl, SchBaseCtrl):
         return wxdt.FormatISODate() if wxdt else None
 
 
-class TIME(masked.TimeCtrl, SchBaseCtrl):
+class TIME(masked.TimeCtrl, SChBaseCtrl):
     """Time input control with mask validation.
 
     Handles ctrltime tag. Uses wx.lib.masked.TimeCtrl for
@@ -92,7 +92,7 @@ class TIME(masked.TimeCtrl, SchBaseCtrl):
             parent: Parent window.
             **kwds: Forwarded to masked.TimeCtrl.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         masked.TimeCtrl.__init__(self, parent, **kwds)
         if self.value:
             self.SetValue(str(self.value))
@@ -106,7 +106,7 @@ class TIME(masked.TimeCtrl, SchBaseCtrl):
 
 if platform.system() == "Linux":
 
-    class DATEPICKER(DataPopupControl, SchBaseCtrl):
+    class DATEPICKER(DataPopupControl, SChBaseCtrl):
         """Date picker control (Linux: popup-based).
 
         On Linux, uses a popup HTML dialog for date selection
@@ -136,7 +136,7 @@ if platform.system() == "Linux":
             else:
                 kwds["size"] = wx.Size(150, -1)
 
-            SchBaseCtrl.__init__(self, parent, kwds)
+            SChBaseCtrl.__init__(self, parent, kwds)
             DataPopupControl.__init__(self, parent, **kwds)
 
             if self.value:
@@ -176,7 +176,7 @@ if platform.system() == "Linux":
 
 else:
 
-    class DATEPICKER(wx.adv.DatePickerCtrl, SchBaseCtrl):
+    class DATEPICKER(wx.adv.DatePickerCtrl, SChBaseCtrl):
         """Date picker control (non-Linux: native).
 
         Uses the platform's native date picker control with
@@ -194,7 +194,7 @@ else:
                 **kwds: Forwarded to DatePickerCtrl with dropdown,
                     show-century, and allow-none styles.
             """
-            SchBaseCtrl.__init__(self, parent, kwds)
+            SChBaseCtrl.__init__(self, parent, kwds)
             kwds["size"] = (120, -1)
             kwds["style"] = (
                 wx.adv.DP_DROPDOWN | wx.adv.DP_SHOWCENTURY | wx.adv.DP_ALLOWNONE
@@ -228,7 +228,7 @@ else:
                 return None
 
 
-class DATETIMEPICKER(DataPopupControl, SchBaseCtrl):
+class DATETIMEPICKER(DataPopupControl, SChBaseCtrl):
     """Date-time picker control with popup dialog.
 
     Handles ctrldatetimepicker tag. Provides combined date and time
@@ -257,7 +257,7 @@ class DATETIMEPICKER(DataPopupControl, SchBaseCtrl):
         else:
             kwds["size"] = wx.Size(200, -1)
 
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         DataPopupControl.__init__(self, parent, **kwds)
 
         self.to_masked(

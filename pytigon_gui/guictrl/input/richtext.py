@@ -1,7 +1,7 @@
 """
-Rich text widget class for the SchForm GUI framework.
+Rich text widget class for the SChForm GUI framework.
 
-Provides a wxPython rich-text editor integrated with SchBaseCtrl for
+Provides a wxPython rich-text editor integrated with SChBaseCtrl for
 formatted multi-line text editing (fonts, colours, styles).
 
 Classes:
@@ -11,10 +11,10 @@ Classes:
 import wx
 import wx.richtext
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
 
-class RICHTEXT(wx.richtext.RichTextCtrl, SchBaseCtrl):
+class RICHTEXT(wx.richtext.RichTextCtrl, SChBaseCtrl):
     """Rich text editor control.
 
     Handles ctrlrichtext tag. A full-featured formatted text editor
@@ -34,7 +34,7 @@ class RICHTEXT(wx.richtext.RichTextCtrl, SchBaseCtrl):
             **kwds: Forwarded to wx.richtext.RichTextCtrl with
                 multi-line style.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
 
         style = kwds.get("style", 0)
         style |= wx.richtext.RE_MULTILINE

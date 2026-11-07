@@ -1,5 +1,5 @@
 """
-Primary tag handler classes for the SchForm widget system.
+Primary tag handler classes for the SChForm widget system.
 
 Converts HTML ctrl-* tags into wxPython widget instances by
 dispatching to the appropriate widget class from guictrl.ctrl.
@@ -59,7 +59,7 @@ def _collect_wx_kwargs(attrs, attributes=_ATTRIBUTES):
 
     The HTML/CSS ``style`` attribute is a string, while wx widgets expect
     an integer style bitmask.  A string style must therefore be filtered
-    out here (it remains available through ``param`` / ``SchBaseCtrl.style``)
+    out here (it remains available through ``param`` / ``SChBaseCtrl.style``)
     to avoid ``str | int`` errors inside widget constructors.
 
     Args:

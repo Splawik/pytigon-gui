@@ -1,7 +1,7 @@
 """
-Grid widget classes for the SchForm GUI framework.
+Grid widget classes for the SChForm GUI framework.
 
-Provides wxPython grid/table controls integrated with SchBaseCtrl:
+Provides wxPython grid/table controls integrated with SChBaseCtrl:
 table grid, data grid, and update-grid-button.
 
 Classes:
@@ -14,16 +14,16 @@ import wx
 
 logger = logging.getLogger(__name__)
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guictrl.grid import grid, gridtable_from_proxy, tabproxy
-from pytigon_gui.guictrl.grid.gridpanel import SchGridPanel
+from pytigon_gui.guictrl.grid.gridpanel import SChGridPanel
 from pytigon_gui.guictrl.grid.gridtable_from_html_table import SimpleDataTable
 from pytigon_gui.guilib.threads import block_http_pumping
 from pytigon_lib.schhtml.htmlviewer import tdata_from_html
 from pytigon_lib.schtools import createparm
 
 
-class TABLE(SchGridPanel, SchBaseCtrl):
+class TABLE(SChGridPanel, SChBaseCtrl):
     """Table grid panel for viewing/editing HTML table data.
 
     Handles ctrltable tag. Renders data from tdata as a grid
@@ -37,7 +37,7 @@ class TABLE(SchGridPanel, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
 
         if self.param and "table_lp" in self.param:
             self._table_lp = int(self.param["table_lp"])
@@ -47,9 +47,9 @@ class TABLE(SchGridPanel, SchBaseCtrl):
         name = kwds.get("name", "LIST")
 
         if "size" in kwds:
-            SchGridPanel.__init__(self, parent, size=kwds["size"], name=name)
+            SChGridPanel.__init__(self, parent, size=kwds["size"], name=name)
         else:
-            SchGridPanel.__init__(self, parent, name=name)
+            SChGridPanel.__init__(self, parent, name=name)
 
         tdata = self.get_tdata()
         if not tdata:
@@ -65,11 +65,11 @@ class TABLE(SchGridPanel, SchBaseCtrl):
         else:
             table = None
 
-        self.grid = grid.SchTableGrid(
+        self.grid = grid.SChTableGrid(
             table,
             "",
             self,
-            typ=grid.SchTableGrid.VIEW,
+            typ=grid.SChTableGrid.VIEW,
             style=wx.TAB_TRAVERSAL | wx.FULL_REPAINT_ON_RESIZE,
         )
         self.create_toolbar(self.grid)
@@ -170,7 +170,7 @@ class TABLE(SchGridPanel, SchBaseCtrl):
         return None
 
     def GetMinSize(self):
-        return SchGridPanel.GetMinSize(self)
+        return SChGridPanel.GetMinSize(self)
 
     def process_refr_data(self, **kwds):
         """Refresh the table with new data.
@@ -222,7 +222,7 @@ class TABLE(SchGridPanel, SchBaseCtrl):
         return self.do_refresh(tdata)
 
 
-class GRID(grid.SchTableGrid, SchBaseCtrl):
+class GRID(grid.SChTableGrid, SChBaseCtrl):
     """Data-bound grid connected to a server data proxy.
 
     Handles ctrlgrid tag. Uses a DataProxy to fetch and display
@@ -236,7 +236,7 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         table = gridtable_from_proxy.DataSource(self._create_proxy(parent, self.src))
 
         if self.readonly:
@@ -312,7 +312,7 @@ class GRID(grid.SchTableGrid, SchBaseCtrl):
             event.Skip()
 
 
-class UPDATEGRIDBUTTON(wx.Button, SchBaseCtrl):
+class UPDATEGRIDBUTTON(wx.Button, SChBaseCtrl):
     """Button that submits form data to update a parent grid.
 
     Handles ctrlupdategridbutton tag. Collects values from all
@@ -324,7 +324,7 @@ class UPDATEGRIDBUTTON(wx.Button, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         wx.Button.__init__(self, parent, **kwds)
         self.Bind(wx.EVT_BUTTON, self._on_click)
 
@@ -365,7 +365,7 @@ class UPDATEGRIDBUTTON(wx.Button, SchBaseCtrl):
         self.GetParent().any_parent_command("on_child_form_cancel")
 
     def get_parent_grid(self):
-        """Return the SchTableGrid on the page above this button's form.
+        """Return the SChTableGrid on the page above this button's form.
 
         Returns:
             The parent grid widget, or None if the button is not on a child
@@ -376,9 +376,9 @@ class UPDATEGRIDBUTTON(wx.Button, SchBaseCtrl):
         if page is None:
             return None
         for ctrl in page.get_widgets().values():
-            if isinstance(ctrl, grid.SchTableGrid):
+            if isinstance(ctrl, grid.SChTableGrid):
                 return ctrl
             inner = getattr(ctrl, "grid", None)
-            if isinstance(inner, grid.SchTableGrid):
+            if isinstance(inner, grid.SChTableGrid):
                 return inner
         return None

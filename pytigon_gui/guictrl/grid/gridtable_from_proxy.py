@@ -1,6 +1,6 @@
 """Grid table data source from a server data proxy.
 
-Provides DataSource: a SchGridTableBase implementation that fetches
+Provides DataSource: a SChGridTableBase implementation that fetches
 paginated data via a DataProxy (tabproxy.py) from a Django backend.
 Supports lazy page loading, dirty tracking, sorting, filtering,
 and commit/sync of CRUD operations.
@@ -15,14 +15,14 @@ import pytigon_lib.schtools.createparm as createparm
 from pytigon_gui.guilib.threads import block_http_pumping
 from pytigon_lib.schhttptools import httpclient
 
-from .gridtable_base import SchGridTableBase
+from .gridtable_base import SChGridTableBase
 
 logger = logging.getLogger(__name__)
 
 
-class DataSource(SchGridTableBase):
+class DataSource(SChGridTableBase):
     def __init__(self, proxy):
-        SchGridTableBase.__init__(self)
+        SChGridTableBase.__init__(self)
         self.proxy = proxy
         self.proxy.set_parent(self)
         self.last_page_id = -1
@@ -53,7 +53,7 @@ class DataSource(SchGridTableBase):
 
     def refr_count(self, count, storePos=0):
         self.rec_count = count - self.can_append - self.append_count
-        return SchGridTableBase.refr_count(self, count, storePos)
+        return SChGridTableBase.refr_count(self, count, storePos)
 
     def refresh(self, storePos):
         # store pos
@@ -206,7 +206,7 @@ class DataSource(SchGridTableBase):
             return dict()
 
     def sort(self, column, append):
-        SchGridTableBase.sort(self, column, append)
+        SChGridTableBase.sort(self, column, append)
         sort = ""
         test = 0
         if len(self.tabsort) > 0:
@@ -248,7 +248,7 @@ class DataSource(SchGridTableBase):
         self.refresh(0)
 
     def get_table_and_state(self):
-        tableandstate = SchGridTableBase.get_table_and_state(self)
+        tableandstate = SChGridTableBase.get_table_and_state(self)
         tableandstate.append(self.proxy)
         tableandstate.append(
             (
@@ -263,7 +263,7 @@ class DataSource(SchGridTableBase):
         return tableandstate
 
     def duplicate_table_and_state(self):
-        tableandstate = SchGridTableBase.duplicate_table_and_state(self)
+        tableandstate = SChGridTableBase.duplicate_table_and_state(self)
         self.proxy = self.proxy.clone()
         self.last_page_id = -1
         self.pages_nr = [-1, -1, -1, -1, -1]
@@ -284,7 +284,7 @@ class DataSource(SchGridTableBase):
         self.max_count = tbl[1][4]
         self.rec_count = tbl[1][5]
 
-        SchGridTableBase.set_table_and_state(self, tableandstate)
+        SChGridTableBase.set_table_and_state(self, tableandstate)
 
         return oldtableandstate
 
@@ -312,7 +312,7 @@ class DataSource(SchGridTableBase):
 
     def GetAttr(self, row, col, kind):
         if not self.is_valid:
-            return SchGridTableBase.GetAttr(self, row, col, kind)
+            return SChGridTableBase.GetAttr(self, row, col, kind)
         if (
             row < self.rec_count
             and (row not in self.rec_to_update)
@@ -357,7 +357,7 @@ class DataSource(SchGridTableBase):
             attr.IncRef()
             return attr
         else:
-            return SchGridTableBase.GetAttr(self, row, col, kind)
+            return SChGridTableBase.GetAttr(self, row, col, kind)
 
     def GetNumberCols(self):
         return len(self.GetColNames()) - 1

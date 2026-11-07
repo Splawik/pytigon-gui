@@ -1,7 +1,7 @@
 """
-Numeric input widget classes for the SchForm GUI framework.
+Numeric input widget classes for the SChForm GUI framework.
 
-Provides wxPython numeric entry controls integrated with SchBaseCtrl:
+Provides wxPython numeric entry controls integrated with SChBaseCtrl:
 integer spin, float spin, currency amount, slider, gauge (progress bar),
 and ticker (scrolling text).
 
@@ -12,10 +12,10 @@ Classes:
 import wx
 from wx.lib import ticker as wx_ticker
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl, to_int
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl, to_int
 
 
-class SPIN(wx.SpinCtrl, SchBaseCtrl):
+class SPIN(wx.SpinCtrl, SChBaseCtrl):
     """Integer spin control.
 
     Handles ctrlspinbutton tag. Wraps wx.SpinCtrl for integer
@@ -33,7 +33,7 @@ class SPIN(wx.SpinCtrl, SchBaseCtrl):
             **kwds: Forwarded to wx.SpinCtrl. Integer bounds read
                 from param['min'] / param['max'].
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         minv = to_int(self.param.get("min"), None) if self.param else None
         maxv = to_int(self.param.get("max"), None) if self.param else None
         if minv is not None:
@@ -47,7 +47,7 @@ class SPIN(wx.SpinCtrl, SchBaseCtrl):
                 self.SetIncrement(inc)
 
 
-class NUM(wx.SpinCtrl, SchBaseCtrl):
+class NUM(wx.SpinCtrl, SChBaseCtrl):
     """Numeric spin control with optional readonly and process_enter.
 
     Handles ctrlnum tag. Similar to SPIN but supports process_enter
@@ -69,7 +69,7 @@ class NUM(wx.SpinCtrl, SchBaseCtrl):
                 are read from param['min'] / param['max'] and the
                 increment from param['inc'] / param['step'].
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if self.param and "process_enter" in self.param:
             kwds["style"] = kwds.get("style", 0) | wx.TE_PROCESS_ENTER
         if self.readonly:
@@ -90,7 +90,7 @@ class NUM(wx.SpinCtrl, SchBaseCtrl):
                 self.SetIncrement(inc)
 
 
-class AMOUNT(wx.SpinCtrlDouble, SchBaseCtrl):
+class AMOUNT(wx.SpinCtrlDouble, SChBaseCtrl):
     """Currency/amount spin control with double precision (2 digits).
 
     Handles ctrlamount tag. Supports min/max bounds from param,
@@ -112,7 +112,7 @@ class AMOUNT(wx.SpinCtrlDouble, SchBaseCtrl):
             **kwds: Forwarded to wx.SpinCtrlDouble with increment
                 of 1, 2 decimal digits, and configurable bounds.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if self.param and "process_enter" in self.param:
             kwds["style"] = kwds.get("style", 0) | wx.TE_PROCESS_ENTER
         if self.readonly:
@@ -135,7 +135,7 @@ class AMOUNT(wx.SpinCtrlDouble, SchBaseCtrl):
         self.SetDigits(2)
 
 
-class FLOAT(wx.SpinCtrlDouble, SchBaseCtrl):
+class FLOAT(wx.SpinCtrlDouble, SChBaseCtrl):
     """Floating-point spin control with high precision (6 digits).
 
     Handles ctrlfloat tag. Similar to AMOUNT but with 6 decimal
@@ -157,7 +157,7 @@ class FLOAT(wx.SpinCtrlDouble, SchBaseCtrl):
             **kwds: Forwarded to wx.SpinCtrlDouble with increment
                 of 1, 6 decimal digits, and configurable bounds.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if self.param and "process_enter" in self.param:
             kwds["style"] = wx.TE_PROCESS_ENTER
         if self.readonly:
@@ -184,7 +184,7 @@ class FLOAT(wx.SpinCtrlDouble, SchBaseCtrl):
         self.SetDigits(6)
 
 
-class SLIDER(wx.Slider, SchBaseCtrl):
+class SLIDER(wx.Slider, SChBaseCtrl):
     """Slider control for selecting a value from a range.
 
     Handles ctrlslider tag. Thin wrapper around wx.Slider.
@@ -201,7 +201,7 @@ class SLIDER(wx.Slider, SchBaseCtrl):
             **kwds: Forwarded to wx.Slider. Range read from
                 param['min'] / param['max'].
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if self.param:
             minv = to_int(self.param.get("min"), None)
             maxv = to_int(self.param.get("max"), None)
@@ -215,7 +215,7 @@ class SLIDER(wx.Slider, SchBaseCtrl):
             self.SetValue(val)
 
 
-class GAUGE(wx.Gauge, SchBaseCtrl):
+class GAUGE(wx.Gauge, SChBaseCtrl):
     """Progress gauge (progress bar) control.
 
     Handles ctrlgauge tag. Displays progress as a horizontal bar.
@@ -234,7 +234,7 @@ class GAUGE(wx.Gauge, SchBaseCtrl):
             parent: Parent window.
             **kwds: Forwarded to wx.Gauge with range from param.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         maxv = to_int(self.param.get("max"), None) if self.param else None
         if maxv is not None:
             kwds["range"] = maxv
@@ -257,7 +257,7 @@ class GAUGE(wx.Gauge, SchBaseCtrl):
             self.SetValue(val)
 
 
-class TICKER(wx_ticker.Ticker, SchBaseCtrl):
+class TICKER(wx_ticker.Ticker, SChBaseCtrl):
     """Scrolling ticker text control.
 
     Handles ctrlticker tag. Displays scrolling text.
@@ -274,7 +274,7 @@ class TICKER(wx_ticker.Ticker, SchBaseCtrl):
             parent: Parent window.
             **kwds: Forwarded to wx.lib.ticker.Ticker.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         wx_ticker.Ticker.__init__(self, parent, **kwds)
 
     def SetValue(self, value):
@@ -295,7 +295,7 @@ class TICKER(wx_ticker.Ticker, SchBaseCtrl):
         return True
 
 
-class PROGRESSDIALOG(wx.ProgressDialog, SchBaseCtrl):
+class PROGRESSDIALOG(wx.ProgressDialog, SChBaseCtrl):
     """Indeterminate/determinate progress dialog.
 
     Handles ctrlprogressdialog tag. A modal progress window driven
@@ -316,7 +316,7 @@ class PROGRESSDIALOG(wx.ProgressDialog, SchBaseCtrl):
             **kwds: Forwarded to wx.ProgressDialog. 'length' gives
                 the maximum value.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         message = kwds.get("message", self.label or "")
         maximum = to_int(self.length, None) or 100
         kwds["message"] = message

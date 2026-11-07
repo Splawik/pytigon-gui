@@ -184,7 +184,7 @@ class ModernHtmlPanel(BaseHtmlPanel):
         """Set the HTML page and update the ribbon bar layout.
 
         Args:
-            html_page: The SchPage to display.
+            html_page: The SChPage to display.
         """
         super().set_page(html_page)
         self.page.parent_bar.update()

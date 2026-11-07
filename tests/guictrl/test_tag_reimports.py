@@ -91,14 +91,14 @@ class TestCtrlShim:
     """Verify ctrl.py correctly re-exports widget classes and factories."""
 
     def test_imports_basectrl(self):
-        """ctrl.py re-exports SchBaseCtrl and handle_best_size."""
-        from pytigon_gui.guictrl.ctrl import SchBaseCtrl, handle_best_size
+        """ctrl.py re-exports SChBaseCtrl and handle_best_size."""
+        from pytigon_gui.guictrl.ctrl import SChBaseCtrl, handle_best_size
         from pytigon_gui.guictrl.basectrl import (
-            SchBaseCtrl as SBC2,
+            SChBaseCtrl as SBC2,
             handle_best_size as HBS2,
         )
 
-        assert SchBaseCtrl is SBC2
+        assert SChBaseCtrl is SBC2
         assert handle_best_size is HBS2
 
     def test_imports_button_classes(self):

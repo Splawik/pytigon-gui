@@ -1,7 +1,7 @@
 """
-Combo box and choice widget classes for the SchForm GUI framework.
+Combo box and choice widget classes for the SChForm GUI framework.
 
-Provides wxPython combo/choice controls integrated with SchBaseCtrl:
+Provides wxPython combo/choice controls integrated with SChBaseCtrl:
 bitmap combo box, choice (popup-based), database choice, and
 extended database choice, plus an editable combo box and an
 owner-drawn combo box.
@@ -20,7 +20,7 @@ import wx
 from wx import ComboCtrl
 from wx.adv import BitmapComboBox
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guilib.image import (
     _cached_bitmaps_from_art_id,
     _cached_local_bitmap,
@@ -48,7 +48,7 @@ def _get_wx_art_ids():
     return _WX_ART_IDS
 
 
-class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
+class BITMAPCOMBOBOX(BitmapComboBox, SChBaseCtrl):
     """Bitmap combo box with icon support.
 
     Handles ctrlbitmapcombobox tag. Displays a dropdown with
@@ -67,7 +67,7 @@ class BITMAPCOMBOBOX(BitmapComboBox, SchBaseCtrl):
             parent: Parent window.
             **kwds: Forwarded to BitmapComboBox.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         BitmapComboBox.__init__(self, parent, **kwds)
         self.init_default_icons = False
         self._first_use = True
@@ -434,7 +434,7 @@ class DBCHOICE_EXT(POPUPHTML):
             return None
 
 
-class COMBOBOX(wx.ComboBox, SchBaseCtrl):
+class COMBOBOX(wx.ComboBox, SChBaseCtrl):
     """Editable combo box.
 
     Handles ctrlcombobox tag. A text field combined with a dropdown
@@ -457,7 +457,7 @@ class COMBOBOX(wx.ComboBox, SchBaseCtrl):
             **kwds: Forwarded to wx.ComboBox. Choices are populated
                 from tdata before construction.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
 
         style = kwds.get("style", 0)
         if self.param and "sort" in self.param:
@@ -536,7 +536,7 @@ class COMBOBOX(wx.ComboBox, SchBaseCtrl):
             self.AppendItems(self.choices)
 
 
-class OWNERDRAWNCOMBOBOX(wx.adv.OwnerDrawnComboBox, SchBaseCtrl):
+class OWNERDRAWNCOMBOBOX(wx.adv.OwnerDrawnComboBox, SChBaseCtrl):
     """Owner-drawn combo box.
 
     Handles ctrlownerdrawncombobox tag. Like BITMAPCOMBOBOX but based
@@ -555,7 +555,7 @@ class OWNERDRAWNCOMBOBOX(wx.adv.OwnerDrawnComboBox, SchBaseCtrl):
             **kwds: Forwarded to wx.adv.OwnerDrawnComboBox. Choices
                 are populated from tdata.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
 
         choices = []
         self.choice_values = []

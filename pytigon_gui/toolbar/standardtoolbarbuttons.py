@@ -2,7 +2,7 @@
 
 Defines the StandardButtons class that creates File, Edit, Operations,
 Browse, and Address panels with their associated event handlers.
-Also includes the SchAutoComplete widget for the address bar.
+Also includes the SChAutoComplete widget for the address bar.
 """
 
 import logging
@@ -83,7 +83,7 @@ class WebHistory:
         return x in ADDRESS_HISTORY
 
 
-class SchAutoComplete(TextCtrlAutoComplete):
+class SChAutoComplete(TextCtrlAutoComplete):
     """Address bar auto-complete control with dynamic web history.
 
     Extends TextCtrlAutoComplete to provide URL auto-completion
@@ -553,7 +553,7 @@ class StandardButtons:
             if hasattr(bar, "panel"):
                 width = 350
                 panel = bar.panel
-                self.address = SchAutoComplete(panel, size=wx.Size(width, -1))
+                self.address = SChAutoComplete(panel, size=wx.Size(width, -1))
                 self.address.set_callback_fun(self.open_page)
                 self.tbs["browser"]["address"] = self.address
                 self.webmenu = FM.FlatMenuBar(panel, spacer=5)

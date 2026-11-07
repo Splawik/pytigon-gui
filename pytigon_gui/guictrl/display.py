@@ -1,5 +1,5 @@
 """
-Display and popup widget classes for the SchForm GUI framework.
+Display and popup widget classes for the SChForm GUI framework.
 
 Provides wxPython display, navigation, and popup controls:
 static text, error indicator, tree, tree list, colour selector,
@@ -24,7 +24,7 @@ from django.utils.translation import gettext_lazy as _
 from wx.lib import colourselect, filebrowsebutton
 from wx.lib.agw.hypertreelist import HyperTreeList as TreeListCtrl
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guictrl.button.toolbarbutton import BitmapTextButton
 from pytigon_gui.guictrl.popup.popuphtml import DataPopupControl
 from pytigon_gui.guilib.image import bitmap_from_href
@@ -52,7 +52,7 @@ _append_column = getattr(TreeListCtrl, "AppendColumn", None) or TreeListCtrl.Add
 # ---------------------------------------------------------------------------
 
 
-class STATICTEXT(wx.StaticText, SchBaseCtrl):
+class STATICTEXT(wx.StaticText, SChBaseCtrl):
     """Static non-editable text label.
 
     Handles ctrlstatictext tag. Displays read-only text.
@@ -62,13 +62,13 @@ class STATICTEXT(wx.StaticText, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         wx.StaticText.__init__(self, parent, **kwds)
         if self.label:
             self.SetLabel(self.label)
 
 
-class STATICBITMAP(wx.StaticBitmap, SchBaseCtrl):
+class STATICBITMAP(wx.StaticBitmap, SChBaseCtrl):
     """Static bitmap / image display.
 
     Handles ctrlstaticbitmap tag. Displays an image loaded from the
@@ -79,7 +79,7 @@ class STATICBITMAP(wx.StaticBitmap, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if self.src:
             kwds["bitmap"] = bitmap_from_href(self.src, 1)
         else:
@@ -96,7 +96,7 @@ class STATICBITMAP(wx.StaticBitmap, SchBaseCtrl):
             self.SetBitmap(bitmap_from_href(value, 1))
 
 
-class STATICLINE(wx.StaticLine, SchBaseCtrl):
+class STATICLINE(wx.StaticLine, SChBaseCtrl):
     """Static horizontal or vertical separator line.
 
     Handles ctrlstaticline tag. Draws a line used to separate
@@ -107,7 +107,7 @@ class STATICLINE(wx.StaticLine, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         wx.StaticLine.__init__(self, parent, **kwds)
 
     def CanAcceptFocus(self):
@@ -115,7 +115,7 @@ class STATICLINE(wx.StaticLine, SchBaseCtrl):
         return False
 
 
-class HYPERLINK(wx.adv.HyperlinkCtrl, SchBaseCtrl):
+class HYPERLINK(wx.adv.HyperlinkCtrl, SChBaseCtrl):
     """Hyperlink control.
 
     Handles ctrlhyperlink tag. Displays a clickable web link that
@@ -127,7 +127,7 @@ class HYPERLINK(wx.adv.HyperlinkCtrl, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         url = kwds.get("value") or self.href or ""
         if self.label:
             kwds["label"] = self.label
@@ -148,7 +148,7 @@ class HYPERLINK(wx.adv.HyperlinkCtrl, SchBaseCtrl):
         event.Skip()
 
 
-class ERRORLIST(BitmapTextButton, SchBaseCtrl):
+class ERRORLIST(BitmapTextButton, SChBaseCtrl):
     """Error indicator button with tooltip.
 
     Handles ctrlerrorlist tag. Displays an error icon with a
@@ -159,7 +159,7 @@ class ERRORLIST(BitmapTextButton, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         self.bmp = bitmap_from_href("client://status/dialog-error.png", 1)
         kwds["style"] = wx.NO_BORDER
         kwds["bitmap"] = self.bmp
@@ -175,7 +175,7 @@ class ERRORLIST(BitmapTextButton, SchBaseCtrl):
 # ---------------------------------------------------------------------------
 
 
-class TREE(wx.TreeCtrl, SchBaseCtrl):
+class TREE(wx.TreeCtrl, SChBaseCtrl):
     """Tree control with hierarchical data.
 
     Handles ctrltree tag. Builds a tree from ldata with folder/file
@@ -186,7 +186,7 @@ class TREE(wx.TreeCtrl, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         kwds["style"] = wx.TR_HIDE_ROOT | wx.TR_DEFAULT_STYLE
         wx.TreeCtrl.__init__(self, parent, **kwds)
 
@@ -262,7 +262,7 @@ class TREE(wx.TreeCtrl, SchBaseCtrl):
         event.Skip()
 
 
-class TREELIST(TreeListCtrl, SchBaseCtrl):
+class TREELIST(TreeListCtrl, SChBaseCtrl):
     """Tree list with multiple columns.
 
     Handles ctrltreelist tag. Supports '||' separated column data
@@ -274,7 +274,7 @@ class TREELIST(TreeListCtrl, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         kwds["agwStyle"] = wx.TR_HIDE_ROOT
         TreeListCtrl.__init__(self, parent, **kwds)
 
@@ -334,7 +334,7 @@ class TREELIST(TreeListCtrl, SchBaseCtrl):
 # ---------------------------------------------------------------------------
 
 
-class COLOURSELECT(colourselect.ColourSelect, SchBaseCtrl):
+class COLOURSELECT(colourselect.ColourSelect, SChBaseCtrl):
     """Colour selection dropdown.
 
     Handles ctrlcolourselect tag.
@@ -344,7 +344,7 @@ class COLOURSELECT(colourselect.ColourSelect, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if "name" in kwds:
             del kwds["name"]
         # ColourSelect builds its bitmap during construction, so it needs a
@@ -355,7 +355,7 @@ class COLOURSELECT(colourselect.ColourSelect, SchBaseCtrl):
         colourselect.ColourSelect.__init__(self, parent, id=-1, **kwds)
 
 
-class GENERICDIR(wx.GenericDirCtrl, SchBaseCtrl):
+class GENERICDIR(wx.GenericDirCtrl, SChBaseCtrl):
     """Directory browser tree.
 
     Handles ctrlgenericdir tag.
@@ -365,11 +365,11 @@ class GENERICDIR(wx.GenericDirCtrl, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         wx.GenericDirCtrl.__init__(self, parent, **kwds)
 
 
-class EDITABLELISTBOX(wx.adv.EditableListBox, SchBaseCtrl):
+class EDITABLELISTBOX(wx.adv.EditableListBox, SChBaseCtrl):
     """Editable list box with add/remove buttons.
 
     Handles ctrleditablelistbox tag.
@@ -379,11 +379,11 @@ class EDITABLELISTBOX(wx.adv.EditableListBox, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         wx.adv.EditableListBox.__init__(self, parent, **kwds)
 
 
-class FILEBROWSEBUTTON(filebrowsebutton.FileBrowseButton, SchBaseCtrl):
+class FILEBROWSEBUTTON(filebrowsebutton.FileBrowseButton, SChBaseCtrl):
     """File browse button with text field and Browse button.
 
     Handles ctrlfilebrowsebutton tag.
@@ -395,7 +395,7 @@ class FILEBROWSEBUTTON(filebrowsebutton.FileBrowseButton, SchBaseCtrl):
 
     def __init__(self, parent, **kwds):
         self._browse_dir = False
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         kwds["labelText"] = ""
         kwds["buttonText"] = str(_("Browse"))
         kwds["size"] = (400, -1)
@@ -444,7 +444,7 @@ class FILEBROWSEBUTTON(filebrowsebutton.FileBrowseButton, SchBaseCtrl):
         return "@" + super().GetValue()
 
 
-class IMAGEBROWSEBUTTON(FILEBROWSEBUTTON, SchBaseCtrl):
+class IMAGEBROWSEBUTTON(FILEBROWSEBUTTON, SChBaseCtrl):
     """Image browse button with preview dialog.
 
     Handles ctrlimagebrowsebutton tag. Uses ImageDialog for
@@ -493,7 +493,7 @@ p { cellpadding:1; border:0; width:100%; }
 """
 
 
-class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
+class HTMLLISTBOX(wx.VListBox, SChBaseCtrl):
     """HTML-rendered virtual list box.
 
     Handles ctrlhtmllist tag. Uses HtmlViewerParser to render
@@ -505,7 +505,7 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         self.choices = []
         self.getItemFunct = None
         self.h = None
@@ -709,7 +709,7 @@ class HTMLLISTBOX(wx.VListBox, SchBaseCtrl):
 # ---------------------------------------------------------------------------
 
 
-class POPUPHTML(DataPopupControl, SchBaseCtrl):
+class POPUPHTML(DataPopupControl, SChBaseCtrl):
     """Popup HTML control with data-driven dialog.
 
     Handles ctrlpopuphtml tag. A text field with a dropdown button
@@ -726,7 +726,7 @@ class POPUPHTML(DataPopupControl, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         DataPopupControl.__init__(self, parent, **kwds)
         if self.param and "IN_NEW_WIN" in self.param:
             self.simpleDialog = False

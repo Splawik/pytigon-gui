@@ -1,7 +1,7 @@
 """
-Toggle button widget classes for the SchForm GUI framework.
+Toggle button widget classes for the SChForm GUI framework.
 
-Provides wxPython toggle (switchable) controls integrated with SchBaseCtrl:
+Provides wxPython toggle (switchable) controls integrated with SChBaseCtrl:
 a plain toggle button and a bitmap toggle button.
 
 Classes:
@@ -10,11 +10,11 @@ Classes:
 
 import wx
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guilib.image import bitmap_from_href
 
 
-class TOGGLEBUTTON(wx.ToggleButton, SchBaseCtrl):
+class TOGGLEBUTTON(wx.ToggleButton, SChBaseCtrl):
     """Toggle button that keeps its pressed state.
 
     Handles ctrltogglebutton tag. A push button that stays in the
@@ -34,7 +34,7 @@ class TOGGLEBUTTON(wx.ToggleButton, SchBaseCtrl):
             **kwds: Forwarded to wx.ToggleButton. Removes 'checked'
                 and 'value' handling before constructing.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
 
         checked = False
         if "checked" in kwds:
@@ -86,7 +86,7 @@ class TOGGLEBUTTON(wx.ToggleButton, SchBaseCtrl):
         self.custom_value = value
 
 
-class BITMAPTOGGLEBUTTON(wx.ToggleButton, SchBaseCtrl):
+class BITMAPTOGGLEBUTTON(wx.ToggleButton, SChBaseCtrl):
     """Toggle button with a bitmap label.
 
     Handles ctrlbitmaptogglebutton tag. Uses an image (from the 'src'
@@ -105,7 +105,7 @@ class BITMAPTOGGLEBUTTON(wx.ToggleButton, SchBaseCtrl):
             **kwds: Forwarded to wx.ToggleButton. The 'src' attribute
                 is used to load the bitmap label.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
 
         checked = False
         if "checked" in kwds:

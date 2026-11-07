@@ -1,4 +1,4 @@
-"""SchPage is a container for four SchForm sub-windows: body, header,
+"""SChPage is a container for four SChForm sub-windows: body, header,
 footer and panel.  Only the 'body' form is mandatory; the others are
 created on demand from the HTML response."""
 
@@ -43,7 +43,7 @@ except ImportError:  # pragma: no cover - PyDispatcher is a declared dependency
 
 from wx.adv import LayoutAlgorithm
 
-from pytigon_gui.guiframe.form import SchForm
+from pytigon_gui.guiframe.form import SChForm
 from pytigon_gui.guilib import events
 from pytigon_gui.guilib.events import *
 from pytigon_gui.guilib.signal import Signal
@@ -53,8 +53,8 @@ from pytigon_lib.schparser.html_parsers import ShtmlParser
 from pytigon_lib.schtools import createparm
 
 
-class SchPage(wx.Window, Signal):
-    """Container that manages up to four SchForm instances.
+class SChPage(wx.Window, Signal):
+    """Container that manages up to four SChForm instances.
 
     Reads an HTML response from the server and distributes its
     sections (header, body, footer, panel) into corresponding
@@ -62,10 +62,10 @@ class SchPage(wx.Window, Signal):
     """
 
     def __init__(self, parent, address_or_parser, parameters, pos=(0, 0), size=wx.DefaultSize):
-        """Construct a SchPage.
+        """Construct a SChPage.
 
         Args:
-            parent: Parent SchNotebookPage.
+            parent: Parent SChNotebookPage.
             address_or_parser: HTTP address (str) or ShtmlParser instance.
             parameters: Dictionary of request parameters.
             pos: Initial position.
@@ -96,7 +96,7 @@ class SchPage(wx.Window, Signal):
         self.publish_size = False
 
         Signal.__init__(self)
-        wx.Window.__init__(self, parent, -1, pos, size, style=wx.WANTS_CHARS, name="SchPage")
+        wx.Window.__init__(self, parent, -1, pos, size, style=wx.WANTS_CHARS, name="SChPage")
 
         self.exists = True
 
@@ -143,7 +143,7 @@ class SchPage(wx.Window, Signal):
             topwin.SetOrientation(wx.adv.LAYOUT_HORIZONTAL)
             topwin.SetAlignment(wx.adv.LAYOUT_TOP)
             topwin.SetSashVisible(wx.adv.SASH_BOTTOM, True)
-            self.header = SchForm(topwin, page=self, form_type="header")
+            self.header = SChForm(topwin, page=self, form_type="header")
             self.header.show_form(header)
             dy = self.header.calculate_best_size()[1]
             topwin.SetDefaultSize((1000, dy))
@@ -159,7 +159,7 @@ class SchPage(wx.Window, Signal):
             bottomwin.SetOrientation(wx.adv.LAYOUT_HORIZONTAL)
             bottomwin.SetAlignment(wx.adv.LAYOUT_BOTTOM)
             bottomwin.SetSashVisible(wx.adv.SASH_TOP, True)
-            self.footer = SchForm(bottomwin, page=self, form_type="footer")
+            self.footer = SChForm(bottomwin, page=self, form_type="footer")
             self.footer.show_form(footer)
             bottomwin.SetDefaultSize((1000, self.footer.calculate_best_size()[1]))
             self._bottom_window = bottomwin
@@ -172,7 +172,7 @@ class SchPage(wx.Window, Signal):
             leftwin.SetOrientation(wx.adv.LAYOUT_VERTICAL)
             leftwin.SetAlignment(wx.adv.LAYOUT_LEFT)
             leftwin.SetSashVisible(wx.adv.SASH_RIGHT, True)
-            self.panel = SchForm(leftwin, page=self, form_type="panel")
+            self.panel = SChForm(leftwin, page=self, form_type="panel")
             self.panel.show_form(panel)
             xy = self.panel.calculate_best_size()
             leftwin.SetDefaultSize(xy)
@@ -181,7 +181,7 @@ class SchPage(wx.Window, Signal):
         else:
             self._left_window = None
 
-        self.body = SchForm(self, self, hscroll, vscroll)
+        self.body = SChForm(self, self, hscroll, vscroll)
         self.body.set_htm_type("body")
         attrs = mp.get_body_attrs()
         if "width" in attrs and "height" in attrs:
@@ -353,7 +353,7 @@ class SchPage(wx.Window, Signal):
     # ------------------------------------------------------------------
 
     def get_parent_page(self):
-        """Return the parent SchPage, if any."""
+        """Return the parent SChPage, if any."""
         return self.parent_page
 
     def set_default_button(self, button):
@@ -713,7 +713,7 @@ class SchPage(wx.Window, Signal):
                     form.enable(enable)
 
     def change_notebook_page_title(self, new_title):
-        """Update the tab caption that contains this SchPage.
+        """Update the tab caption that contains this SChPage.
 
         Args:
             new_title: New tab text.
@@ -742,7 +742,7 @@ class SchPage(wx.Window, Signal):
         # Release the back buffers while this page is not the active one: each
         # is a full-window W*H*4 wx.Bitmap (7.7 MB at 1920x1000), and without
         # this every open tab held one for as long as the frame lived.
-        # SchNotebook.on_changed() calls Refresh() on the page being left, so
+        # SChNotebook.on_changed() calls Refresh() on the page being left, so
         # the buffer is rebuilt when the page comes back.
         self.release_dc_buf()
 

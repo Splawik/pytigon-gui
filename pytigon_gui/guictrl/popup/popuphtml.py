@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 class DataPopup(wx.ComboPopup):
     """Popup window that embeds an HTML page for data selection.
 
-    Used by DataPopupControl to display a SchPage inside a combo
+    Used by DataPopupControl to display a SChPage inside a combo
     dropdown. Handles ESC dismissal and size negotiation.
     """
 
@@ -48,7 +48,7 @@ class DataPopup(wx.ComboPopup):
         wx.ComboPopup.__init__(self)
 
     def Create(self, parent):
-        """Create the popup content (SchPage) and layout.
+        """Create the popup content (SChPage) and layout.
 
         Args:
             parent: The popup parent window.
@@ -368,18 +368,18 @@ class DataPopupControl(ComboCtrl):
         self.rec_value = []
 
     def on_create(self, parent):
-        """Create the embedded SchPage for popup content.
+        """Create the embedded SChPage for popup content.
 
         Args:
-            parent: Parent window for the SchPage.
+            parent: Parent window for the SChPage.
 
         Returns:
-            The created SchPage instance.
+            The created SChPage instance.
         """
-        from pytigon_gui.guiframe.page import SchPage
+        from pytigon_gui.guiframe.page import SChPage
 
         href = self.href + "dialog/|value" if self.dialog_with_value else self.href + "dialog/"
-        self.html = SchPage(parent, href, self)
+        self.html = SChPage(parent, href, self)
         self.html.body.parent_combo = self
         return self.html
 

@@ -376,7 +376,7 @@ class ArtProviderFromIcon(wx.ArtProvider):
         return wx.NullBitmap
 
 
-class SchImage:
+class SChImage:
     """Extract individual bitmaps from a sprite sheet image.
 
     All partial bitmaps should be the same size. Between bitmaps there
@@ -384,7 +384,7 @@ class SchImage:
 
     Usage::
 
-        images = SchImage("http://www.page.com", (32, 32))
+        images = SChImage("http://www.page.com", (32, 32))
         image1 = images[0]
         image2 = images[2]
     """

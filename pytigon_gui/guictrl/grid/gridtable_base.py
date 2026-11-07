@@ -1,7 +1,7 @@
-"""Base grid table class for the SchForm framework.
+"""Base grid table class for the SChForm framework.
 
-Provides SchGridTableBase, the abstract base for all grid table
-data sources used by SchTableGrid. Implements common functionality:
+Provides SChGridTableBase, the abstract base for all grid table
+data sources used by SChTableGrid. Implements common functionality:
 row selection, sorting, filtering, read-only state, dirty tracking,
 and cell attribute management.
 """
@@ -12,7 +12,7 @@ from wx.grid import (
 )
 
 
-class SchGridTableBase(wx.grid.GridTableBase):
+class SChGridTableBase(wx.grid.GridTableBase):
     def __init__(self):
         wx.grid.GridTableBase.__init__(self)
         self.can_append = 0

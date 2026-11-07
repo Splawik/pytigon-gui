@@ -7,7 +7,7 @@ from wx.lib.agw.
 import wx
 from wx.lib.agw import customtreectrl as CT
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guilib.events import *
 from pytigon_gui.toolbar.basetoolbar import (
     BaseHtmlPanel,
@@ -60,7 +60,7 @@ class TreeHtmlPanel(BaseHtmlPanel):
         """Set the HTML page within this panel.
 
         Args:
-            html_page: The SchPage to display.
+            html_page: The SChPage to display.
         """
         super().set_page(html_page)
 
@@ -363,7 +363,7 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
         """Send a menu event for the given tree item.
 
         Tries to process the event on this tree first, then falls back
-        to the active SchBaseCtrl control.
+        to the active SChBaseCtrl control.
 
         Args:
             item: The tree item that was clicked.
@@ -372,7 +372,7 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
         ret = self.ProcessEvent(e)
         if not ret:
             win = wx.GetApp().GetTopWindow().get_active_ctrl()
-            if win and isinstance(win, SchBaseCtrl):
+            if win and isinstance(win, SChBaseCtrl):
                 win.ProcessEvent(e)
 
     def on_idle(self):
@@ -399,7 +399,7 @@ class TreeToolbarBar(ToolbarBar, CT.CustomTreeCtrl):
                     else:
                         enable = False
                         win = wx.Window.FindFocus()
-                        if win and isinstance(win, SchBaseCtrl):
+                        if win and isinstance(win, SChBaseCtrl):
                             if win.ProcessEvent(event):
                                 if event.GetEnabled():
                                     enable = True

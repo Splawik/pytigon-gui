@@ -1,4 +1,4 @@
-"""This is the main Pytigon client module. Function :func:`~pytigon_gui.pytigon.main` create SchApp object, which extends wxPython wx.App.
+"""This is the main Pytigon client module. Function :func:`~pytigon_gui.pytigon.main` create SChApp object, which extends wxPython wx.App.
 Function :func:`~pytigon_gui.pytigon.main` process pytigon command line arguments. Module supports:
 
 - instalation of pytigon applications,
@@ -264,7 +264,7 @@ def process_adv_argv():
     if not ("args" in _PARAM and len(_PARAM["args"]) > 0):
         # Reuse an already existing application if there is one; otherwise
         # create a throwaway one for the selection dialog and drop it before
-        # the real SchApp is constructed (only one wx.App should be alive).
+        # the real SChApp is constructed (only one wx.App should be alive).
         own_app = wx.GetApp() is None
         _app = wx.App() if own_app else wx.GetApp()
 
@@ -345,7 +345,7 @@ if _ASYNC_APP:
     # <cwd>/ext_lib happened to be on sys.path.
     from pytigon.ext_lib.wxasync import AsyncBind, StartCoroutine, WxAsyncApp
 
-    class SchAsyncApp(WxAsyncApp):
+    class SChAsyncApp(WxAsyncApp):
         async def MainLoop(self):
             evtloop = wx.GUIEventLoop()
             with wx.EventLoopActivator(evtloop):
@@ -366,7 +366,7 @@ from pytigon_gui.guiframe import appframe, browserframe
 from pytigon_gui.guilib import image, pytigon_install
 from pytigon_gui.guilib.httperror import http_error
 from pytigon_gui.guilib.logindialog import LoginDialog
-from pytigon_gui.guilib.threadwindow import SchThreadManager
+from pytigon_gui.guilib.threadwindow import SChThreadManager
 from pytigon_gui.guilib.tools import colour_to_html, standard_tab_colour
 from pytigon_lib.schfs.vfstools import extractall
 from pytigon_lib.schhttptools import httpclient
@@ -407,7 +407,7 @@ if _APP_CONFIG["inspection"]:
 
     if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
 
-        class InspectableApp(SchAsyncApp, wx.lib.mixins.inspection.InspectionMixin):
+        class InspectableApp(SChAsyncApp, wx.lib.mixins.inspection.InspectionMixin):
             def OnInit(self):
                 self.InitInspection()
                 return True
@@ -450,7 +450,7 @@ if _APP_CONFIG["inspection"]:
 
 else:
     if "channels" in _PARAM or "rpc" in _PARAM or "websocket" in _PARAM:
-        App = SchAsyncApp
+        App = SChAsyncApp
     else:
         App = wx.App
 
@@ -464,7 +464,7 @@ else:
     _BASE_APP = _base
 
 
-class SchApp(App, _BASE_APP):
+class SChApp(App, _BASE_APP):
     """It is a subclass of wxPython wx.App. Depending on the command line parameters it is also subclass of
     xmlrpc.XMLRPC and wx.lib.mixins.inspection.InspectableApp.
     """
@@ -655,12 +655,12 @@ class SchApp(App, _BASE_APP):
             return response if response else 0
 
         if app and app != "":
-            # self.images = image.SchImage("/" + app + "/site_media/app.png")
-            self.images = image.SchImage("/" + app + "/static/images/app.png")
+            # self.images = image.SChImage("/" + app + "/site_media/app.png")
+            self.images = image.SChImage("/" + app + "/static/images/app.png")
             response = self.http.get(self, "/" + app + "/", user_agent="python")
         else:
-            # self.images = image.SchImage("/site_media/app.png")
-            self.images = image.SchImage("/static/images/app.png")
+            # self.images = image.SChImage("/site_media/app.png")
+            self.images = image.SChImage("/static/images/app.png")
             response = self.http.get(self, "/", user_agent="python")
 
         config_path = os.path.join(str(self.data_path), self.prj_name, "gui_config.json")
@@ -798,7 +798,7 @@ class SchApp(App, _BASE_APP):
         frame.SetIcon(icon)
 
         if hasattr(frame, "statusbar") and frame.statusbar:
-            self.thread_manager = SchThreadManager(self, frame.statusbar)
+            self.thread_manager = SChThreadManager(self, frame.statusbar)
         if _APP_CONFIG["inspection"]:
             self.ShowInspectionTool()
 
@@ -1204,7 +1204,7 @@ def _setup_app_params():
     app_title = _("Pytigon")
     app_name = ""
 
-    app = SchApp()
+    app = SChApp()
     if "menu_always" in _PARAM:
         app.menu_always = True
     if "rpc" in _PARAM:
@@ -1522,7 +1522,7 @@ def _main_run():
     app.locale.AddCatalog("pytigon")
 
     if app.embeded_browser:
-        frame = browserframe.SchBrowserFrame(
+        frame = browserframe.SChBrowserFrame(
             None,
             app.gui_style,
             wx.ID_ANY,
@@ -1531,7 +1531,7 @@ def _main_run():
             wx.Size(_APP_CONFIG["app_size"][0], _APP_CONFIG["app_size"][1]),
         )
     else:
-        frame = appframe.SchAppFrame(
+        frame = appframe.SChAppFrame(
             app.gui_style,
             app.title,
             wx.DefaultPosition,

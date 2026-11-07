@@ -1,6 +1,6 @@
 """Grid table data source from server-rendered HTML tables.
 
-Provides SimpleDataTable and PageData: a SchGridTableBase
+Provides SimpleDataTable and PageData: a SChGridTableBase
 implementation that loads paginated table data from the server
 as HTML and parses it into grid rows. Supports sorting,
 column sizing, cell-level attributes, and copy/paste.
@@ -19,7 +19,7 @@ from pytigon_lib.schhtml.htmlviewer import tdata_from_html
 from pytigon_lib.schhttptools import httpclient
 from pytigon_lib.schhtml.htmltools import Td
 
-from .gridtable_base import SchGridTableBase
+from .gridtable_base import SChGridTableBase
 
 logger = logging.getLogger(__name__)
 
@@ -295,9 +295,9 @@ class PageData:
         return self.sizes
 
 
-class SimpleDataTable(SchGridTableBase):
+class SimpleDataTable(SChGridTableBase):
     def __init__(self, parent, tab):
-        SchGridTableBase.__init__(self)
+        SChGridTableBase.__init__(self)
         self._parent = parent
         self.init_data(tab)
         # self.last_row_count = len(self.data)
@@ -355,7 +355,7 @@ class SimpleDataTable(SchGridTableBase):
         self.enabled = False
 
     def replace_tab(self, new_tab):
-        SchGridTableBase.replace_tab(self, new_tab)
+        SChGridTableBase.replace_tab(self, new_tab)
         self.init_data(new_tab)
         self.refr_count(self.count)
 
@@ -401,7 +401,7 @@ class SimpleDataTable(SchGridTableBase):
             return []
 
     def sort(self, column, append):
-        SchGridTableBase.sort(self, column, append)
+        SChGridTableBase.sort(self, column, append)
         if self.count < 4096:
             key = make_key(self.tabsort)
             self.data.sort(key=key)

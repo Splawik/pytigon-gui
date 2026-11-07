@@ -1,6 +1,6 @@
 """Form rendering panel for Pytigon applications.
 
-SchForm is a scrollable panel that parses HTML, renders it via a
+SChForm is a scrollable panel that parses HTML, renders it via a
 custom wxDC backend, and manages interactive widgets defined by
 the HTML markup.
 """
@@ -43,7 +43,7 @@ def install_pre_process_lib(fun):
 
 
 def _get_css():
-    """Load and cache the combined CSS for SchForm rendering.
+    """Load and cache the combined CSS for SChForm rendering.
 
     Returns:
         String containing concatenated _core.icss and wx.icss.
@@ -57,7 +57,7 @@ def _get_css():
     return _INIT_CSS_STR
 
 
-class SchForm(ScrolledPanel):
+class SChForm(ScrolledPanel):
     """Html window"""
 
     @property
@@ -75,7 +75,7 @@ class SchForm(ScrolledPanel):
 
         Args:
             parent - parent window
-            page - parent SchPage object
+            page - parent SChPage object
             hscroll - enable horizontal scroll bar
             vscroll - enable vertical scroll  bar
             form_type - can be: body, header, footer, panel
@@ -409,7 +409,7 @@ class SchForm(ScrolledPanel):
         """Drop the W*H*4 back buffer (the wx.MemoryDC owns the wx.Bitmap).
 
         Called before a new buffer is allocated, when the page is deactivated
-        (see SchPage.deactivate_page), and on close. Without this every open
+        (see SChPage.deactivate_page), and on close. Without this every open
         page pinned a full-window RGBA bitmap for its whole lifetime - 7.7 MB at
         1920x1000, per tab. Safe to call at any time: _draw_background()
         re-allocates and re-plays self.wxdc when the buffer is None.
@@ -553,7 +553,7 @@ class SchForm(ScrolledPanel):
         return self.page
 
     def get_parent_form(self):
-        """return parent SchFrame object in hierarchy"""
+        """return parent SChForm object in hierarchy"""
         gpage = self.get_gparent_page()
         if gpage:
             return gpage.active_form

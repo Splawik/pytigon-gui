@@ -1,7 +1,7 @@
-"""Base control class for the SchForm GUI framework.
+"""Base control class for the SChForm GUI framework.
 
-Defines SchBaseCtrl -- the mixin base class for all wxPython widgets
-managed by the SchForm framework. Provides attribute initialization
+Defines SChBaseCtrl -- the mixin base class for all wxPython widgets
+managed by the SChForm framework. Provides attribute initialization
 from HTML tag kwargs, parent form navigation, data loading from server,
 and keyboard event handling.
 
@@ -119,12 +119,12 @@ def _html_bool(param, key):
 
 
 # ---------------------------------------------------------------------------
-# SchBaseCtrl
+# SChBaseCtrl
 # ---------------------------------------------------------------------------
 
 
-class SchBaseCtrl:
-    """Base mixin class for all SchForm wxPython widgets.
+class SChBaseCtrl:
+    """Base mixin class for all SChForm wxPython widgets.
 
     Provides:
     - Attribute initialization from HTML tag keyword arguments
@@ -432,16 +432,16 @@ class SchBaseCtrl:
         return self.ldatabuf
 
     def get_parent_form(self):
-        """Walk up the widget hierarchy to find the parent SchForm.
+        """Walk up the widget hierarchy to find the parent SChForm.
 
         Returns:
-            The SchForm ancestor, or None if not found.
+            The SChForm ancestor, or None if not found.
         """
         parent = self.parent
         while parent is not None:
             # Duck-typed rather than isinstance(): guiframe.form imports this
             # module at load time, and the parent may be any test double.
-            if type(parent).__name__ == "SchForm":
+            if type(parent).__name__ == "SChForm":
                 return parent
             parent = parent.GetParent()
         return None
@@ -450,7 +450,7 @@ class SchBaseCtrl:
         """Return the parent page that contains this control's form.
 
         Returns:
-            The parent SchPage, or None if not found.
+            The parent SChPage, or None if not found.
         """
         form = self.get_parent_form()
         if form:

@@ -1,7 +1,7 @@
 """
 Browser-based main frame for Pytigon.
 
-SchBrowserFrame embeds an HTML2 webview control as the main content
+SChBrowserFrame embeds an HTML2 webview control as the main content
 area instead of the standard AUI-managed desktop. It is used when the
 application runs in a webview-embedded mode.
 """
@@ -13,7 +13,7 @@ import wx
 
 import pytigon_gui.guictrl.ctrl
 from pytigon.pytigon_request import init, request
-from pytigon_gui.guiframe.baseframe import SchBaseFrame
+from pytigon_gui.guiframe.baseframe import SChBaseFrame
 from pytigon_gui.guilib.threads import call_after_if_alive
 from pytigon_lib.schtools.env import get_environ
 
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 _ = wx.GetTranslation
 
 
-class SchBrowserFrame(SchBaseFrame):
+class SChBrowserFrame(SChBaseFrame):
     """Main window for browser-embedded Pytigon applications.
 
     Uses an HTML2 webview control as the primary content area,
@@ -63,7 +63,7 @@ class SchBrowserFrame(SchBaseFrame):
         self.ctrl = None
         self._start_html = None
 
-        SchBaseFrame.__init__(
+        SChBaseFrame.__init__(
             self, parent, id, gui_style, title, pos, size, style | wx.WANTS_CHARS, name
         )
         wx.GetApp().SetTopWindow(self)

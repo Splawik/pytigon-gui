@@ -1,7 +1,7 @@
 """Notebook page container for Pytigon applications.
 
-SchNotebookPage represents one tab within a SchNotebook. It manages
-multiple SchPage windows laid out inside a single tab using a custom
+SChNotebookPage represents one tab within a SChNotebook. It manages
+multiple SChPage windows laid out inside a single tab using a custom
 split/stack algorithm and supports mouse-driven divider resizing.
 """
 
@@ -11,20 +11,20 @@ from pytigon_gui.guiframe import page
 from pytigon_gui.guilib.threads import call_after_if_alive
 
 
-class SchNotebookPage(wx.Window):
-    """One tab in a SchNotebook, hosting one or more SchPage windows."""
+class SChNotebookPage(wx.Window):
+    """One tab in a SChNotebook, hosting one or more SChPage windows."""
 
     def __init__(self, parent):
         """Initialize the notebook page.
 
         Args:
-            parent: Parent SchNotebook window.
+            parent: Parent SChNotebook window.
         """
         wx.Window.__init__(
             self,
             parent,
             style=wx.TAB_TRAVERSAL | wx.WANTS_CHARS,
-            name="SchNotebookPage",
+            name="SChNotebookPage",
         )
         try:
             self.SetBackgroundStyle(wx.BG_STYLE_ERASE)
@@ -75,7 +75,7 @@ class SchNotebookPage(wx.Window):
         dc.Clear()
         margin = self.get_margins()
 
-        # SchBrowserFrame has desktop = None, so cannot use hasattr() here.
+        # SChBrowserFrame has desktop = None, so cannot use hasattr() here.
         desktop = getattr(top, "desktop", None)
         tabs_count = (
             len(desktop._mgr.GetAllPanes())
@@ -255,7 +255,7 @@ class SchNotebookPage(wx.Window):
         panel and the ``reverse_style`` flag.
 
         Args:
-            page: SchPage to resize.
+            page: SChPage to resize.
             x, y: Desired position.
             width, height: Desired size.
             dx, dy: Container dimensions.
@@ -419,28 +419,28 @@ class SchNotebookPage(wx.Window):
     # ------------------------------------------------------------------
 
     def get_page_count(self):
-        """Return number of child SchPage windows."""
+        """Return number of child SChPage windows."""
         return len(self.child_panels)
 
     def get_page(self, nr):
-        """Return a child SchPage by index.
+        """Return a child SChPage by index.
 
         Args:
             nr: Index of the page (supports negative indexing).
 
         Returns:
-            SchPage instance.
+            SChPage instance.
         """
         return self.child_panels[nr]
 
     def add_page(self, page):
-        """Append a child SchPage to this notebook page.
+        """Append a child SChPage to this notebook page.
 
         If the new page has ``disable_parent`` set and there are
         existing pages, the last existing page's forms are disabled.
 
         Args:
-            page: The SchPage to add.
+            page: The SChPage to add.
         """
         if self.get_page_count() > 0:
             if page.disable_parent:
@@ -514,14 +514,14 @@ class SchNotebookPage(wx.Window):
         return False
 
     def on_child_form_ok(self):
-        """Called by child SchForm when OK is pushed.
+        """Called by child SChForm when OK is pushed.
 
         Closes the child and refreshes the parent form.
         """
         self.close_child_page(False)
 
     def on_child_form_cancel(self):
-        """Called by child SchForm when Cancel is pushed.
+        """Called by child SChForm when Cancel is pushed.
 
         Closes the child without refreshing the parent.
         """
@@ -548,7 +548,7 @@ class SchNotebookPage(wx.Window):
     # ------------------------------------------------------------------
 
     def new_child_page(self, address_or_parser, title="", parameters=None, callback=None):
-        """Append a new SchPage as a child of this notebook page.
+        """Append a new SChPage as a child of this notebook page.
 
         Args:
             address_or_parser: HTTP address (str) or ShtmlParser instance.
@@ -557,9 +557,9 @@ class SchNotebookPage(wx.Window):
             callback: Optional callback invoked after init.
 
         Returns:
-            The created SchPage.
+            The created SChPage.
         """
-        h = page.SchPage(self, address_or_parser, parameters)
+        h = page.SChPage(self, address_or_parser, parameters)
         if self.get_page_count() > 0:
             h.parent_page = self.get_page(-1)
 

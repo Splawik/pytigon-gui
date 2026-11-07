@@ -1,5 +1,5 @@
 """
-Factory and dispatch functions for the SchForm GUI framework.
+Factory and dispatch functions for the SChForm GUI framework.
 
 These UPPERCASE functions serve as the primary interface for
 creating widget instances from HTML tag handlers (tag.py).
@@ -14,7 +14,7 @@ import logging
 
 import wx
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guictrl.button.base import (
     BITMAPBUTTON,
     CLOSEBUTTON,

@@ -1,6 +1,6 @@
-"""Grid panel with toolbar for the SchForm framework.
+"""Grid panel with toolbar for the SChForm framework.
 
-Provides SchGridPanel: a wx.Panel wrapper that hosts a SchTableGrid
+Provides SChGridPanel: a wx.Panel wrapper that hosts a SChTableGrid
 alongside a configurable toolbar with action buttons (edit, delete,
 view row) and dynamic per-row action buttons.
 """
@@ -12,7 +12,7 @@ from pytigon_gui.guilib.image import bitmap_from_href
 _ = wx.GetTranslation
 
 
-class SchGridPanel(wx.Panel):
+class SChGridPanel(wx.Panel):
     """Panel for grid widget with toolbar"""
 
     def __init__(self, *args, **argv):

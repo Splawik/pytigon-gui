@@ -11,7 +11,7 @@ import logging
 
 import wx
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guilib.threads import block_http_pumping, is_alive
 from pytigon_lib.schtools import schjson
 
@@ -240,7 +240,7 @@ class Select2Popup(wx.MiniFrame):
         super().Hide()
 
 
-class Select2Base(wx.ComboCtrl, SchBaseCtrl):
+class Select2Base(wx.ComboCtrl, SChBaseCtrl):
     """Server-backed autocomplete combo using Select2 protocol.
 
     Provides a wx.ComboCtrl that communicates with a Select2-compatible
@@ -255,7 +255,7 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
         Args:
             parent: Parent window.
             **kwds: Keyword arguments forwarded to wx.ComboCtrl and
-                SchBaseCtrl. Expects 'param' containing 'data' with
+                SChBaseCtrl. Expects 'param' containing 'data' with
                 Select2 configuration attrs.
         """
         self.popup = None
@@ -263,7 +263,7 @@ class Select2Base(wx.ComboCtrl, SchBaseCtrl):
         self.button2 = None
         self._popup_shown = False
 
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
 
         data = self.param["data"][0]["attrs"]
         self.multiple = "multiple" in data

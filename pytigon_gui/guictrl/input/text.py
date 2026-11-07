@@ -1,7 +1,7 @@
 """
-Text input widget classes for the SchForm GUI framework.
+Text input widget classes for the SChForm GUI framework.
 
-Provides wxPython text entry controls integrated with SchBaseCtrl:
+Provides wxPython text entry controls integrated with SChBaseCtrl:
 single-line text, password, search, styled (multi-line) text,
 and masked input widgets.
 
@@ -16,10 +16,10 @@ import sys
 import wx
 from wx.lib import masked
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 
 
-class TEXT(SchBaseCtrl, wx.TextCtrl):
+class TEXT(SChBaseCtrl, wx.TextCtrl):
     """Single-line text input control.
 
     Handles ctrltext tag. Supports process_enter style for
@@ -40,7 +40,7 @@ class TEXT(SchBaseCtrl, wx.TextCtrl):
             **kwds: Forwarded to wx.TextCtrl after processing
                 'param' for process_enter flag.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if self.param and "process_enter" in self.param:
             kwds["style"] = kwds.get("style", 0) | wx.TE_PROCESS_ENTER
         if self.readonly:
@@ -87,7 +87,7 @@ class TEXT(SchBaseCtrl, wx.TextCtrl):
         return (4 * size[0], size[1])
 
 
-class PASSWORD(TEXT, SchBaseCtrl):
+class PASSWORD(TEXT, SChBaseCtrl):
     """Password entry control with masked input.
 
     Handles ctrlpassword tag. Inherits from TEXT but adds
@@ -112,7 +112,7 @@ class PASSWORD(TEXT, SchBaseCtrl):
         TEXT.__init__(self, parent, **kwds)
 
 
-class SEARCH(wx.SearchCtrl, SchBaseCtrl):
+class SEARCH(wx.SearchCtrl, SChBaseCtrl):
     """Search text control with platform-specific sizing.
 
     Handles ctrlsearch tag. Wraps wx.SearchCtrl with
@@ -133,7 +133,7 @@ class SEARCH(wx.SearchCtrl, SchBaseCtrl):
             **kwds: Forwarded to wx.SearchCtrl with platform-adjusted
                 size and optional TE_PROCESS_ENTER style.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if sys.platform.startswith("linux"):
             kwds["size"] = (200, 28)
         else:
@@ -150,7 +150,7 @@ class SEARCH(wx.SearchCtrl, SchBaseCtrl):
             self.SetDescriptiveText(self.param["placeholder"])
 
 
-class STYLEDTEXT(wx.TextCtrl, SchBaseCtrl):
+class STYLEDTEXT(wx.TextCtrl, SChBaseCtrl):
     """Multi-line styled text control.
 
     Handles ctrlstyledtext tag. Always uses wx.TE_MULTILINE style.
@@ -168,7 +168,7 @@ class STYLEDTEXT(wx.TextCtrl, SchBaseCtrl):
             parent: Parent window.
             **kwds: Forwarded to wx.TextCtrl with TE_MULTILINE style.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if "style" in kwds:
             style = kwds["style"]
             style = style | wx.TE_MULTILINE
@@ -203,7 +203,7 @@ STANDARDSTYLEDTEXT = STYLEDTEXT
 """Alias for STYLEDTEXT; the standard styled text implementation."""
 
 
-class MASKTEXT(masked.TextCtrl, SchBaseCtrl):
+class MASKTEXT(masked.TextCtrl, SChBaseCtrl):
     """Masked text input control with format validation.
 
     Handles ctrlmasktext tag. Supports mask patterns and
@@ -225,7 +225,7 @@ class MASKTEXT(masked.TextCtrl, SchBaseCtrl):
             **kwds: Forwarded to masked.TextCtrl. If valuetype
                 and src are set, configures mask or autoformat.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if self.valuetype:
             if self.src:
                 if self.src.startswith("!"):

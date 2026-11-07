@@ -33,37 +33,37 @@ class TestThreadEvent:
 
 
 class TestSchThreadManager:
-    """Tests for SchThreadManager."""
+    """Tests for SChThreadManager."""
 
     def test_class_exists(self):
-        """SchThreadManager is importable."""
-        from pytigon_gui.guilib.threadwindow import SchThreadManager
+        """SChThreadManager is importable."""
+        from pytigon_gui.guilib.threadwindow import SChThreadManager
 
-        assert SchThreadManager is not None
+        assert SChThreadManager is not None
 
-    @patch("pytigon_gui.guilib.threadwindow.SchThreadWindow")
+    @patch("pytigon_gui.guilib.threadwindow.SChThreadWindow")
     def test_init(self, mock_win):
-        """SchThreadManager initializes with empty windows list."""
-        from pytigon_gui.guilib.threadwindow import SchThreadManager
+        """SChThreadManager initializes with empty windows list."""
+        from pytigon_gui.guilib.threadwindow import SChThreadManager
 
         mock_app = MagicMock()
         mock_statusbar = MagicMock()
 
-        mgr = SchThreadManager(mock_app, mock_statusbar)
+        mgr = SChThreadManager(mock_app, mock_statusbar)
         assert mgr.windows == []
         assert mgr.sizeChanged == True
 
-    @patch("pytigon_gui.guilib.threadwindow.SchThreadWindow")
+    @patch("pytigon_gui.guilib.threadwindow.SChThreadWindow")
     def test_append(self, mock_win_class):
-        """append adds a SchThreadWindow to the list."""
-        from pytigon_gui.guilib.threadwindow import SchThreadManager
+        """append adds a SChThreadWindow to the list."""
+        from pytigon_gui.guilib.threadwindow import SChThreadManager
 
         mock_app = MagicMock()
         mock_statusbar = MagicMock()
         mock_win = MagicMock()
         mock_win_class.return_value = mock_win
 
-        mgr = SchThreadManager(mock_app, mock_statusbar)
+        mgr = SChThreadManager(mock_app, mock_statusbar)
         mgr.append("thread_1")
 
         assert len(mgr.windows) == 1
@@ -71,18 +71,18 @@ class TestSchThreadManager:
 
     def test_reposition_empty(self):
         """reposition does nothing when no windows."""
-        from pytigon_gui.guilib.threadwindow import SchThreadManager
+        from pytigon_gui.guilib.threadwindow import SChThreadManager
 
         mock_app = MagicMock()
         mock_statusbar = MagicMock()
 
-        mgr = SchThreadManager(mock_app, mock_statusbar)
+        mgr = SChThreadManager(mock_app, mock_statusbar)
         mgr.reposition()  # Should not raise
 
-    @patch("pytigon_gui.guilib.threadwindow.SchThreadWindow")
+    @patch("pytigon_gui.guilib.threadwindow.SChThreadWindow")
     def test_timer_removes_closed_windows(self, mock_win_class):
         """timer destroys and removes closed windows."""
-        from pytigon_gui.guilib.threadwindow import SchThreadManager
+        from pytigon_gui.guilib.threadwindow import SChThreadManager
 
         mock_app = MagicMock()
         mock_statusbar = MagicMock()
@@ -91,17 +91,17 @@ class TestSchThreadManager:
         mock_win.is_closed.return_value = True
         mock_win_class.return_value = mock_win
 
-        mgr = SchThreadManager(mock_app, mock_statusbar)
+        mgr = SChThreadManager(mock_app, mock_statusbar)
         mgr.append("thread_1")
         mgr.timer()
 
         assert len(mgr.windows) == 0
         mock_win.Destroy.assert_called_once()
 
-    @patch("pytigon_gui.guilib.threadwindow.SchThreadWindow")
+    @patch("pytigon_gui.guilib.threadwindow.SChThreadWindow")
     def test_timer_polls_open_windows(self, mock_win_class):
         """timer calls timer() on open windows."""
-        from pytigon_gui.guilib.threadwindow import SchThreadManager
+        from pytigon_gui.guilib.threadwindow import SChThreadManager
 
         mock_app = MagicMock()
         mock_statusbar = MagicMock()
@@ -110,7 +110,7 @@ class TestSchThreadManager:
         mock_win.is_closed.return_value = False
         mock_win_class.return_value = mock_win
 
-        mgr = SchThreadManager(mock_app, mock_statusbar)
+        mgr = SChThreadManager(mock_app, mock_statusbar)
         mgr.append("thread_1")
         mgr.timer()
 
@@ -134,10 +134,10 @@ class TestEventBindings:
 
 
 class TestSchThreadWindow:
-    """Simple tests for SchThreadWindow."""
+    """Simple tests for SChThreadWindow."""
 
     def test_class_exists(self):
-        """SchThreadWindow is importable."""
-        from pytigon_gui.guilib.threadwindow import SchThreadWindow
+        """SChThreadWindow is importable."""
+        from pytigon_gui.guilib.threadwindow import SChThreadWindow
 
-        assert SchThreadWindow is not None
+        assert SChThreadWindow is not None

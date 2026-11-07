@@ -145,12 +145,12 @@ class TestBitmapFromHref:
 
 
 class TestSchImage:
-    """Tests for SchImage sprite sheet extractor."""
+    """Tests for SChImage sprite sheet extractor."""
 
     @patch("pytigon_gui.guilib.image.wx")
     def test_sch_image_initialization(self, mock_wx):
-        """SchImage loads image from server."""
-        from pytigon_gui.guilib.image import SchImage
+        """SChImage loads image from server."""
+        from pytigon_gui.guilib.image import SChImage
 
         mock_http = MagicMock()
         mock_response = MagicMock()
@@ -161,14 +161,14 @@ class TestSchImage:
         mock_wx.Bitmap.return_value = MagicMock()
         mock_wx.Image.return_value = MagicMock()
 
-        img = SchImage("http://example.com/sprite.png", (20, 20))
+        img = SChImage("http://example.com/sprite.png", (20, 20))
         assert img.one_image_size == (20, 20)
         assert img.bmp is not None
 
     @patch("pytigon_gui.guilib.image.wx")
     def test_getitem(self, mock_wx):
-        """SchImage extracts sub-bitmaps by index."""
-        from pytigon_gui.guilib.image import SchImage
+        """SChImage extracts sub-bitmaps by index."""
+        from pytigon_gui.guilib.image import SChImage
 
         mock_http = MagicMock()
         mock_response = MagicMock()
@@ -184,6 +184,6 @@ class TestSchImage:
         mock_wx.Image.return_value = MagicMock()
         mock_wx.Rect.return_value = (0, 0, 20, 20)
 
-        img = SchImage("http://example.com/sprite.png", (20, 20))
+        img = SChImage("http://example.com/sprite.png", (20, 20))
         result = img[0]
         assert result is mock_sub

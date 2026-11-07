@@ -1,5 +1,5 @@
 """
-This module contains SchAppFrame class. When pytigon application starts, new top frame window (class SchAppFrame) is created.
+This module contains SChAppFrame class. When pytigon application starts, new top frame window (class SChAppFrame) is created.
 During the initialisation process all defined for application plugins are started.
 """
 
@@ -18,10 +18,10 @@ logger = logging.getLogger(__name__)
 from wx.lib.agw import aui
 import wx.lib.buttons as buttons
 
-from pytigon_gui.guiframe.baseframe import SchBaseFrame
+from pytigon_gui.guiframe.baseframe import SChBaseFrame
 from pytigon_gui.guiframe.manager import SChAuiManager
-from pytigon_gui.guiframe.notebook import SchNotebook
-from pytigon_gui.guiframe.notebookpage import SchNotebookPage
+from pytigon_gui.guiframe.notebook import SChNotebook
+from pytigon_gui.guiframe.notebookpage import SChNotebookPage
 from pytigon_gui.guilib.events import *  # @UnusedWildImport
 
 # from pytigon_lib.schtasks.task import get_process_manager
@@ -130,7 +130,7 @@ class _SChMainPanel(wx.Window):
         pass
 
 
-class SchAppFrame(SchBaseFrame):
+class SChAppFrame(SChBaseFrame):
     """
     This is main window of pytigon application
     """
@@ -177,7 +177,7 @@ class SchAppFrame(SchBaseFrame):
             style - see wx.Frame constructor
         """
 
-        SchBaseFrame.__init__(
+        SChBaseFrame.__init__(
             self, None, gui_style, wx.ID_ANY, title, pos, size, style, "MainWindow"
         )
         # self.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BACKGROUND))
@@ -598,7 +598,7 @@ class SchAppFrame(SchBaseFrame):
             | aui.AUI_NB_WINDOWLIST_BUTTON
         )
 
-        n = SchNotebook(self._panel, wx.Point(0, 0), wx.Size(0, 0), style=style)
+        n = SChNotebook(self._panel, wx.Point(0, 0), wx.Size(0, 0), style=style)
         n.SetAGWWindowStyleFlag(style)
         n.SetArtProvider(aui.VC71TabArt())
 
@@ -616,7 +616,7 @@ class SchAppFrame(SchBaseFrame):
         w = wx.Window.FindFocus()
         parent = w
         while parent:
-            if parent.__class__.__name__ == "SchForm":
+            if parent.__class__.__name__ == "SChForm":
                 if hasattr(parent, "on_page_event"):
                     parent.on_page_event(direction)
                     return
@@ -683,7 +683,7 @@ class SchAppFrame(SchBaseFrame):
         """close active tab in active notebook"""
         win = wx.Window.FindFocus()
         while win:
-            if win.__class__.__name__ == "SchNotebook":
+            if win.__class__.__name__ == "SChNotebook":
                 id = win.GetSelection()
                 if id >= 0:
                     panel = win.GetPage(id)
@@ -829,7 +829,7 @@ class SchAppFrame(SchBaseFrame):
             view_in - options are: 'desktop', 'panel', 'header', 'footer'
             panel - optional explicit panel override (e.g. 'pscript')
         Returns:
-            created form :class:'~pytigon_gui.guiframe.htmlsash.SchPage'
+            created form :class:'~pytigon_gui.guiframe.htmlsash.SChPage'
         """
 
         if isinstance(address_or_parser, str):
@@ -972,7 +972,7 @@ class SchAppFrame(SchBaseFrame):
                 self._mgr.Update()
             return None
 
-        page = SchNotebookPage(n)
+        page = SChNotebookPage(n)
         page.SetName(title)
         if panel == "desktop2":
             if title is None:

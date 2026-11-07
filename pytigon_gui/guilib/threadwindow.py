@@ -49,7 +49,7 @@ class ThreadEvent(wx.PyCommandEvent):
         return self.info
 
 
-class SchThreadWindow(wx.Panel):
+class SChThreadWindow(wx.Panel):
     """Status bar panel showing progress and info for a background thread.
 
     Displays a progress gauge, HTML description, and expand/kill buttons.
@@ -59,7 +59,7 @@ class SchThreadWindow(wx.Panel):
         """Initialize the thread window.
 
         Args:
-            manager: The SchThreadManager that owns this window.
+            manager: The SChThreadManager that owns this window.
             thread_name: Identifier for the background thread.
             parent: Parent window (typically the status bar).
         """
@@ -161,8 +161,8 @@ class SchThreadWindow(wx.Panel):
             logger.exception("Failed to kill thread %s", self.thread_name)
 
 
-class SchThreadManager:
-    """Manages multiple SchThreadWindow instances in a status bar.
+class SChThreadManager:
+    """Manages multiple SChThreadWindow instances in a status bar.
 
     Handles layout, positioning, and periodic polling of thread windows.
     """
@@ -207,7 +207,7 @@ class SchThreadManager:
         Args:
             thread_address: Identifier for the background thread.
         """
-        self.windows.append(SchThreadWindow(self, thread_address, self.statusbar))
+        self.windows.append(SChThreadWindow(self, thread_address, self.statusbar))
         self.sizeChanged = True
 
     def reposition(self):

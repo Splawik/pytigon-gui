@@ -1,8 +1,8 @@
 """
-Button widget classes for the SchForm GUI framework.
+Button widget classes for the SChForm GUI framework.
 
 Provides factory functions that create wxPython button subclasses
-integrated with the SchBaseCtrl mixin. All button classes are
+integrated with the SChBaseCtrl mixin. All button classes are
 created dynamically through factory functions to reduce code
 duplication while allowing each button type to customize its
 behavior (bitmap handling, close behavior, menu handling, etc.).
@@ -20,7 +20,7 @@ Factory functions:
 import wx
 import wx.lib.platebtn as platebtn
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guictrl.button.toolbarbutton import BitmapTextButton, BitmapTextButtonTransparent
 from pytigon_gui.guilib.image import bitmap_from_href
 
@@ -29,7 +29,7 @@ def _make_button_class(base_class, is_bitmap_button=False, is_close_button=False
     """Create a button widget class dynamically.
 
     This factory generates a class that inherits from both a wxPython
-    button base class and SchBaseCtrl. It handles bitmap loading,
+    button base class and SChBaseCtrl. It handles bitmap loading,
     label parsing for accelerators (via '&' prefix), default button
     behavior, tooltip generation, and click/close event binding.
 
@@ -43,14 +43,14 @@ def _make_button_class(base_class, is_bitmap_button=False, is_close_button=False
         icon_size: Size index passed to bitmap_from_href (2=normal, 1=small).
 
     Returns:
-        A new class combining base_class and SchBaseCtrl with button
+        A new class combining base_class and SChBaseCtrl with button
         behavior customized according to the parameters.
     """
 
-    class _ButtonClass(base_class, SchBaseCtrl):
+    class _ButtonClass(base_class, SChBaseCtrl):
         """Dynamically generated button widget class.
 
-        Inherits from a wxPython button base class and SchBaseCtrl.
+        Inherits from a wxPython button base class and SChBaseCtrl.
         Provides unified handling for bitmap buttons, labeled buttons,
         accelerator keys, tooltips, default button behavior, and
         click/close events.
@@ -69,7 +69,7 @@ def _make_button_class(base_class, is_bitmap_button=False, is_close_button=False
                     May include 'style', 'fields', 'bitmap', 'bmp',
                     'label', 'id', etc.
             """
-            SchBaseCtrl.__init__(self, parent, kwds)
+            SChBaseCtrl.__init__(self, parent, kwds)
 
             if is_bitmap_button:
                 self._set_bitmap()

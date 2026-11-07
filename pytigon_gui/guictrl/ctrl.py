@@ -40,8 +40,8 @@ replaced). Keep this file as a thin shim to preserve that capability.
 # Order matters: base classes first, then widgets grouped by category.
 # ---------------------------------------------------------------------------
 
-# Base classes (used by plugins via 'from pytigon_gui.guictrl.ctrl import SchBaseCtrl')
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl, handle_best_size
+# Base classes (used by plugins via 'from pytigon_gui.guictrl.ctrl import SChBaseCtrl')
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl, handle_best_size
 
 # Button classes
 from pytigon_gui.guictrl.button.base import (

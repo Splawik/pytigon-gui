@@ -1,7 +1,7 @@
 """
-Panel and container widget classes for the SchForm GUI framework.
+Panel and container widget classes for the SChForm GUI framework.
 
-Provides wxPython container controls integrated with SchBaseCtrl:
+Provides wxPython container controls integrated with SChBaseCtrl:
 HTML panel, notebook (tab control), collapsible pane, static box, and
 composite panel.
 
@@ -11,12 +11,12 @@ Classes:
 
 import wx
 
-from pytigon_gui.guictrl.basectrl import SchBaseCtrl
+from pytigon_gui.guictrl.basectrl import SChBaseCtrl
 from pytigon_gui.guiframe import page
 from pytigon_lib.schparser.html_parsers import ShtmlParser
 
 
-class HTML(page.SchPage, SchBaseCtrl):
+class HTML(page.SChPage, SChBaseCtrl):
     """HTML content panel.
 
     Handles ctrlhtml tag. Renders HTML content loaded from a
@@ -29,8 +29,8 @@ class HTML(page.SchPage, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
-        page.SchPage.__init__(self, parent, self.src, None)
+        SChBaseCtrl.__init__(self, parent, kwds)
+        page.SChPage.__init__(self, parent, self.src, None)
         if self.src:
             value = self.load_string_from_server(self.src)
             self._set_value(value, False)
@@ -78,7 +78,7 @@ class HTML(page.SchPage, SchBaseCtrl):
         return self._value
 
 
-class NOTEBOOK(wx.Notebook, SchBaseCtrl):
+class NOTEBOOK(wx.Notebook, SChBaseCtrl):
     """Tabbed notebook container.
 
     Handles ctrlnotebook tag. Each row in tdata creates a tab
@@ -90,21 +90,21 @@ class NOTEBOOK(wx.Notebook, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         self.children = []
         wx.Notebook.__init__(self, parent, **kwds)
         if self.tdata:
             for row in self.tdata:
-                h = page.SchPage(self, row[1].data, {})
+                h = page.SChPage(self, row[1].data, {})
                 self.AddPage(h, row[0].data)
                 self.children.append(h)
 
 
-class COLLAPSIBLE_PANEL(wx.CollapsiblePane, SchBaseCtrl):
+class COLLAPSIBLE_PANEL(wx.CollapsiblePane, SChBaseCtrl):
     """Collapsible panel that can show/hide HTML content.
 
     Handles ctrlcollapsible_panel tag. Content is loaded from
-    param['data'] as HTML and rendered in a SchPage child.
+    param['data'] as HTML and rendered in a SChPage child.
 
     Tag arguments:
         value: Not directly used.
@@ -114,7 +114,7 @@ class COLLAPSIBLE_PANEL(wx.CollapsiblePane, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         kwds["label"] = self.label
         kwds["style"] = wx.CP_DEFAULT_STYLE | wx.CP_NO_TLW_RESIZE
         if "size" in kwds:
@@ -158,7 +158,7 @@ class COLLAPSIBLE_PANEL(wx.CollapsiblePane, SchBaseCtrl):
         )
         mp.address = None
         if not self.html:
-            self.html = page.SchPage(self.GetPane(), mp, {})
+            self.html = page.SChPage(self.GetPane(), mp, {})
             self.html.init_frame()
             self.html.activate_page()
             width = self._size[0] if self._size[0] > 0 else 400
@@ -220,7 +220,7 @@ class COLLAPSIBLE_PANEL(wx.CollapsiblePane, SchBaseCtrl):
                 self.set_html(self.param["data"])
 
 
-class STATICBOX(wx.StaticBox, SchBaseCtrl):
+class STATICBOX(wx.StaticBox, SChBaseCtrl):
     """Static box used to visually group related controls.
 
     Handles ctrlstaticbox tag. Draws a labelled frame around a group
@@ -237,7 +237,7 @@ class STATICBOX(wx.StaticBox, SchBaseCtrl):
             parent: Parent window.
             **kwds: Forwarded to wx.StaticBox with the label.
         """
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         if self.label:
             kwds["label"] = self.label
         wx.StaticBox.__init__(self, parent, **kwds)
@@ -247,7 +247,7 @@ class STATICBOX(wx.StaticBox, SchBaseCtrl):
         return False
 
 
-class CompositePanel(wx.Panel, SchBaseCtrl):
+class CompositePanel(wx.Panel, SChBaseCtrl):
     """Composite panel that wraps a primary control.
 
     Used by SELECT2 to embed a Select2Base control alongside
@@ -258,7 +258,7 @@ class CompositePanel(wx.Panel, SchBaseCtrl):
     """
 
     def __init__(self, parent, **kwds):
-        SchBaseCtrl.__init__(self, parent, kwds)
+        SChBaseCtrl.__init__(self, parent, kwds)
         wx.Panel.__init__(self, parent, **kwds)
         self.ctrl = None
 

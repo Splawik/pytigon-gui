@@ -7,18 +7,18 @@ from unittest.mock import MagicMock
 class TestSchBaseFrame:
 
     def test_attributes_after_init(self):
-        from pytigon_gui.guiframe.baseframe import SchBaseFrame
+        from pytigon_gui.guiframe.baseframe import SChBaseFrame
 
-        frame = SchBaseFrame.__new__(SchBaseFrame)
+        frame = SChBaseFrame.__new__(SChBaseFrame)
         frame.run_on_close = []
         frame.destroy_fun_tab = []
         assert frame.run_on_close == []
         assert frame.destroy_fun_tab == []
 
     def test_on_close_calls_handlers(self):
-        from pytigon_gui.guiframe.baseframe import SchBaseFrame
+        from pytigon_gui.guiframe.baseframe import SChBaseFrame
 
-        frame = SchBaseFrame.__new__(SchBaseFrame)
+        frame = SChBaseFrame.__new__(SChBaseFrame)
         called = []
 
         def handler1(sender):
@@ -34,9 +34,9 @@ class TestSchBaseFrame:
         mock_event.Skip.assert_called_once()
 
     def test_on_close_handler_error(self):
-        from pytigon_gui.guiframe.baseframe import SchBaseFrame
+        from pytigon_gui.guiframe.baseframe import SChBaseFrame
 
-        frame = SchBaseFrame.__new__(SchBaseFrame)
+        frame = SChBaseFrame.__new__(SChBaseFrame)
         called = []
 
         def broken_handler(sender):

@@ -20,7 +20,7 @@ from pytigon_gui.toolbar.basetoolbar import (
 _ = wx.GetTranslation
 
 
-class SchAuiToolBarArt(aui.AuiDefaultToolBarArt):
+class SChAuiToolBarArt(aui.AuiDefaultToolBarArt):
     """Custom AUI toolbar art provider that draws a flat background.
 
     Uses the system background colour and draws a subtle reflex line
@@ -164,7 +164,7 @@ class GenericToolbarPage(ToolbarPage, aui.AuiToolBar):
 
         self.SetToolBitmapSize(wx.Size(24, 24))
         if wx.Platform != "__WXMSW__":
-            self.SetArtProvider(SchAuiToolBarArt())
+            self.SetArtProvider(SChAuiToolBarArt())
         nr = len(parent_bar.pages) + 1
 
         pinfo = (

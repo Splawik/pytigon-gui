@@ -1,13 +1,13 @@
-"""Tests for pytigon_gui.guiframe.notebookpage - SchNotebookPage class."""
+"""Tests for pytigon_gui.guiframe.notebookpage - SChNotebookPage class."""
 
 import pytest
 from unittest.mock import MagicMock
 
 
 def _make_page():
-    from pytigon_gui.guiframe.notebookpage import SchNotebookPage
+    from pytigon_gui.guiframe.notebookpage import SChNotebookPage
 
-    page = SchNotebookPage.__new__(SchNotebookPage)
+    page = SChNotebookPage.__new__(SChNotebookPage)
     page.child_panels = []
     page.bestx = -1
     page.orient = None
