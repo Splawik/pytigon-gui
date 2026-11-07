@@ -204,6 +204,9 @@ class SchNotebookPage(wx.Window):
                 self._start_pos_x_y_dx_dy[2],
                 self._start_pos_x_y_dx_dy[3],
             )
+            count = self.get_page_count()
+            if count > 1:
+                self.get_page(count - 1).publish_size = True
             self._layout()
         event.Skip()
 
@@ -544,9 +547,7 @@ class SchNotebookPage(wx.Window):
     # Creating new pages
     # ------------------------------------------------------------------
 
-    def new_child_page(
-        self, address_or_parser, title="", parameters=None, callback=None
-    ):
+    def new_child_page(self, address_or_parser, title="", parameters=None, callback=None):
         """Append a new SchPage as a child of this notebook page.
 
         Args:

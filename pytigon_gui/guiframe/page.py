@@ -8,6 +8,7 @@ import wx
 
 logger = logging.getLogger(__name__)
 
+
 class _NullDispatcher:
     """No-op stand-in used when PyDispatcher cannot be imported.
 
@@ -60,9 +61,7 @@ class SchPage(wx.Window, Signal):
     sash-layout sub-windows.
     """
 
-    def __init__(
-        self, parent, address_or_parser, parameters, pos=(0, 0), size=wx.DefaultSize
-    ):
+    def __init__(self, parent, address_or_parser, parameters, pos=(0, 0), size=wx.DefaultSize):
         """Construct a SchPage.
 
         Args:
@@ -75,6 +74,8 @@ class SchPage(wx.Window, Signal):
         self._active = True
         self._ctrl_dict_old = {}
         self._ctrl_dict = {}
+        self._saved_size = None
+        self._first_size = None
         self._last_size = None
         self._disable_setfocus = 0
         self._signal_handlers = []
@@ -92,11 +93,10 @@ class SchPage(wx.Window, Signal):
         self.footer = None
         self.active_form = None
         self.active_ctrl = None
+        self.publish_size = False
 
         Signal.__init__(self)
-        wx.Window.__init__(
-            self, parent, -1, pos, size, style=wx.WANTS_CHARS, name="SchPage"
-        )
+        wx.Window.__init__(self, parent, -1, pos, size, style=wx.WANTS_CHARS, name="SchPage")
 
         self.exists = True
 
@@ -168,9 +168,7 @@ class SchPage(wx.Window, Signal):
             self._bottom_window = None
 
         if panel[0]:
-            leftwin = wx.adv.SashLayoutWindow(
-                self, -1, wx.DefaultPosition, (5, 100), wx.adv.SW_3D
-            )
+            leftwin = wx.adv.SashLayoutWindow(self, -1, wx.DefaultPosition, (5, 100), wx.adv.SW_3D)
             leftwin.SetOrientation(wx.adv.LAYOUT_VERTICAL)
             leftwin.SetAlignment(wx.adv.LAYOUT_LEFT)
             leftwin.SetSashVisible(wx.adv.SASH_RIGHT, True)
@@ -517,9 +515,7 @@ class SchPage(wx.Window, Signal):
             new_win = new_win.GetParent()
 
         if new_win is not self.last_control_with_focus:
-            if self.last_control_with_focus and hasattr(
-                self.last_control_with_focus, "KillFocus"
-            ):
+            if self.last_control_with_focus and hasattr(self.last_control_with_focus, "KillFocus"):
                 self._disable_setfocus = True
                 self.last_control_with_focus.KillFocus()
                 self._disable_setfocus = False
@@ -556,6 +552,17 @@ class SchPage(wx.Window, Signal):
         """Handle size changes, re-laying out the sash windows."""
         LayoutAlgorithm().LayoutWindow(self, self.body)
         self.body.Refresh()
+
+        if not self._first_size:
+            self._first_size = event.GetSize()
+
+        if self.publish_size:
+            if self._saved_size and self._first_size:
+                size = event.GetSize()
+                dy = size.GetHeight() - self._first_size.GetHeight() + self._saved_size[1]
+                dx = size.GetWidth() - self._first_size.GetWidth() + self._saved_size[0]
+                wx.GetApp().set_gui_config_item(self.title, (dx, dy))
+
         if event:
             event.Skip()
 
@@ -664,6 +671,11 @@ class SchPage(wx.Window, Signal):
             self._last_size = None
             return (dx, dy)
 
+        if self.title in wx.GetApp().gui_config:
+            dx, dy = wx.GetApp().gui_config[self.title]
+            self._saved_size = (dx, dy)
+            return (dx, dy)
+
         dx = 0
         dy = 0
 
@@ -682,6 +694,8 @@ class SchPage(wx.Window, Signal):
             dx += x
             if y > dy:
                 dy = y
+        if self._saved_size is None:
+            self._saved_size = (dx, dy)
         return (dx, dy)
 
     def enable_forms(self, enable):
